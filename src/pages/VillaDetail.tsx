@@ -135,7 +135,29 @@ export default function VillaDetail() {
             </p>
           </div>
 
-          <div className="flex w-full h-[60vh] md:h-[80vh] gap-1 md:gap-2 overflow-hidden">
+          <div
+            className="flex w-full h-[60vh] md:h-[80vh] gap-1 md:gap-2 overflow-hidden select-none touch-pan-y"
+            onTouchMove={(e) => {
+              const touch = e.touches[0];
+              const el = document.elementFromPoint(touch.clientX, touch.clientY);
+              const item = el?.closest('.gallery-item');
+              if (item) {
+                Array.from(e.currentTarget.children).forEach(c => {
+                  (c as HTMLElement).style.flex = (c === item) ? '8' : '1';
+                });
+              }
+            }}
+            onTouchEnd={(e) => {
+              Array.from(e.currentTarget.children).forEach(c => {
+                (c as HTMLElement).style.flex = '';
+              });
+            }}
+            onTouchCancel={(e) => {
+              Array.from(e.currentTarget.children).forEach(c => {
+                (c as HTMLElement).style.flex = '';
+              });
+            }}
+          >
             {villa.gallery.map((img, idx) => (
               <motion.div
                 key={idx}
@@ -143,21 +165,8 @@ export default function VillaDetail() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: idx * 0.02 }}
-                className="relative group cursor-pointer overflow-hidden rounded-sm flex-1 hover:flex-[8] transition-all duration-500 ease-out"
-                onClick={(e) => {
-                  if (window.innerWidth < 1024) {
-                    const el = e.currentTarget;
-                    if (el.style.flex === '8') {
-                      el.style.flex = '';
-                      setSelectedImage(img);
-                    } else {
-                      Array.from(el.parentElement!.children).forEach(c => (c as HTMLElement).style.flex = '');
-                      el.style.flex = '8';
-                    }
-                  } else {
-                    setSelectedImage(img);
-                  }
-                }}
+                className="gallery-item relative group cursor-pointer overflow-hidden rounded-sm flex-1 hover:flex-[8] transition-all duration-500 ease-out"
+                onClick={() => setSelectedImage(img)}
               >
                 <img
                   src={img}
