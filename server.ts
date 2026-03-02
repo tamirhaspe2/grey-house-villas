@@ -24,11 +24,11 @@ async function startServer() {
   const app = express();
   const server = http.createServer(app);
   const io = new Server(server);
-  const PORT = 3000;
+  const PORT = process.env.PORT || 8080;
 
   app.use(express.json());
   app.use(express.static(path.join(process.cwd(), "public")));
-  
+
   // API Routes
   app.post("/api/inquiry", async (req, res) => {
     const { name, email, message } = req.body;
