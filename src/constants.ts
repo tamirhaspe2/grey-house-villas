@@ -34,7 +34,7 @@ export const VILLAS = [
   },
   {
     id: 'omorfi-suite',
-    name: 'Omorphy Suite',
+    name: 'Omorphy Sussssite',
     subtitle: 'The Sanctuary',
     description: 'A discreet suite tucked beneath the main outdoor pool. Featuring a large natural stone terrace seamlessly separated by a modern glass wall.',
     image: '/OMORFI_SUITE/image1.png',
