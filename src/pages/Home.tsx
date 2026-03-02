@@ -12,17 +12,17 @@ export default function Home() {
       {/* Hero Section - Editorial Recipe */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <motion.img 
+          <motion.img
             initial={{ scale: 1.1 }}
             animate={{ scale: 1 }}
             transition={{ duration: 2 }}
-            src="/WhatsApp Image 2026-02-22 at 16.31.43.jpeg" 
-            alt="Breathtaking view from Lefkas" 
+            src="/WhatsApp Image 2026-02-22 at 16.31.43.jpeg"
+            alt="Breathtaking view from Lefkas"
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-black/40"></div>
         </div>
-        
+
         <div className="relative z-10 text-center px-6 max-w-5xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -33,7 +33,7 @@ export default function Home() {
               Lefkas, Greece • Katouna Mountain
             </span>
             <h1 className="text-5xl md:text-8xl lg:text-9xl font-serif text-white leading-[0.85] mb-12 tracking-tight">
-              Grey House <br/> <span className="italic font-light opacity-90">Villas.</span>
+              Grey House <br /> <span className="italic font-light opacity-90">Villas.</span>
             </h1>
             <p className="text-lg md:text-xl text-white/90 font-light max-w-2xl mx-auto mb-12 leading-relaxed">
               A private 3,000 sqm sanctuary perched 400 meters above the Ionian Sea. Hand-crafted from natural stone, designed for the eternal horizon.
@@ -50,7 +50,7 @@ export default function Home() {
         </div>
 
         {/* Scroll Indicator */}
-        <motion.div 
+        <motion.div
           animate={{ y: [0, 10, 0] }}
           transition={{ duration: 2, repeat: Infinity }}
           className="absolute bottom-12 left-1/2 -translate-x-1/2 z-10"
@@ -72,7 +72,7 @@ export default function Home() {
               >
                 <span className="text-[10px] uppercase tracking-[0.4em] text-[#A89F91] mb-6 block">The Vision</span>
                 <h2 className="text-4xl md:text-6xl font-serif mb-10 text-[#2C3539] leading-tight">
-                  Born from <br/> the <span className="italic">Katouna</span> Earth.
+                  Born from <br /> the <span className="italic">Katouna</span> Earth.
                 </h2>
                 <div className="space-y-8 text-gray-600 font-light leading-relaxed text-lg">
                   <p>
@@ -89,22 +89,22 @@ export default function Home() {
               </motion.div>
             </div>
             <div className="lg:col-span-7 relative">
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, scale: 1.05 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ duration: 1.2 }}
                 className="relative aspect-[4/5] md:aspect-video lg:aspect-[4/5]"
               >
-                <img 
-                  src="/WhatsApp Image 2026-02-22 at 16.31.48.jpeg" 
-                  alt="Natural stone architecture" 
+                <img
+                  src="/WhatsApp Image 2026-02-22 at 16.31.48.jpeg"
+                  alt="Natural stone architecture"
                   className="w-full h-full object-cover rounded-sm shadow-2xl"
                 />
                 <div className="absolute -bottom-12 -left-12 w-64 h-80 hidden xl:block border-[12px] border-white shadow-xl">
-                  <img 
-                    src="/WhatsApp Image 2026-02-22 at 16.31.52.jpeg" 
-                    alt="Detail" 
+                  <img
+                    src="/WhatsApp Image 2026-02-22 at 16.31.52.jpeg"
+                    alt="Detail"
                     className="w-full h-full object-cover"
                   />
                 </div>
@@ -125,7 +125,7 @@ export default function Home() {
           <div className="flex flex-col gap-4">
             {VILLAS.map((villa, index) => (
               <div key={villa.id} className="border-b border-black/10 overflow-hidden">
-                <button 
+                <button
                   onClick={() => setActiveVillaIndex(index)}
                   className="w-full py-8 flex items-center justify-between text-left group"
                 >
@@ -150,13 +150,13 @@ export default function Home() {
                     >
                       <div className="grid lg:grid-cols-12 gap-12 pb-12">
                         <div className="lg:col-span-7 relative h-[400px] lg:h-[500px] overflow-hidden rounded-sm">
-                          <motion.img 
+                          <motion.img
                             initial={{ scale: 1.1 }}
                             animate={{ scale: 1 }}
                             transition={{ duration: 1.5 }}
-                            src={villa.image} 
-                            alt={villa.name} 
-                            className="w-full h-full object-cover" 
+                            src={villa.image}
+                            alt={villa.name}
+                            className="w-full h-full object-cover"
                           />
                           <div className="absolute top-6 left-6 bg-white/90 backdrop-blur px-4 py-1.5 text-[9px] font-bold tracking-[0.3em] uppercase text-[#8B6F5A]">
                             {villa.subtitle}
@@ -166,7 +166,7 @@ export default function Home() {
                           <p className="text-gray-500 font-light mb-10 leading-relaxed text-lg">
                             {villa.description}
                           </p>
-                          
+
                           <div className="grid grid-cols-2 gap-y-6 gap-x-4 mb-12">
                             {villa.specs.slice(0, 4).map((spec, i) => (
                               <div key={i} className="flex flex-col gap-1">
@@ -175,16 +175,16 @@ export default function Home() {
                               </div>
                             ))}
                           </div>
-                          
+
                           <div className="flex flex-col sm:flex-row items-center gap-6">
-                            <Link 
-                              to={`/villas/${villa.id}`} 
+                            <Link
+                              to={`/villas/${villa.id}`}
                               className="w-full sm:w-auto px-10 py-4 bg-[#2C3539] text-white text-[10px] uppercase tracking-[0.3em] font-bold hover:bg-[#8B6F5A] transition-all duration-300 text-center"
                             >
                               Explore Villa
                             </Link>
-                            <Link 
-                              to={`/villas/${villa.id}`} 
+                            <Link
+                              to={`/villas/${villa.id}`}
                               className="text-[10px] uppercase tracking-[0.3em] font-bold text-[#8B6F5A] hover:text-[#2C3539] transition-colors flex items-center group"
                             >
                               Gallery <ArrowRight size={14} className="ml-3 group-hover:translate-x-2 transition-transform" />
@@ -207,29 +207,29 @@ export default function Home() {
           <div className="grid lg:grid-cols-2 gap-24 items-center">
             <div className="order-2 lg:order-1 relative">
               <div className="grid grid-cols-2 gap-4">
-                <motion.img 
+                <motion.img
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  src="/WhatsApp Image 2026-02-22 at 16.31.50.jpeg" 
-                  alt="Interior" 
-                  className="w-full aspect-[3/4] object-cover rounded-sm" 
+                  src="/WhatsApp Image 2026-02-22 at 16.31.50.jpeg"
+                  alt="Interior"
+                  className="w-full aspect-[3/4] object-cover rounded-sm"
                 />
-                <motion.img 
+                <motion.img
                   initial={{ opacity: 0, y: 40 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: 0.2 }}
-                  src="/WhatsApp Image 2026-02-22 at 16.31.51.jpeg" 
-                  alt="Kitchen" 
-                  className="w-full aspect-[3/4] object-cover rounded-sm mt-12" 
+                  src="/WhatsApp Image 2026-02-22 at 16.31.51.jpeg"
+                  alt="Kitchen"
+                  className="w-full aspect-[3/4] object-cover rounded-sm mt-12"
                 />
               </div>
               <div className="absolute -z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[80%] bg-[#F9F8F6] rounded-full blur-3xl opacity-50"></div>
             </div>
             <div className="order-1 lg:order-2">
               <span className="text-[10px] uppercase tracking-[0.4em] text-[#A89F91] mb-6 block">Interior Design</span>
-              <h2 className="text-4xl md:text-5xl font-serif mb-8 text-[#2C3539]">Furnished with <br/> <span className="italic">Intention.</span></h2>
+              <h2 className="text-4xl md:text-5xl font-serif mb-8 text-[#2C3539]">Furnished with <br /> <span className="italic">Intention.</span></h2>
               <p className="text-gray-600 font-light mb-10 text-lg leading-relaxed">
                 Delivered turnkey, Grey House Villas are curated with a selection of Dutch, Italian, and Greek designer furniture. Practical luxury is woven into the fabric of the estate, from high-end Italian kitchens to advanced climate control systems.
               </p>
@@ -281,7 +281,7 @@ export default function Home() {
             "/WhatsApp Image 2026-02-22 at 16.31.59.jpeg",
             "/WhatsApp Image 2026-02-22 at 16.32.00.jpeg"
           ].map((src, idx) => (
-            <motion.div 
+            <motion.div
               key={idx}
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
@@ -289,10 +289,10 @@ export default function Home() {
               transition={{ duration: 1, delay: idx * 0.1 }}
               className="aspect-[4/5] overflow-hidden group relative"
             >
-              <img 
-                src={src} 
-                alt={`Gallery ${idx}`} 
-                className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-1000 scale-110 group-hover:scale-100"
+              <img
+                src={src}
+                alt={`Gallery ${idx}`}
+                className="w-full h-full object-cover transition-all duration-1000 scale-110 group-hover:scale-100"
               />
               <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors"></div>
             </motion.div>
