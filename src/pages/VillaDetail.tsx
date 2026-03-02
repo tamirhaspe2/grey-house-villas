@@ -45,20 +45,20 @@ export default function VillaDetail() {
     <div className="bg-[#FDFCFB] min-h-screen">
       {/* Hero Section */}
       <section className="relative h-[80vh] overflow-hidden">
-        <motion.div 
+        <motion.div
           initial={{ scale: 1.1 }}
           animate={{ scale: 1 }}
           transition={{ duration: 2 }}
           className="absolute inset-0"
         >
-          <img 
-            src={villa.image} 
-            alt={villa.name} 
+          <img
+            src={villa.image}
+            alt={villa.name}
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-black/30"></div>
         </motion.div>
-        
+
         <div className="relative z-10 h-full flex flex-col justify-end pb-24 px-6">
           <div className="max-w-7xl mx-auto w-full">
             <motion.div
@@ -84,7 +84,7 @@ export default function VillaDetail() {
             <h2 className="text-3xl md:text-5xl font-serif text-[#2C3539] leading-tight mb-12">
               {villa.description}
             </h2>
-            
+
             <div className="grid md:grid-cols-2 gap-12 mt-20">
               {villa.specs.map((spec, i) => (
                 <div key={i} className="group">
@@ -137,19 +137,32 @@ export default function VillaDetail() {
 
           <div className="flex w-full h-[60vh] md:h-[80vh] gap-1 md:gap-2 overflow-hidden">
             {villa.gallery.map((img, idx) => (
-              <motion.div 
+              <motion.div
                 key={idx}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: idx * 0.02 }}
                 className="relative group cursor-pointer overflow-hidden rounded-sm flex-1 hover:flex-[8] transition-all duration-500 ease-out"
-                onClick={() => setSelectedImage(img)}
+                onClick={(e) => {
+                  if (window.innerWidth < 1024) {
+                    const el = e.currentTarget;
+                    if (el.style.flex === '8') {
+                      el.style.flex = '';
+                      setSelectedImage(img);
+                    } else {
+                      Array.from(el.parentElement!.children).forEach(c => (c as HTMLElement).style.flex = '');
+                      el.style.flex = '8';
+                    }
+                  } else {
+                    setSelectedImage(img);
+                  }
+                }}
               >
-                <img 
-                  src={img} 
-                  alt={`${villa.name} detail ${idx + 1}`} 
-                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
+                <img
+                  src={img}
+                  alt={`${villa.name} detail ${idx + 1}`}
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-black/40 group-hover:bg-black/0 transition-colors flex items-center justify-center">
                   <Maximize className="text-white opacity-0 group-hover:opacity-100 transition-opacity" size={24} />
@@ -163,7 +176,7 @@ export default function VillaDetail() {
       {/* Lightbox */}
       <AnimatePresence>
         {selectedImage && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -173,12 +186,12 @@ export default function VillaDetail() {
             <button className="absolute top-8 right-8 text-white/50 hover:text-white transition-colors">
               <X size={32} />
             </button>
-            <motion.img 
+            <motion.img
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              src={selectedImage} 
-              alt="Expanded view" 
+              src={selectedImage}
+              alt="Expanded view"
               className="max-w-full max-h-full object-contain shadow-2xl"
             />
           </motion.div>
@@ -191,14 +204,14 @@ export default function VillaDetail() {
           <span className="text-[10px] uppercase tracking-[0.4em] text-[#A89F91] mb-12 block text-center">Continue Exploring</span>
           <div className="grid md:grid-cols-2 gap-8">
             {VILLAS.filter(v => v.id !== id).map(otherVilla => (
-              <Link 
-                key={otherVilla.id} 
+              <Link
+                key={otherVilla.id}
                 to={`/villas/${otherVilla.id}`}
                 className="group relative h-80 overflow-hidden flex items-center justify-center"
               >
-                <img 
-                  src={otherVilla.image} 
-                  alt={otherVilla.name} 
+                <img
+                  src={otherVilla.image}
+                  alt={otherVilla.name}
                   className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
                 />
                 <div className="absolute inset-0 bg-black/40 group-hover:bg-black/60 transition-colors"></div>
