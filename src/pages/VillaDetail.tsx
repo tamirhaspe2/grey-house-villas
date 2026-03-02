@@ -8,6 +8,7 @@ export default function VillaDetail() {
   const { id } = useParams<{ id: string }>();
   const villa = VILLAS.find(v => v.id === id);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [activeIdx, setActiveIdx] = useState<number | null>(null);
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
@@ -142,39 +143,42 @@ export default function VillaDetail() {
               const el = document.elementFromPoint(touch.clientX, touch.clientY);
               const item = el?.closest('.gallery-item');
               if (item) {
-                Array.from(e.currentTarget.children).forEach(c => {
-                  (c as HTMLElement).style.flex = (c === item) ? '8' : '1';
-                });
+                const idx = parseInt(item.getAttribute('data-idx') || '-1', 10);
+                if (idx !== -1 && activeIdx !== idx) {
+                  setActiveIdx(idx);
+                }
               }
-            }}
-            onTouchEnd={(e) => {
-              Array.from(e.currentTarget.children).forEach(c => {
-                (c as HTMLElement).style.flex = '';
-              });
-            }}
-            onTouchCancel={(e) => {
-              Array.from(e.currentTarget.children).forEach(c => {
-                (c as HTMLElement).style.flex = '';
-              });
             }}
           >
             {villa.gallery.map((img, idx) => (
               <motion.div
                 key={idx}
+                data-idx={idx}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: idx * 0.02 }}
-                className="gallery-item relative group cursor-pointer overflow-hidden rounded-sm flex-1 hover:flex-[8] transition-all duration-500 ease-out"
-                onClick={() => setSelectedImage(img)}
+                className={`gallery-item relative cursor-pointer overflow-hidden rounded-sm flex-1 md:hover:flex-[8] transition-all duration-500 ease-out ${activeIdx === idx ? 'flex-[8]' : ''}`}
+                onClick={(e) => {
+                  const isMobile = window.matchMedia('(hover: none)').matches || window.innerWidth < 1024;
+                  if (isMobile) {
+                    if (activeIdx === idx) {
+                      setSelectedImage(img);
+                    } else {
+                      setActiveIdx(idx);
+                    }
+                  } else {
+                    setSelectedImage(img);
+                  }
+                }}
               >
                 <img
                   src={img}
                   alt={`${villa.name} detail ${idx + 1}`}
-                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 md:group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-black/40 group-hover:bg-black/0 transition-colors flex items-center justify-center">
-                  <Maximize className="text-white opacity-0 group-hover:opacity-100 transition-opacity" size={24} />
+                <div className={`absolute inset-0 bg-black/40 transition-colors flex items-center justify-center md:group-hover:bg-black/0 md:group-hover:opacity-100 ${activeIdx === idx ? 'bg-black/0 opacity-100' : 'opacity-0'}`}>
+                  <Maximize className={`text-white transition-opacity md:opacity-0 md:group-hover:opacity-100 ${activeIdx === idx ? 'opacity-100' : 'opacity-0'}`} size={24} />
                 </div>
               </motion.div>
             ))}
