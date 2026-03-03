@@ -5,6 +5,9 @@ import { Server } from "socket.io";
 import http from "http";
 import path from "path";
 import { Resend } from "resend";
+import multer from "multer";
+import cookieParser from "cookie-parser";
+import fs from "fs/promises";
 
 const db = new Database("villas.db");
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
@@ -24,9 +27,10 @@ async function startServer() {
   const app = express();
   const server = http.createServer(app);
   const io = new Server(server);
-  const PORT = process.env.PORT || 8080;
+  const PORT: number = parseInt(process.env.PORT as string || '8080', 10);
 
   app.use(express.json());
+  app.use(cookieParser());
   app.use(express.static(path.join(process.cwd(), "public")));
 
   // API Routes
@@ -64,6 +68,56 @@ async function startServer() {
     } catch (error) {
       console.error("Inquiry error:", error);
       res.status(500).json({ error: "Failed to process inquiry" });
+    }
+  });
+
+  // Admin Routes
+  app.post("/api/admin/login", (req, res) => {
+    const { password } = req.body;
+    if (password === process.env.ADMIN_PASSWORD) {
+      res.cookie("admin_auth", "true", { httpOnly: true, maxAge: 24 * 60 * 60 * 1000 });
+      return res.json({ success: true });
+    }
+    res.status(401).json({ error: "Invalid password" });
+  });
+
+  const checkAuth = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    if (req.cookies?.admin_auth === "true") {
+      return next();
+    }
+    res.status(401).json({ error: "Unauthorized" });
+  };
+
+  const upload = multer({
+    storage: multer.diskStorage({
+      destination: (req, file, cb) => {
+        const destFolder = req.body.folder || '';
+        const uploadPath = path.join(process.cwd(), "public", destFolder);
+        cb(null, uploadPath);
+      },
+      filename: (req, file, cb) => {
+        cb(null, `${Date.now()}-${file.originalname}`);
+      }
+    })
+  });
+
+  app.post("/api/admin/upload", checkAuth, upload.single("image"), (req, res) => {
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+    const destFolder = req.body.folder || '';
+    const imageUrl = `/${destFolder ? destFolder + '/' : ''}${req.file.filename}`;
+    res.json({ success: true, url: imageUrl });
+  });
+
+  app.put("/api/admin/villas", checkAuth, async (req, res) => {
+    try {
+      const dataPath = path.join(process.cwd(), "src", "data", "villas.json");
+      await fs.writeFile(dataPath, JSON.stringify(req.body, null, 2));
+      res.json({ success: true });
+    } catch (err) {
+      console.error("Failed to update villas.json:", err);
+      res.status(500).json({ error: "Failed to update configuration" });
     }
   });
 

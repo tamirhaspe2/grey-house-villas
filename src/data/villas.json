@@ -1,0 +1,130 @@
+[
+  {
+    "id": "villa-oneiro",
+    "name": "Villa Oneiro",
+    "subtitle": "The Main House",
+    "description": "A masterful 175m² two-story residence combining high-end Italian design with raw natural textures. Features multi-zone outdoor lighting and underfloor heating.",
+    "image": "/VILLA_ONEIRO/image.png",
+    "specs": [
+      {
+        "label": "Space",
+        "value": "120m² Downstairs | 55m² Upstairs"
+      },
+      {
+        "label": "Bedrooms",
+        "value": "2 Bedrooms (12000 BTU AC)"
+      },
+      {
+        "label": "Baths",
+        "value": "2.5 Baths (Luxury showers, heated mirrors)"
+      },
+      {
+        "label": "Kitchen",
+        "value": "Italian Kitchen & 15KW Soapstone Stove"
+      }
+    ],
+    "gallery": [
+      "/VILLA_ONEIRO/image.png",
+      "/VILLA_ONEIRO/image1.png",
+      "/VILLA_ONEIRO/image2.png",
+      "/VILLA_ONEIRO/image3.png",
+      "/VILLA_ONEIRO/image4.png",
+      "/VILLA_ONEIRO/image5.png",
+      "/VILLA_ONEIRO/image6.png",
+      "/VILLA_ONEIRO/image7.png",
+      "/VILLA_ONEIRO/image8.png",
+      "/VILLA_ONEIRO/image9.png",
+      "/VILLA_ONEIRO/image10.png",
+      "/VILLA_ONEIRO/image11.png",
+      "/VILLA_ONEIRO/image12.png",
+      "/VILLA_ONEIRO/image13.png",
+      "/VILLA_ONEIRO/image14.png",
+      "/VILLA_ONEIRO/image15.png",
+      "/VILLA_ONEIRO/image16.png",
+      "/VILLA_ONEIRO/image17.png"
+    ]
+  },
+  {
+    "id": "omorfi-suite",
+    "name": "Omorphy Sussssite",
+    "subtitle": "The Sanctuary",
+    "description": "A discreet suite tucked beneath the main outdoor pool. Featuring a large natural stone terrace seamlessly separated by a modern glass wall.",
+    "image": "/OMORFI_SUITE/image1.png",
+    "specs": [
+      {
+        "label": "Space",
+        "value": "25m² Suite Space"
+      },
+      {
+        "label": "Bedrooms",
+        "value": "1 Bedroom (12000 BTU AC)"
+      },
+      {
+        "label": "Baths",
+        "value": "Luxury shower & single sink"
+      },
+      {
+        "label": "Kitchen",
+        "value": "Kitchenette with Induction Hob"
+      }
+    ],
+    "gallery": [
+      "/OMORFI_SUITE/image1.png",
+      "/OMORFI_SUITE/image2.png",
+      "/OMORFI_SUITE/image3.png",
+      "/OMORFI_SUITE/image4.png",
+      "/OMORFI_SUITE/image5.png",
+      "/OMORFI_SUITE/image6.png",
+      "/OMORFI_SUITE/image7.png",
+      "/OMORFI_SUITE/image8.png",
+      "/OMORFI_SUITE/image9.png",
+      "/OMORFI_SUITE/image10.png",
+      "/OMORFI_SUITE/image11.png",
+      "/OMORFI_SUITE/image12.png",
+      "/OMORFI_SUITE/image13.png",
+      "/OMORFI_SUITE/image14.png",
+      "/OMORFI_SUITE/image15.png",
+      "/OMORFI_SUITE/image16.png"
+    ]
+  },
+  {
+    "id": "villa-petra",
+    "name": "Villa Pétra",
+    "subtitle": "The Private Enclave",
+    "description": "Situated 50 meters below the main house, offering ultimate seclusion. Accessed via a private road with its own dedicated parking and terraced living spaces.",
+    "image": "/Villa_PETRA/image1.png",
+    "specs": [
+      {
+        "label": "Space",
+        "value": "50m² Living Space + 100m² Parking"
+      },
+      {
+        "label": "Bedrooms",
+        "value": "1 Bedroom (12000 BTU AC)"
+      },
+      {
+        "label": "Pool",
+        "value": "4x1.5m Private Plunge Pool"
+      },
+      {
+        "label": "Kitchen",
+        "value": "Kitchen & 10KW Soapstone Stove"
+      }
+    ],
+    "gallery": [
+      "/Villa_PETRA/image1.png",
+      "/Villa_PETRA/image2.png",
+      "/Villa_PETRA/image3.png",
+      "/Villa_PETRA/image4.png",
+      "/Villa_PETRA/image5.png",
+      "/Villa_PETRA/image6.png",
+      "/Villa_PETRA/image7.png",
+      "/Villa_PETRA/image8.png",
+      "/Villa_PETRA/image9.png",
+      "/Villa_PETRA/image10.png",
+      "/Villa_PETRA/image11.png",
+      "/Villa_PETRA/image12.png",
+      "/Villa_PETRA/image13.png"
+    ]
+  }
+]
