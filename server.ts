@@ -8,6 +8,9 @@ import { Resend } from "resend";
 import multer from "multer";
 import cookieParser from "cookie-parser";
 import fs from "fs/promises";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const db = new Database("villas.db");
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
@@ -74,6 +77,7 @@ async function startServer() {
   // Admin Routes
   app.post("/api/admin/login", (req, res) => {
     const { password } = req.body;
+    console.log("LOGIN ATTEMPT - req.body.password:", password, "process.env.ADMIN_PASSWORD:", process.env.ADMIN_PASSWORD);
     if (password === process.env.ADMIN_PASSWORD) {
       res.cookie("admin_auth", "true", { httpOnly: true, maxAge: 24 * 60 * 60 * 1000 });
       return res.json({ success: true });
