@@ -27,6 +27,7 @@ export default function Admin() {
             const res = await fetch('/api/admin/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({ password })
             });
 
@@ -51,6 +52,7 @@ export default function Admin() {
         try {
             const res = await fetch('/api/admin/upload', {
                 method: 'POST',
+                credentials: 'include',
                 body: formData
             });
 
@@ -83,6 +85,7 @@ export default function Admin() {
             const res = await fetch('/api/admin/villas', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify(villas)
             });
 
