@@ -154,9 +154,13 @@ export default function Home() {
                             initial={{ scale: 1.1 }}
                             animate={{ scale: 1 }}
                             transition={{ duration: 1.5 }}
+                            key={villa.image}
                             src={villa.image}
                             alt={villa.name}
                             className="w-full h-full object-cover"
+                            onError={(e) => {
+                              console.error('Image failed to load:', villa.image);
+                            }}
                           />
                           <div className="absolute top-6 left-6 bg-white/90 backdrop-blur px-4 py-1.5 text-[9px] font-bold tracking-[0.3em] uppercase text-[#8B6F5A]">
                             {villa.subtitle}

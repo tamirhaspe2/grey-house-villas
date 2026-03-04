@@ -8,6 +8,7 @@ import { Resend } from "resend";
 import multer from "multer";
 import cookieParser from "cookie-parser";
 import fs from "fs/promises";
+import fsSync from "fs";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -95,23 +96,105 @@ async function startServer() {
   const upload = multer({
     storage: multer.diskStorage({
       destination: (req, file, cb) => {
-        const destFolder = req.body.folder || '';
-        const uploadPath = path.join(process.cwd(), "public", destFolder);
-        cb(null, uploadPath);
+        try {
+          // Note: req.body might not be fully parsed in destination callback
+          // We'll handle folder validation in the route handler
+          // For now, use a temporary location or the folder from body if available
+          const destFolder = (req.body && req.body.folder) ? req.body.folder : '';
+          const uploadPath = destFolder
+            ? path.join(process.cwd(), "public", destFolder)
+            : path.join(process.cwd(), "public");
+
+          // Ensure the directory exists
+          if (!fsSync.existsSync(uploadPath)) {
+            fsSync.mkdirSync(uploadPath, { recursive: true });
+            console.log(`Created upload directory: ${uploadPath}`);
+          }
+
+          cb(null, uploadPath);
+        } catch (error) {
+          console.error("Error setting upload destination:", error);
+          cb(error as Error, path.join(process.cwd(), "public"));
+        }
       },
       filename: (req, file, cb) => {
-        cb(null, `${Date.now()}-${file.originalname}`);
+        // Sanitize filename and preserve extension
+        const originalName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
+        const timestamp = Date.now();
+        cb(null, `${timestamp}-${originalName}`);
       }
-    })
+    }),
+    limits: {
+      fileSize: 10 * 1024 * 1024 // 10MB limit
+    }
   });
 
   app.post("/api/admin/upload", checkAuth, upload.single("image"), (req, res) => {
-    if (!req.file) {
-      return res.status(400).json({ error: "No file uploaded" });
+    try {
+      if (!req.file) {
+        console.error("Upload failed: No file received");
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+
+      // Get folder from request body (multer should have parsed it)
+      const destFolder = (req.body && req.body.folder) ? req.body.folder.trim() : '';
+
+      if (!destFolder) {
+        console.error("Upload failed: No folder specified");
+        // Delete the uploaded file if folder is missing
+        if (req.file.path && fsSync.existsSync(req.file.path)) {
+          try {
+            fsSync.unlinkSync(req.file.path);
+          } catch (unlinkError) {
+            console.error("Failed to delete file:", unlinkError);
+          }
+        }
+        return res.status(400).json({ error: "Folder name is required" });
+      }
+
+      // Validate folder name (security: prevent directory traversal)
+      if (destFolder.includes('..') || destFolder.includes('/') || destFolder.includes('\\')) {
+        console.error("Upload failed: Invalid folder name:", destFolder);
+        if (req.file.path && fsSync.existsSync(req.file.path)) {
+          try {
+            fsSync.unlinkSync(req.file.path);
+          } catch (unlinkError) {
+            console.error("Failed to delete file:", unlinkError);
+          }
+        }
+        return res.status(400).json({ error: "Invalid folder name" });
+      }
+
+      // Ensure the file is in the correct folder
+      const expectedPath = path.join(process.cwd(), "public", destFolder);
+      const actualPath = path.dirname(req.file.path);
+
+      // If file was saved to wrong location, move it
+      if (actualPath !== expectedPath) {
+        const newPath = path.join(expectedPath, req.file.filename);
+        if (!fsSync.existsSync(expectedPath)) {
+          fsSync.mkdirSync(expectedPath, { recursive: true });
+        }
+        fsSync.renameSync(req.file.path, newPath);
+        console.log(`Moved file from ${req.file.path} to ${newPath}`);
+      }
+
+      const imageUrl = `/${destFolder}/${req.file.filename}`;
+
+      console.log(`Image uploaded successfully: ${imageUrl} to folder: ${destFolder}`);
+      res.json({ success: true, url: imageUrl });
+    } catch (error) {
+      console.error("Upload error:", error);
+      // Clean up file if it was created
+      if (req.file && req.file.path && fsSync.existsSync(req.file.path)) {
+        try {
+          fsSync.unlinkSync(req.file.path);
+        } catch (unlinkError) {
+          console.error("Failed to delete file after error:", unlinkError);
+        }
+      }
+      res.status(500).json({ error: "Failed to upload image" });
     }
-    const destFolder = req.body.folder || '';
-    const imageUrl = `/${destFolder ? destFolder + '/' : ''}${req.file.filename}`;
-    res.json({ success: true, url: imageUrl });
   });
 
   app.put("/api/admin/villas", checkAuth, async (req, res) => {

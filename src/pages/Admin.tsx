@@ -13,6 +13,7 @@ export default function Admin() {
 
     const [isSaving, setIsSaving] = useState(false);
     const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
+    const [uploadingImage, setUploadingImage] = useState<string | null>(null); // Track which image is uploading
 
     // Verify auth on mount
     useEffect(() => {
@@ -45,6 +46,28 @@ export default function Admin() {
     const currentVilla = villas.find(v => v.id === activeVilla);
 
     const handleImageUpload = async (file: File, folder: string, index: number | 'hero') => {
+        // Create unique key for this upload
+        const uploadKey = index === 'hero' ? `hero-${activeVilla}` : `gallery-${activeVilla}-${index}`;
+
+        // Validate file
+        if (!file || !file.type.startsWith('image/')) {
+            alert('Please select a valid image file.');
+            return;
+        }
+
+        // Validate file size (10MB limit)
+        if (file.size > 10 * 1024 * 1024) {
+            alert('Image size must be less than 10MB.');
+            return;
+        }
+
+        // Validate folder
+        if (!folder || folder.trim() === '') {
+            alert('Could not determine folder for this image. Please refresh and try again.');
+            return;
+        }
+
+        setUploadingImage(uploadKey);
         const formData = new FormData();
         formData.append('image', file);
         formData.append('folder', folder);
@@ -57,24 +80,62 @@ export default function Admin() {
             });
 
             if (res.ok) {
-                const { url } = await res.json();
+                const data = await res.json();
+                const url = data.url;
 
-                // Update local state with new image URL
-                const updatedVillas = [...villas];
-                const villaIndex = updatedVillas.findIndex(v => v.id === activeVilla);
-
-                if (index === 'hero') {
-                    updatedVillas[villaIndex].image = url;
-                } else {
-                    updatedVillas[villaIndex].gallery[index as number] = url;
+                if (!url) {
+                    alert('Upload succeeded but no URL returned.');
+                    setUploadingImage(null);
+                    return;
                 }
 
-                setVillas(updatedVillas);
+                // Ensure URL starts with /
+                const imageUrl = url.startsWith('/') ? url : `/${url}`;
+
+                // Update local state with new image URL - use functional update to ensure we have latest state
+                setVillas(prevVillas => {
+                    const updatedVillas = [...prevVillas];
+                    const villaIndex = updatedVillas.findIndex(v => v.id === activeVilla);
+
+                    if (villaIndex === -1) {
+                        console.error('Villa not found:', activeVilla);
+                        return prevVillas; // Return unchanged state
+                    }
+
+                    if (index === 'hero') {
+                        updatedVillas[villaIndex] = {
+                            ...updatedVillas[villaIndex],
+                            image: imageUrl
+                        };
+                    } else {
+                        const galleryIndex = index as number;
+                        if (!updatedVillas[villaIndex].gallery) {
+                            updatedVillas[villaIndex].gallery = [];
+                        }
+                        const newGallery = [...updatedVillas[villaIndex].gallery];
+                        newGallery[galleryIndex] = imageUrl;
+                        updatedVillas[villaIndex] = {
+                            ...updatedVillas[villaIndex],
+                            gallery: newGallery
+                        };
+                    }
+
+                    return updatedVillas;
+                });
             } else {
-                alert('Upload failed. Are you logged in?');
+                const errorData = await res.json().catch(() => ({ error: 'Unknown error' }));
+                if (res.status === 401) {
+                    alert('Upload failed: You are not authenticated. Please log in again.');
+                    setIsAuthenticated(false);
+                } else {
+                    alert(`Upload failed: ${errorData.error || 'Server error'}`);
+                }
             }
         } catch (err) {
-            alert('Upload error.');
+            console.error('Upload error:', err);
+            alert('Upload error: Could not connect to server. Please check your connection.');
+        } finally {
+            setUploadingImage(null);
         }
     };
 
@@ -91,6 +152,8 @@ export default function Admin() {
 
             if (res.ok) {
                 setSaveStatus('success');
+                // Note: Frontend will automatically reload from villas.json
+                // If images don't update, try refreshing the browser page
                 setTimeout(() => setSaveStatus('idle'), 3000);
             } else {
                 setSaveStatus('error');
@@ -205,19 +268,45 @@ export default function Admin() {
                             <div className="mb-20">
                                 <h3 className="text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-6 border-b border-gray-100 pb-4">Cover Image</h3>
                                 <div className="relative group rounded-sm overflow-hidden border border-gray-200 aspect-[21/9]">
-                                    <img src={currentVilla.image} alt={currentVilla.name} className="w-full h-full object-cover" />
+                                    {uploadingImage === `hero-${activeVilla}` && (
+                                        <div className="absolute inset-0 bg-black/70 z-30 flex items-center justify-center">
+                                            <div className="text-white text-sm">Uploading...</div>
+                                        </div>
+                                    )}
+                                    <img
+                                        src={currentVilla.image}
+                                        alt={currentVilla.name}
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                            console.error('Image failed to load:', currentVilla.image);
+                                            (e.target as HTMLImageElement).src = '/placeholder-image.png';
+                                        }}
+                                    />
                                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-4">
                                         <ImageIcon className="text-white drop-shadow-md" size={40} strokeWidth={1.5} />
-                                        <label className="cursor-pointer bg-white text-[#2C3539] px-6 py-2.5 text-xs font-bold uppercase tracking-widest hover:bg-[#8B6F5A] hover:text-white transition-colors">
-                                            Upload Replacement
+                                        <label className={`cursor-pointer bg-white text-[#2C3539] px-6 py-2.5 text-xs font-bold uppercase tracking-widest hover:bg-[#8B6F5A] hover:text-white transition-colors ${uploadingImage === `hero-${activeVilla}` ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                                            {uploadingImage === `hero-${activeVilla}` ? 'Uploading...' : 'Upload Replacement'}
                                             <input
                                                 type="file"
                                                 accept="image/*"
                                                 className="hidden"
+                                                disabled={uploadingImage === `hero-${activeVilla}`}
                                                 onChange={(e) => {
                                                     if (e.target.files?.[0]) {
-                                                        const folderName = currentVilla.image.split('/')[1] || '';
+                                                        // Extract folder name from image path (e.g., "/VILLA_ONEIRO/image.png" -> "VILLA_ONEIRO")
+                                                        const imagePath = currentVilla.image;
+                                                        const pathParts = imagePath.split('/').filter(part => part);
+                                                        const folderName = pathParts.length > 0 ? pathParts[0] : '';
+
+                                                        if (!folderName) {
+                                                            alert('Could not determine folder for this image.');
+                                                            e.target.value = '';
+                                                            return;
+                                                        }
+
                                                         handleImageUpload(e.target.files[0], folderName, 'hero');
+                                                        // Reset input to allow re-uploading the same file
+                                                        e.target.value = '';
                                                     }
                                                 }}
                                             />
@@ -230,35 +319,63 @@ export default function Admin() {
                             <div>
                                 <h3 className="text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-6 border-b border-gray-100 pb-4">Gallery Images ({currentVilla.gallery.length})</h3>
                                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                                    {currentVilla.gallery.map((img, idx) => (
-                                        <div key={idx} className="relative group rounded-sm overflow-hidden border border-gray-200 aspect-[2/3]">
-                                            <img src={img} alt={`Gallery ${idx}`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                                    {currentVilla.gallery.map((img, idx) => {
+                                        const isUploading = uploadingImage === `gallery-${activeVilla}-${idx}`;
+                                        return (
+                                            <div key={idx} className="relative group rounded-sm overflow-hidden border border-gray-200 aspect-[2/3]">
+                                                {isUploading && (
+                                                    <div className="absolute inset-0 bg-black/70 z-30 flex items-center justify-center">
+                                                        <div className="text-white text-xs">Uploading...</div>
+                                                    </div>
+                                                )}
+                                                <img
+                                                    src={img}
+                                                    alt={`Gallery ${idx}`}
+                                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                                    onError={(e) => {
+                                                        console.error('Gallery image failed to load:', img);
+                                                        (e.target as HTMLImageElement).src = '/placeholder-image.png';
+                                                    }}
+                                                />
 
-                                            {/* Image Number / Indicator overlay */}
-                                            <div className="absolute top-2 left-2 bg-black/60 text-white text-[9px] uppercase tracking-wider px-2 py-1 rounded-sm backdrop-blur-sm z-10 transition-opacity group-hover:opacity-0">
-                                                Image {idx + 1}
-                                            </div>
+                                                {/* Image Number / Indicator overlay */}
+                                                <div className="absolute top-2 left-2 bg-black/60 text-white text-[9px] uppercase tracking-wider px-2 py-1 rounded-sm backdrop-blur-sm z-10 transition-opacity group-hover:opacity-0">
+                                                    Image {idx + 1}
+                                                </div>
 
-                                            {/* Hover Overlay */}
-                                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col items-center justify-center gap-4 z-20">
-                                                <Camera className="text-white drop-shadow-md transform -translate-y-4 group-hover:translate-y-0 transition-transform duration-300" size={28} strokeWidth={1.5} />
-                                                <label className="cursor-pointer bg-white/90 text-[#2C3539] px-4 py-2 text-[10px] font-bold uppercase tracking-wider hover:bg-[#8B6F5A] hover:text-white transition-colors text-center w-3/4 transform translate-y-4 group-hover:translate-y-0 shadow-lg">
-                                                    Replace
-                                                    <input
-                                                        type="file"
-                                                        accept="image/*"
-                                                        className="hidden"
-                                                        onChange={(e) => {
-                                                            if (e.target.files?.[0]) {
-                                                                const folderName = img.split('/')[1] || '';
-                                                                handleImageUpload(e.target.files[0], folderName, idx);
-                                                            }
-                                                        }}
-                                                    />
-                                                </label>
+                                                {/* Hover Overlay */}
+                                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col items-center justify-center gap-4 z-20">
+                                                    <Camera className="text-white drop-shadow-md transform -translate-y-4 group-hover:translate-y-0 transition-transform duration-300" size={28} strokeWidth={1.5} />
+                                                    <label className={`cursor-pointer bg-white/90 text-[#2C3539] px-4 py-2 text-[10px] font-bold uppercase tracking-wider hover:bg-[#8B6F5A] hover:text-white transition-colors text-center w-3/4 transform translate-y-4 group-hover:translate-y-0 shadow-lg ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                                                        {isUploading ? 'Uploading...' : 'Replace'}
+                                                        <input
+                                                            type="file"
+                                                            accept="image/*"
+                                                            className="hidden"
+                                                            disabled={isUploading}
+                                                            onChange={(e) => {
+                                                                if (e.target.files?.[0]) {
+                                                                    // Extract folder name from image path (e.g., "/VILLA_ONEIRO/image.png" -> "VILLA_ONEIRO")
+                                                                    const pathParts = img.split('/').filter(part => part);
+                                                                    const folderName = pathParts.length > 0 ? pathParts[0] : '';
+
+                                                                    if (!folderName) {
+                                                                        alert('Could not determine folder for this image.');
+                                                                        e.target.value = '';
+                                                                        return;
+                                                                    }
+
+                                                                    handleImageUpload(e.target.files[0], folderName, idx);
+                                                                    // Reset input to allow re-uploading the same file
+                                                                    e.target.value = '';
+                                                                }
+                                                            }}
+                                                        />
+                                                    </label>
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             </div>
 

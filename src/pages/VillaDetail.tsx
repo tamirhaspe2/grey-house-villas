@@ -53,9 +53,13 @@ export default function VillaDetail() {
           className="absolute inset-0"
         >
           <img
+            key={villa.image}
             src={villa.image}
             alt={villa.name}
             className="w-full h-full object-cover"
+            onError={(e) => {
+              console.error('Image failed to load:', villa.image);
+            }}
           />
           <div className="absolute inset-0 bg-black/30"></div>
         </motion.div>
@@ -152,7 +156,7 @@ export default function VillaDetail() {
           >
             {villa.gallery.map((img, idx) => (
               <motion.div
-                key={idx}
+                key={`${img}-${idx}`}
                 data-idx={idx}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -173,9 +177,13 @@ export default function VillaDetail() {
                 }}
               >
                 <img
+                  key={img}
                   src={img}
                   alt={`${villa.name} detail ${idx + 1}`}
                   className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 md:group-hover:scale-105"
+                  onError={(e) => {
+                    console.error('Gallery image failed to load:', img);
+                  }}
                 />
                 <div className={`absolute inset-0 bg-black/40 transition-colors flex items-center justify-center md:group-hover:bg-black/0 md:group-hover:opacity-100 ${activeIdx === idx ? 'bg-black/0 opacity-100' : 'opacity-0'}`}>
                   <Maximize className={`text-white transition-opacity md:opacity-0 md:group-hover:opacity-100 ${activeIdx === idx ? 'opacity-100' : 'opacity-0'}`} size={24} />
