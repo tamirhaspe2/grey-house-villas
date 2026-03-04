@@ -143,6 +143,12 @@ async function startServer() {
       server: { middlewareMode: true },
       appType: "spa",
     });
+
+    // Explicitly serve public files BEFORE vite middleware catches them as SPA routes
+    app.use('/VILLA_ONEIRO', express.static(path.join(process.cwd(), 'public', 'VILLA_ONEIRO')));
+    app.use('/OMORFI_SUITE', express.static(path.join(process.cwd(), 'public', 'OMORFI_SUITE')));
+    app.use('/Villa_PETRA', express.static(path.join(process.cwd(), 'public', 'Villa_PETRA')));
+
     app.use(vite.middlewares);
   } else {
     app.use(express.static(path.join(process.cwd(), "dist")));
