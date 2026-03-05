@@ -20,7 +20,8 @@ export default function Home({ villas }: HomeProps) {
             initial={{ scale: 1.1 }}
             animate={{ scale: 1 }}
             transition={{ duration: 2 }}
-            src="/WhatsApp Image 2026-02-22 at 16.31.43.jpeg"
+            // src="/WhatsApp Image 2026-02-22 at 16.31.43.jpeg"
+            src="/big_cover.jpeg"
             alt="Breathtaking view from Lefkas"
             className="w-full h-full object-cover"
           />
