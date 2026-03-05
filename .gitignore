@@ -45,3 +45,6 @@ __pycache__/
 coverage/
 .nyc_output/
 villas.db
+
+# Sensitive Credentials
+gcp-key.json
