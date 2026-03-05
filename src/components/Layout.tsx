@@ -4,13 +4,14 @@ import '../types.ts';
 import { Menu, X, Users, Instagram, Facebook, Linkedin, ChevronDown, Mail, Phone, MapPin, ChevronLeft } from 'lucide-react';
 import { io, Socket } from 'socket.io-client';
 import { motion, AnimatePresence } from 'framer-motion';
-import { VILLAS } from '../constants';
+import { Villa } from '../types';
 
 interface LayoutProps {
   children: React.ReactNode;
+  villas: Villa[];
 }
 
-export default function Layout({ children }: LayoutProps) {
+export default function Layout({ children, villas }: LayoutProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeSubMenu, setActiveSubMenu] = useState<string | null>(null);
@@ -101,18 +102,18 @@ export default function Layout({ children }: LayoutProps) {
 
             <div className="flex items-center gap-4 lg:gap-6">
               <a href="#contact" className={`hidden sm:block px-8 py-2.5 text-[11px] uppercase tracking-widest border rounded-full transition-all duration-300 ${isScrolled || isDarkHeader
-                  ? 'border-[#2C3539] text-[#2C3539] hover:bg-[#2C3539] hover:text-white'
-                  : 'border-white text-white hover:bg-white hover:text-[#2C3539]'
+                ? 'border-[#2C3539] text-[#2C3539] hover:bg-[#2C3539] hover:text-white'
+                : 'border-white text-white hover:bg-white hover:text-[#2C3539]'
                 }`}>
                 Get in Touch
               </a>
 
               <button
                 className={`p-3 border transition-all duration-300 z-[80] relative ${mobileMenuOpen
-                    ? 'border-[#2C3539] text-[#2C3539] bg-white'
-                    : isScrolled || isDarkHeader
-                      ? 'border-[#2C3539] text-[#2C3539]'
-                      : 'border-white text-white'
+                  ? 'border-[#2C3539] text-[#2C3539] bg-white'
+                  : isScrolled || isDarkHeader
+                    ? 'border-[#2C3539] text-[#2C3539]'
+                    : 'border-white text-white'
                   }`}
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               >
@@ -185,7 +186,7 @@ export default function Layout({ children }: LayoutProps) {
                       >
                         <ChevronLeft size={20} className="mr-2" /> Back
                       </button>
-                      {VILLAS.map((villa) => (
+                      {villas.map((villa) => (
                         <Link
                           key={villa.id}
                           to={`/villas/${villa.id}`}

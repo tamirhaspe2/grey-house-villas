@@ -293,13 +293,43 @@ export default function Admin() {
                                                 disabled={uploadingImage === `hero-${activeVilla}`}
                                                 onChange={(e) => {
                                                     if (e.target.files?.[0]) {
-                                                        // Extract folder name from image path (e.g., "/VILLA_ONEIRO/image.png" -> "VILLA_ONEIRO")
-                                                        const imagePath = currentVilla.image;
-                                                        const pathParts = imagePath.split('/').filter(part => part);
-                                                        const folderName = pathParts.length > 0 ? pathParts[0] : '';
+                                                        // Extract folder name from image path
+                                                        // Handles both local paths (/VILLA_ONEIRO/image.png) and GCS URLs (https://storage.googleapis.com/bucket/VILLA_ONEIRO/image.png)
+                                                        let imagePath = currentVilla.image;
+                                                        // Fix malformed URLs that might have leading slash before https://
+                                                        if (imagePath.startsWith('/https://') || imagePath.startsWith('/http://')) {
+                                                            imagePath = imagePath.substring(1);
+                                                        }
+                                                        let folderName = '';
+
+                                                        if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+                                                            // GCS URL: extract folder from path
+                                                            try {
+                                                                const url = new URL(imagePath);
+                                                                const pathParts = url.pathname.split('/').filter(part => part);
+                                                                // Path is usually: bucket/folder/filename, so folder is second part
+                                                                if (pathParts.length >= 2) {
+                                                                    folderName = pathParts[1]; // Skip bucket name, get folder
+                                                                } else {
+                                                                    // Fallback: try to get from villa ID
+                                                                    folderName = currentVilla.id === 'villa-oneiro' ? 'VILLA_ONEIRO' :
+                                                                        currentVilla.id === 'omorfi-suite' ? 'OMORFI_SUITE' :
+                                                                            currentVilla.id === 'villa-petra' ? 'Villa_PETRA' : '';
+                                                                }
+                                                            } catch (err) {
+                                                                // If URL parsing fails, use villa ID mapping
+                                                                folderName = currentVilla.id === 'villa-oneiro' ? 'VILLA_ONEIRO' :
+                                                                    currentVilla.id === 'omorfi-suite' ? 'OMORFI_SUITE' :
+                                                                        currentVilla.id === 'villa-petra' ? 'Villa_PETRA' : '';
+                                                            }
+                                                        } else {
+                                                            // Local path: /VILLA_ONEIRO/image.png
+                                                            const pathParts = imagePath.split('/').filter(part => part);
+                                                            folderName = pathParts.length > 0 ? pathParts[0] : '';
+                                                        }
 
                                                         if (!folderName) {
-                                                            alert('Could not determine folder for this image.');
+                                                            alert('Could not determine folder for this image. Please check the image path.');
                                                             e.target.value = '';
                                                             return;
                                                         }
@@ -355,12 +385,43 @@ export default function Admin() {
                                                             disabled={isUploading}
                                                             onChange={(e) => {
                                                                 if (e.target.files?.[0]) {
-                                                                    // Extract folder name from image path (e.g., "/VILLA_ONEIRO/image.png" -> "VILLA_ONEIRO")
-                                                                    const pathParts = img.split('/').filter(part => part);
-                                                                    const folderName = pathParts.length > 0 ? pathParts[0] : '';
+                                                                    // Extract folder name from image path
+                                                                    // Handles both local paths (/VILLA_ONEIRO/image.png) and GCS URLs (https://storage.googleapis.com/bucket/VILLA_ONEIRO/image.png)
+                                                                    let imagePath = img;
+                                                                    // Fix malformed URLs that might have leading slash before https://
+                                                                    if (imagePath.startsWith('/https://') || imagePath.startsWith('/http://')) {
+                                                                        imagePath = imagePath.substring(1);
+                                                                    }
+                                                                    let folderName = '';
+
+                                                                    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+                                                                        // GCS URL: extract folder from path
+                                                                        try {
+                                                                            const url = new URL(imagePath);
+                                                                            const pathParts = url.pathname.split('/').filter(part => part);
+                                                                            // Path is usually: bucket/folder/filename, so folder is second part
+                                                                            if (pathParts.length >= 2) {
+                                                                                folderName = pathParts[1]; // Skip bucket name, get folder
+                                                                            } else {
+                                                                                // Fallback: try to get from villa ID
+                                                                                folderName = currentVilla.id === 'villa-oneiro' ? 'VILLA_ONEIRO' :
+                                                                                    currentVilla.id === 'omorfi-suite' ? 'OMORFI_SUITE' :
+                                                                                        currentVilla.id === 'villa-petra' ? 'Villa_PETRA' : '';
+                                                                            }
+                                                                        } catch (err) {
+                                                                            // If URL parsing fails, use villa ID mapping
+                                                                            folderName = currentVilla.id === 'villa-oneiro' ? 'VILLA_ONEIRO' :
+                                                                                currentVilla.id === 'omorfi-suite' ? 'OMORFI_SUITE' :
+                                                                                    currentVilla.id === 'villa-petra' ? 'Villa_PETRA' : '';
+                                                                        }
+                                                                    } else {
+                                                                        // Local path: /VILLA_ONEIRO/image.png
+                                                                        const pathParts = imagePath.split('/').filter(part => part);
+                                                                        folderName = pathParts.length > 0 ? pathParts[0] : '';
+                                                                    }
 
                                                                     if (!folderName) {
-                                                                        alert('Could not determine folder for this image.');
+                                                                        alert('Could not determine folder for this image. Please check the image path.');
                                                                         e.target.value = '';
                                                                         return;
                                                                     }

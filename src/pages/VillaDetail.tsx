@@ -2,11 +2,15 @@ import React, { useState } from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Maximize, Home as HomeIcon, Droplets, Wind, ArrowRight, ChevronLeft, X } from 'lucide-react';
-import { VILLAS } from '../constants';
+import { Villa } from '../types';
 
-export default function VillaDetail() {
+interface VillaDetailProps {
+  villas: Villa[];
+}
+
+export default function VillaDetail({ villas }: VillaDetailProps) {
   const { id } = useParams<{ id: string }>();
-  const villa = VILLAS.find(v => v.id === id);
+  const villa = villas.find(v => v.id === id);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
@@ -224,7 +228,7 @@ export default function VillaDetail() {
         <div className="max-w-7xl mx-auto">
           <span className="text-[10px] uppercase tracking-[0.4em] text-[#A89F91] mb-12 block text-center">Continue Exploring</span>
           <div className="grid md:grid-cols-2 gap-8">
-            {VILLAS.filter(v => v.id !== id).map(otherVilla => (
+            {villas.filter(v => v.id !== id).map(otherVilla => (
               <Link
                 key={otherVilla.id}
                 to={`/villas/${otherVilla.id}`}

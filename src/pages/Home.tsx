@@ -2,9 +2,13 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Maximize, Home as HomeIcon, Droplets, Wind, Check } from 'lucide-react';
-import { VILLAS } from '../constants';
+import { Villa } from '../types';
 
-export default function Home() {
+interface HomeProps {
+  villas: Villa[];
+}
+
+export default function Home({ villas }: HomeProps) {
   const [activeVillaIndex, setActiveVillaIndex] = useState(0);
 
   return (
@@ -123,7 +127,7 @@ export default function Home() {
           </div>
 
           <div className="flex flex-col gap-4">
-            {VILLAS.map((villa, index) => (
+            {villas.map((villa, index) => (
               <div key={villa.id} className="border-b border-black/10 overflow-hidden">
                 <button
                   onClick={() => setActiveVillaIndex(index)}
