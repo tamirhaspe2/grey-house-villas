@@ -85,7 +85,7 @@ export default function Layout({ children, villas }: LayoutProps) {
           </span>
           <span className="hidden md:inline opacity-30">|</span>
           <span className="hidden md:inline">
-            Last opportunity: <span className="font-semibold text-white">only one Grey House Villa remains</span> before we're fully reserved. <a href="#contact" className="underline hover:text-white transition-colors ml-1">Click to schedule a call.</a>
+            Last opportunity: <span className="font-semibold text-white">only one Grey House Villa remains</span> before we're fully reserved. <Link to="/schedule-call" className="underline hover:text-white transition-colors ml-1">Click to schedule a call.</Link>
           </span>
         </div>
 
@@ -101,12 +101,12 @@ export default function Layout({ children, villas }: LayoutProps) {
             </Link>
 
             <div className="flex items-center gap-4 lg:gap-6">
-              <a href="#contact" className={`hidden sm:block px-8 py-2.5 text-[11px] uppercase tracking-widest border rounded-full transition-all duration-300 ${isScrolled || isDarkHeader
+              <Link to="/schedule-call" className={`hidden sm:block px-8 py-2.5 text-[11px] uppercase tracking-widest border rounded-full transition-all duration-300 ${isScrolled || isDarkHeader
                 ? 'border-[#2C3539] text-[#2C3539] hover:bg-[#2C3539] hover:text-white'
                 : 'border-white text-white hover:bg-white hover:text-[#2C3539]'
                 }`}>
                 Get in Touch
-              </a>
+              </Link>
 
               <button
                 className={`p-3 border transition-all duration-300 z-[80] relative ${mobileMenuOpen
@@ -212,13 +212,13 @@ export default function Layout({ children, villas }: LayoutProps) {
                     <Linkedin size={18} />
                   </a>
                 </div>
-                <a
-                  href="#contact"
+                <Link
+                  to="/schedule-call"
                   onClick={() => setMobileMenuOpen(false)}
                   className="inline-block border border-[#8B6F5A] text-[#8B6F5A] px-10 py-3.5 rounded-full uppercase tracking-widest text-[10px] font-bold hover:bg-[#8B6F5A] hover:text-white transition-all duration-300"
                 >
                   Get in Touch
-                </a>
+                </Link>
               </div>
             </motion.div>
           </>
