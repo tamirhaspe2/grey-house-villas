@@ -322,6 +322,64 @@ async function startServer() {
     }
   });
 
+  // Home page data endpoints
+  app.get("/api/home", async (req, res) => {
+    try {
+      if (useFirestore && dbFirestore) {
+        // Use Firestore
+        const docRef = dbFirestore.collection('config').doc('home');
+        const doc = await docRef.get();
+
+        if (!doc.exists) {
+          // Fallback: Read local file and seed Firestore if it's empty
+          console.log("Firestore home empty, reading from local file...");
+          const dataPath = path.join(process.cwd(), "src", "data", "home.json");
+          const localDataRaw = await fs.readFile(dataPath, 'utf8');
+          const localData = JSON.parse(localDataRaw);
+
+          await docRef.set({ data: localData });
+          return res.json(localData);
+        }
+
+        res.json(doc.data().data);
+      } else {
+        // Use local JSON file
+        const dataPath = path.join(process.cwd(), "src", "data", "home.json");
+        const localDataRaw = await fs.readFile(dataPath, 'utf8');
+        const localData = JSON.parse(localDataRaw);
+        res.json(localData);
+      }
+    } catch (err) {
+      console.error("Failed to fetch home data:", err);
+      res.status(500).json({ error: "Failed to fetch home configuration" });
+    }
+  });
+
+  app.put("/api/admin/home", checkAuth, async (req, res) => {
+    try {
+      // Always update local file first
+      const dataPath = path.join(process.cwd(), "src", "data", "home.json");
+      await fs.writeFile(dataPath, JSON.stringify(req.body, null, 2));
+
+      // Also update Firestore if configured
+      if (useFirestore && dbFirestore) {
+        try {
+          const docRef = dbFirestore.collection('config').doc('home');
+          await docRef.set({ data: req.body });
+          console.log('Updated Firestore home');
+        } catch (firestoreError) {
+          console.error("Failed to update Firestore home (but local file was saved):", firestoreError);
+          // Don't fail the request if Firestore update fails, local file is saved
+        }
+      }
+
+      res.json({ success: true });
+    } catch (err) {
+      console.error("Failed to update home:", err);
+      res.status(500).json({ error: "Failed to update home configuration" });
+    }
+  });
+
   // Create /api/villas GET endpoint
   app.get("/api/villas", async (req, res) => {
     try {

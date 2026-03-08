@@ -1,15 +1,71 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Maximize, Home as HomeIcon, Droplets, Wind, Check } from 'lucide-react';
 import { Villa } from '../types';
+import homeDataDefault from '../data/home.json';
 
 interface HomeProps {
   villas: Villa[];
 }
 
+interface HomeData {
+  hero: {
+    backgroundImage: string;
+    location: string;
+    title: string;
+    subtitle: string;
+    description: string;
+    button1: string;
+    button2: string;
+  };
+  philosophy: {
+    sectionLabel: string;
+    heading: string;
+    headingHighlight: string;
+    paragraph1: string;
+    paragraph2: string;
+    quote: string;
+    mainImage: string;
+    detailImage: string;
+  };
+  interior: {
+    sectionLabel: string;
+    heading: string;
+    headingHighlight: string;
+    description: string;
+    features: string[];
+    buttonText: string;
+    image1: string;
+    image2: string;
+  };
+  gallery: {
+    sectionLabel: string;
+    heading: string;
+    headingHighlight: string;
+    description: string;
+    images: string[];
+  };
+  residences: {
+    sectionLabel: string;
+    heading: string;
+  };
+}
+
 export default function Home({ villas }: HomeProps) {
   const [activeVillaIndex, setActiveVillaIndex] = useState(0);
+  const [homeData, setHomeData] = useState<HomeData>(homeDataDefault as HomeData);
+
+  useEffect(() => {
+    // Fetch home data from API
+    fetch('/api/home')
+      .then(res => res.json())
+      .then(data => setHomeData(data))
+      .catch(() => {
+        // Fallback to default data if API fails
+        setHomeData(homeDataDefault as HomeData);
+      });
+  }, []);
 
   return (
     <div className="bg-[#FDFCFB] text-[#1A1A1A]">
@@ -20,10 +76,13 @@ export default function Home({ villas }: HomeProps) {
             initial={{ scale: 1.1 }}
             animate={{ scale: 1 }}
             transition={{ duration: 2 }}
-            src="/WhatsApp Image 2026-02-22 at 16.31.43.jpeg"
-            // src="/big_cover.jpeg"
+            key={homeData.hero.backgroundImage}
+            src={homeData.hero.backgroundImage}
             alt="Breathtaking view from Lefkas"
             className="w-full h-full object-cover"
+            onError={(e) => {
+              console.error('Hero image failed to load:', homeData.hero.backgroundImage);
+            }}
           />
           <div className="absolute inset-0 bg-black/40"></div>
         </div>
@@ -35,20 +94,20 @@ export default function Home({ villas }: HomeProps) {
             transition={{ duration: 1, delay: 0.5 }}
           >
             <span className="inline-block text-[10px] uppercase tracking-[0.5em] text-white/80 mb-8 border-b border-white/20 pb-2">
-              Lefkas, Greece • Katouna Mountain
+              {homeData.hero.location}
             </span>
             <h1 className="text-5xl md:text-8xl lg:text-9xl font-serif text-white leading-[0.85] mb-12 tracking-tight">
-              Grey House <br /> <span className="italic font-light opacity-90">Villas.</span>
+              {homeData.hero.title} <br /> <span className="italic font-light opacity-90">{homeData.hero.subtitle}</span>
             </h1>
             <p className="text-lg md:text-xl text-white/90 font-light max-w-2xl mx-auto mb-12 leading-relaxed">
-              A private 3,000 sqm sanctuary perched 400 meters above the Ionian Sea. Hand-crafted from natural stone, designed for the eternal horizon.
+              {homeData.hero.description}
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
               <a href="#villas" className="px-10 py-4 bg-white text-black text-[10px] uppercase tracking-[0.3em] font-bold hover:bg-[#D4C3B3] transition-all duration-500">
-                Explore Residences
+                {homeData.hero.button1}
               </a>
               <a href="#estate" className="text-white text-[10px] uppercase tracking-[0.3em] font-bold flex items-center group">
-                The Philosophy <ArrowRight size={14} className="ml-3 group-hover:translate-x-2 transition-transform" />
+                {homeData.hero.button2} <ArrowRight size={14} className="ml-3 group-hover:translate-x-2 transition-transform" />
               </a>
             </div>
           </motion.div>
@@ -75,21 +134,21 @@ export default function Home({ villas }: HomeProps) {
                 viewport={{ once: true }}
                 transition={{ duration: 1 }}
               >
-                <span className="text-[10px] uppercase tracking-[0.4em] text-[#A89F91] mb-6 block">The Vision</span>
+                <span className="text-[10px] uppercase tracking-[0.4em] text-[#A89F91] mb-6 block">{homeData.philosophy.sectionLabel}</span>
                 <h2 className="text-4xl md:text-6xl font-serif mb-10 text-[#2C3539] leading-tight">
-                  Born from <br /> the <span className="italic">Katouna</span> Earth.
+                  {homeData.philosophy.heading} <br /> <span className="italic">{homeData.philosophy.headingHighlight}</span>
                 </h2>
                 <div className="space-y-8 text-gray-600 font-light leading-relaxed text-lg">
                   <p>
-                    The architecture of Grey House Villas is a dialogue with the land. Every exterior wall is hand-laid from local natural stones, creating a structure that feels less like a building and more like an extension of the mountain itself.
+                    {homeData.philosophy.paragraph1}
                   </p>
                   <p>
-                    Inside, the boundaries dissolve. Continuous stone flooring flows from the hearth to the terrace, framing the Ionian Sea as the ultimate centerpiece. Surrounded by ancient olive groves and orchards, it is a sanctuary of silence and light.
+                    {homeData.philosophy.paragraph2}
                   </p>
                 </div>
                 <div className="mt-16 flex items-center gap-8">
                   <div className="w-16 h-[1px] bg-[#D4C3B3]"></div>
-                  <p className="font-serif italic text-xl text-[#8B6F5A]">Crafted for the four seasons.</p>
+                  <p className="font-serif italic text-xl text-[#8B6F5A]">{homeData.philosophy.quote}</p>
                 </div>
               </motion.div>
             </div>
@@ -102,15 +161,23 @@ export default function Home({ villas }: HomeProps) {
                 className="relative aspect-[4/5] md:aspect-video lg:aspect-[4/5]"
               >
                 <img
-                  src="/WhatsApp Image 2026-02-22 at 16.31.48.jpeg"
+                  key={homeData.philosophy.mainImage}
+                  src={homeData.philosophy.mainImage}
                   alt="Natural stone architecture"
                   className="w-full h-full object-cover rounded-sm shadow-2xl"
+                  onError={(e) => {
+                    console.error('Philosophy main image failed to load:', homeData.philosophy.mainImage);
+                  }}
                 />
                 <div className="absolute -bottom-12 -left-12 w-64 h-80 hidden xl:block border-[12px] border-white shadow-xl">
                   <img
-                    src="/WhatsApp Image 2026-02-22 at 16.31.52.jpeg"
+                    key={homeData.philosophy.detailImage}
+                    src={homeData.philosophy.detailImage}
                     alt="Detail"
                     className="w-full h-full object-cover"
+                    onError={(e) => {
+                      console.error('Philosophy detail image failed to load:', homeData.philosophy.detailImage);
+                    }}
                   />
                 </div>
               </motion.div>
@@ -123,8 +190,8 @@ export default function Home({ villas }: HomeProps) {
       <section id="villas" className="py-32 bg-[#F9F8F6]">
         <div className="max-w-7xl mx-auto px-6">
           <div className="mb-20">
-            <span className="text-[10px] uppercase tracking-[0.4em] text-[#A89F91] mb-4 block">The Collection</span>
-            <h2 className="text-4xl md:text-5xl font-serif text-[#2C3539]">Three Distinct Sanctuaries.</h2>
+            <span className="text-[10px] uppercase tracking-[0.4em] text-[#A89F91] mb-4 block">{homeData.residences.sectionLabel}</span>
+            <h2 className="text-4xl md:text-5xl font-serif text-[#2C3539]">{homeData.residences.heading}</h2>
           </div>
 
           <div className="flex flex-col gap-4">
@@ -220,35 +287,38 @@ export default function Home({ villas }: HomeProps) {
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  src="/WhatsApp Image 2026-02-22 at 16.31.50.jpeg"
+                  key={homeData.interior.image1}
+                  src={homeData.interior.image1}
                   alt="Interior"
                   className="w-full aspect-[3/4] object-cover rounded-sm"
+                  onError={(e) => {
+                    console.error('Interior image 1 failed to load:', homeData.interior.image1);
+                  }}
                 />
                 <motion.img
                   initial={{ opacity: 0, y: 40 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: 0.2 }}
-                  src="/WhatsApp Image 2026-02-22 at 16.31.51.jpeg"
+                  key={homeData.interior.image2}
+                  src={homeData.interior.image2}
                   alt="Kitchen"
                   className="w-full aspect-[3/4] object-cover rounded-sm mt-12"
+                  onError={(e) => {
+                    console.error('Interior image 2 failed to load:', homeData.interior.image2);
+                  }}
                 />
               </div>
               <div className="absolute -z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[80%] bg-[#F9F8F6] rounded-full blur-3xl opacity-50"></div>
             </div>
             <div className="order-1 lg:order-2">
-              <span className="text-[10px] uppercase tracking-[0.4em] text-[#A89F91] mb-6 block">Interior Design</span>
-              <h2 className="text-4xl md:text-5xl font-serif mb-8 text-[#2C3539]">Furnished with <br /> <span className="italic">Intention.</span></h2>
+              <span className="text-[10px] uppercase tracking-[0.4em] text-[#A89F91] mb-6 block">{homeData.interior.sectionLabel}</span>
+              <h2 className="text-4xl md:text-5xl font-serif mb-8 text-[#2C3539]">{homeData.interior.heading} <br /> <span className="italic">{homeData.interior.headingHighlight}</span></h2>
               <p className="text-gray-600 font-light mb-10 text-lg leading-relaxed">
-                Delivered turnkey, Grey House Villas are curated with a selection of Dutch, Italian, and Greek designer furniture. Practical luxury is woven into the fabric of the estate, from high-end Italian kitchens to advanced climate control systems.
+                {homeData.interior.description}
               </p>
               <div className="space-y-6 mb-12">
-                {[
-                  "Underfloor heating powered by advanced heat pumps",
-                  "High-capacity AC units (up to 24000 BTU)",
-                  "Integrated electronic access and central sensors",
-                  "Estate-wide WiFi boosters for seamless connectivity"
-                ].map((item, i) => (
+                {homeData.interior.features.map((item, i) => (
                   <div key={i} className="flex items-center gap-4">
                     <div className="w-5 h-5 rounded-full bg-[#F4F1ED] flex items-center justify-center text-[#A89F91]">
                       <Check size={12} />
@@ -258,7 +328,7 @@ export default function Home({ villas }: HomeProps) {
                 ))}
               </div>
               <button className="px-10 py-4 border border-black text-[10px] uppercase tracking-[0.3em] font-bold hover:bg-black hover:text-white transition-all">
-                View Specifications
+                {homeData.interior.buttonText}
               </button>
             </div>
           </div>
@@ -270,26 +340,17 @@ export default function Home({ villas }: HomeProps) {
         <div className="max-w-7xl mx-auto px-6 mb-20">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
             <div>
-              <span className="text-[10px] uppercase tracking-[0.4em] text-white/40 mb-4 block">Visual Diary</span>
-              <h2 className="text-4xl md:text-6xl font-serif">Captured <span className="italic font-light">Moments.</span></h2>
+              <span className="text-[10px] uppercase tracking-[0.4em] text-white/40 mb-4 block">{homeData.gallery.sectionLabel}</span>
+              <h2 className="text-4xl md:text-6xl font-serif">{homeData.gallery.heading} <span className="italic font-light">{homeData.gallery.headingHighlight}</span></h2>
             </div>
             <p className="text-white/50 font-light max-w-md text-lg">
-              A glimpse into life at Grey House. From the golden hour over the Ionian Sea to the intricate textures of Katouna stone.
+              {homeData.gallery.description}
             </p>
           </div>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-1 px-1">
-          {[
-            "/WhatsApp Image 2026-02-22 at 16.31.53.jpeg",
-            "/WhatsApp Image 2026-02-22 at 16.31.54.jpeg",
-            "/WhatsApp Image 2026-02-22 at 16.31.55.jpeg",
-            "/WhatsApp Image 2026-02-22 at 16.31.56.jpeg",
-            "/WhatsApp Image 2026-02-22 at 16.31.57.jpeg",
-            "/WhatsApp Image 2026-02-22 at 16.31.58.jpeg",
-            "/WhatsApp Image 2026-02-22 at 16.31.59.jpeg",
-            "/WhatsApp Image 2026-02-22 at 16.32.00.jpeg"
-          ].map((src, idx) => (
+          {homeData.gallery.images.map((src, idx) => (
             <motion.div
               key={idx}
               initial={{ opacity: 0 }}
@@ -299,9 +360,13 @@ export default function Home({ villas }: HomeProps) {
               className="aspect-[4/5] overflow-hidden group relative"
             >
               <img
+                key={src}
                 src={src}
                 alt={`Gallery ${idx}`}
                 className="w-full h-full object-cover transition-all duration-1000 scale-110 group-hover:scale-100"
+                onError={(e) => {
+                  console.error('Gallery image failed to load:', src);
+                }}
               />
               <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors"></div>
             </motion.div>

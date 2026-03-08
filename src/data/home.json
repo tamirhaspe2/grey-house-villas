@@ -1,0 +1,56 @@
+{
+  "hero": {
+    "backgroundImage": "/WhatsApp Image 2026-02-22 at 16.31.43.jpeg",
+    "location": "Lefkas, Greece • Katouna Mountain",
+    "title": "Grey House",
+    "subtitle": "Villas.",
+    "description": "A private 3,000 sqm sanctuary perched 400 meters above the Ionian Sea. Hand-crafted from natural stone, designed for the eternal horizon.",
+    "button1": "Explore Residences",
+    "button2": "The Philosophy"
+  },
+  "philosophy": {
+    "sectionLabel": "The Vision",
+    "heading": "Born from",
+    "headingHighlight": "the Katouna Earth.",
+    "paragraph1": "The architecture of Grey House Villas is a dialogue with the land. Every exterior wall is hand-laid from local natural stones, creating a structure that feels less like a building and more like an extension of the mountain itself.",
+    "paragraph2": "Inside, the boundaries dissolve. Continuous stone flooring flows from the hearth to the terrace, framing the Ionian Sea as the ultimate centerpiece. Surrounded by ancient olive groves and orchards, it is a sanctuary of silence and light.",
+    "quote": "Crafted for the four seasons.",
+    "mainImage": "/WhatsApp Image 2026-02-22 at 16.31.48.jpeg",
+    "detailImage": "/WhatsApp Image 2026-02-22 at 16.31.52.jpeg"
+  },
+  "interior": {
+    "sectionLabel": "Interior Design",
+    "heading": "Furnished with",
+    "headingHighlight": "Intention.",
+    "description": "Delivered turnkey, Grey House Villas are curated with a selection of Dutch, Italian, and Greek designer furniture. Practical luxury is woven into the fabric of the estate, from high-end Italian kitchens to advanced climate control systems.",
+    "features": [
+      "Underfloor heating powered by advanced heat pumps",
+      "High-capacity AC units (up to 24000 BTU)",
+      "Integrated electronic access and central sensors",
+      "Estate-wide WiFi boosters for seamless connectivity"
+    ],
+    "buttonText": "View Specifications",
+    "image1": "/WhatsApp Image 2026-02-22 at 16.31.50.jpeg",
+    "image2": "/WhatsApp Image 2026-02-22 at 16.31.51.jpeg"
+  },
+  "gallery": {
+    "sectionLabel": "Visual Diary",
+    "heading": "Captured",
+    "headingHighlight": "Moments.",
+    "description": "A glimpse into life at Grey House. From the golden hour over the Ionian Sea to the intricate textures of Katouna stone.",
+    "images": [
+      "/WhatsApp Image 2026-02-22 at 16.31.53.jpeg",
+      "/WhatsApp Image 2026-02-22 at 16.31.54.jpeg",
+      "/WhatsApp Image 2026-02-22 at 16.31.55.jpeg",
+      "/WhatsApp Image 2026-02-22 at 16.31.56.jpeg",
+      "/WhatsApp Image 2026-02-22 at 16.31.57.jpeg",
+      "/WhatsApp Image 2026-02-22 at 16.31.58.jpeg",
+      "/WhatsApp Image 2026-02-22 at 16.31.59.jpeg",
+      "/WhatsApp Image 2026-02-22 at 16.32.00.jpeg"
+    ]
+  },
+  "residences": {
+    "sectionLabel": "The Collection",
+    "heading": "Three Distinct Sanctuaries."
+  }
+}
