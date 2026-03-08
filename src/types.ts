@@ -6,6 +6,16 @@ export interface Villa {
   description: string;
   specs: { label: string; value: string }[];
   gallery: string[];
+  detailPage?: {
+    overviewLabel?: string;
+    inquiryHeading?: string;
+    inquiryDescription?: string;
+    inquiryButtonText?: string;
+    galleryLabel?: string;
+    galleryHeading?: string;
+    galleryDescription?: string;
+    navigationLabel?: string;
+  };
 }
 
 export { };

@@ -89,7 +89,7 @@ export default function VillaDetail({ villas }: VillaDetailProps) {
       <section className="py-32 px-6">
         <div className="max-w-7xl mx-auto grid lg:grid-cols-12 gap-20">
           <div className="lg:col-span-7">
-            <span className="text-[10px] uppercase tracking-[0.4em] text-[#A89F91] mb-8 block">The Residence</span>
+            <span className="text-[10px] uppercase tracking-[0.4em] text-[#A89F91] mb-8 block">{villa.detailPage?.overviewLabel || "The Residence"}</span>
             <h2 className="text-3xl md:text-5xl font-serif text-[#2C3539] leading-tight mb-12">
               {villa.description}
             </h2>
@@ -114,16 +114,16 @@ export default function VillaDetail({ villas }: VillaDetailProps) {
 
           <div className="lg:col-span-5">
             <div className="bg-[#F9F8F6] p-12 lg:p-16 sticky top-32">
-              <h3 className="text-2xl font-serif mb-8 text-[#2C3539]">Inquire for Ownership</h3>
+              <h3 className="text-2xl font-serif mb-8 text-[#2C3539]">{villa.detailPage?.inquiryHeading || "Inquire for Ownership"}</h3>
               <p className="text-gray-500 font-light mb-10 leading-relaxed">
-                Grey House Villas are offered as a complete estate or individual residences. Each villa is delivered turnkey with full designer furnishings.
+                {villa.detailPage?.inquiryDescription || "Grey House Villas are offered as a complete estate or individual residences. Each villa is delivered turnkey with full designer furnishings."}
               </p>
               <form className="space-y-6">
                 <input type="text" placeholder="Full Name" className="w-full bg-transparent border-b border-black/10 py-4 text-sm focus:border-black outline-none transition-colors" />
                 <input type="email" placeholder="Email Address" className="w-full bg-transparent border-b border-black/10 py-4 text-sm focus:border-black outline-none transition-colors" />
                 <textarea placeholder="Message" rows={4} className="w-full bg-transparent border-b border-black/10 py-4 text-sm focus:border-black outline-none transition-colors resize-none"></textarea>
                 <button className="w-full py-5 bg-[#2C3539] text-white text-[10px] uppercase tracking-[0.3em] font-bold hover:bg-[#8B6F5A] transition-all">
-                  Request Brochure
+                  {villa.detailPage?.inquiryButtonText || "Request Brochure"}
                 </button>
               </form>
             </div>
@@ -136,11 +136,11 @@ export default function VillaDetail({ villas }: VillaDetailProps) {
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-20 gap-8">
             <div>
-              <span className="text-[10px] uppercase tracking-[0.4em] text-[#A89F91] mb-4 block">Gallery</span>
-              <h2 className="text-4xl md:text-5xl font-serif text-[#2C3539]">Visual Details.</h2>
+              <span className="text-[10px] uppercase tracking-[0.4em] text-[#A89F91] mb-4 block">{villa.detailPage?.galleryLabel || "Gallery"}</span>
+              <h2 className="text-4xl md:text-5xl font-serif text-[#2C3539]">{villa.detailPage?.galleryHeading || "Visual Details."}</h2>
             </div>
             <p className="text-gray-500 font-light max-w-sm">
-              Click on any image to expand and explore the intricate craftsmanship of {villa.name}.
+              {villa.detailPage?.galleryDescription || `Click on any image to expand and explore the intricate craftsmanship of ${villa.name}.`}
             </p>
           </div>
 
@@ -226,7 +226,7 @@ export default function VillaDetail({ villas }: VillaDetailProps) {
       {/* Navigation Between Villas */}
       <section className="py-32 bg-[#F9F8F6] px-6">
         <div className="max-w-7xl mx-auto">
-          <span className="text-[10px] uppercase tracking-[0.4em] text-[#A89F91] mb-12 block text-center">Continue Exploring</span>
+          <span className="text-[10px] uppercase tracking-[0.4em] text-[#A89F91] mb-12 block text-center">{villa.detailPage?.navigationLabel || "Continue Exploring"}</span>
           <div className="grid md:grid-cols-2 gap-8">
             {villas.filter(v => v.id !== id).map(otherVilla => (
               <Link

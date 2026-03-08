@@ -151,19 +151,19 @@ export default function Admin() {
                 // Update local state with new image URL - use functional update to ensure we have latest state
                 setVillas(prevVillas => {
                     const updatedVillas = [...prevVillas];
-                    const villaIndex = updatedVillas.findIndex(v => v.id === activeVilla);
+                const villaIndex = updatedVillas.findIndex(v => v.id === activeVilla);
 
                     if (villaIndex === -1) {
                         console.error('Villa not found:', activeVilla);
                         return prevVillas; // Return unchanged state
                     }
 
-                    if (index === 'hero') {
+                if (index === 'hero') {
                         updatedVillas[villaIndex] = {
                             ...updatedVillas[villaIndex],
                             image: imageUrl
                         };
-                    } else {
+                } else {
                         const galleryIndex = index as number;
                         if (!updatedVillas[villaIndex].gallery) {
                             updatedVillas[villaIndex].gallery = [];
@@ -183,7 +183,7 @@ export default function Admin() {
                 if (res.status === 401) {
                     alert('Upload failed: You are not authenticated. Please log in again.');
                     setIsAuthenticated(false);
-                } else {
+            } else {
                     alert(`Upload failed: ${errorData.error || 'Server error'}`);
                 }
             }
@@ -200,18 +200,18 @@ export default function Admin() {
         setSaveStatus('idle');
         try {
             if (activeSection === 'villas') {
-                const res = await fetch('/api/admin/villas', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
-                    body: JSON.stringify(villas)
-                });
+            const res = await fetch('/api/admin/villas', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify(villas)
+            });
 
-                if (res.ok) {
-                    setSaveStatus('success');
-                    setTimeout(() => setSaveStatus('idle'), 3000);
-                } else {
-                    setSaveStatus('error');
+            if (res.ok) {
+                setSaveStatus('success');
+                setTimeout(() => setSaveStatus('idle'), 3000);
+            } else {
+                setSaveStatus('error');
                 }
             } else {
                 const res = await fetch('/api/admin/home', {
@@ -407,17 +407,17 @@ export default function Admin() {
                     {activeSection === 'villas' && (
                         <>
                             <h3 className="text-[10px] uppercase tracking-[0.3em] text-[#A89F91] font-bold mb-6 mt-8">Select Villa</h3>
-                            <div className="flex lg:flex-col overflow-x-auto lg:overflow-visible space-x-2 lg:space-x-0 lg:space-y-2 pb-4 lg:pb-0 mb-8 lg:mb-0">
-                                {villas.map(villa => (
-                                    <button
-                                        key={villa.id}
-                                        onClick={() => setActiveVilla(villa.id)}
-                                        className={`text-left px-4 py-3 rounded-sm text-sm transition-all whitespace-nowrap lg:whitespace-normal ${activeVilla === villa.id ? 'bg-[#2C3539] text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}
-                                    >
-                                        {villa.name}
-                                    </button>
-                                ))}
-                            </div>
+                    <div className="flex lg:flex-col overflow-x-auto lg:overflow-visible space-x-2 lg:space-x-0 lg:space-y-2 pb-4 lg:pb-0 mb-8 lg:mb-0">
+                        {villas.map(villa => (
+                            <button
+                                key={villa.id}
+                                onClick={() => setActiveVilla(villa.id)}
+                                className={`text-left px-4 py-3 rounded-sm text-sm transition-all whitespace-nowrap lg:whitespace-normal ${activeVilla === villa.id ? 'bg-[#2C3539] text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}
+                            >
+                                {villa.name}
+                            </button>
+                        ))}
+                    </div>
                         </>
                     )}
 
@@ -1021,7 +1021,7 @@ export default function Admin() {
                                     {currentVilla.gallery.map((img, idx) => {
                                         const isUploading = uploadingImage === `gallery-${activeVilla}-${idx}`;
                                         return (
-                                            <div key={idx} className="relative group rounded-sm overflow-hidden border border-gray-200 aspect-[2/3]">
+                                        <div key={idx} className="relative group rounded-sm overflow-hidden border border-gray-200 aspect-[2/3]">
                                                 {isUploading && (
                                                     <div className="absolute inset-0 bg-black/70 z-30 flex items-center justify-center">
                                                         <div className="text-white text-xs">Uploading...</div>
@@ -1037,23 +1037,23 @@ export default function Admin() {
                                                     }}
                                                 />
 
-                                                {/* Image Number / Indicator overlay */}
-                                                <div className="absolute top-2 left-2 bg-black/60 text-white text-[9px] uppercase tracking-wider px-2 py-1 rounded-sm backdrop-blur-sm z-10 transition-opacity group-hover:opacity-0">
-                                                    Image {idx + 1}
-                                                </div>
+                                            {/* Image Number / Indicator overlay */}
+                                            <div className="absolute top-2 left-2 bg-black/60 text-white text-[9px] uppercase tracking-wider px-2 py-1 rounded-sm backdrop-blur-sm z-10 transition-opacity group-hover:opacity-0">
+                                                Image {idx + 1}
+                                            </div>
 
-                                                {/* Hover Overlay */}
-                                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col items-center justify-center gap-4 z-20">
-                                                    <Camera className="text-white drop-shadow-md transform -translate-y-4 group-hover:translate-y-0 transition-transform duration-300" size={28} strokeWidth={1.5} />
+                                            {/* Hover Overlay */}
+                                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col items-center justify-center gap-4 z-20">
+                                                <Camera className="text-white drop-shadow-md transform -translate-y-4 group-hover:translate-y-0 transition-transform duration-300" size={28} strokeWidth={1.5} />
                                                     <label className={`cursor-pointer bg-white/90 text-[#2C3539] px-4 py-2 text-[10px] font-bold uppercase tracking-wider hover:bg-[#8B6F5A] hover:text-white transition-colors text-center w-3/4 transform translate-y-4 group-hover:translate-y-0 shadow-lg ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
                                                         {isUploading ? 'Uploading...' : 'Replace'}
-                                                        <input
-                                                            type="file"
-                                                            accept="image/*"
-                                                            className="hidden"
+                                                    <input
+                                                        type="file"
+                                                        accept="image/*"
+                                                        className="hidden"
                                                             disabled={isUploading}
-                                                            onChange={(e) => {
-                                                                if (e.target.files?.[0]) {
+                                                        onChange={(e) => {
+                                                            if (e.target.files?.[0]) {
                                                                     // Extract folder name from image path
                                                                     // Handles both local paths (/VILLA_ONEIRO/image.png) and GCS URLs (https://storage.googleapis.com/bucket/VILLA_ONEIRO/image.png)
                                                                     let imagePath = img;
@@ -1095,17 +1095,238 @@ export default function Admin() {
                                                                         return;
                                                                     }
 
-                                                                    handleImageUpload(e.target.files[0], folderName, idx);
+                                                                handleImageUpload(e.target.files[0], folderName, idx);
                                                                     // Reset input to allow re-uploading the same file
                                                                     e.target.value = '';
-                                                                }
-                                                            }}
-                                                        />
-                                                    </label>
-                                                </div>
+                                                            }
+                                                        }}
+                                                    />
+                                                </label>
                                             </div>
+                                        </div>
                                         );
                                     })}
+                                </div>
+                            </div>
+
+                            {/* Detail Page Text Content */}
+                            <div className="mt-20">
+                                <h3 className="text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-6 border-b border-gray-100 pb-4">Detail Page Content</h3>
+                                
+                                <div className="space-y-8">
+                                    {/* Overview Section */}
+                                    <div>
+                                        <h4 className="text-sm font-bold text-[#2C3539] mb-4">Overview Section</h4>
+                                        <div className="space-y-4">
+                                            <div>
+                                                <label className="block text-xs uppercase tracking-[0.3em] text-[#A89F91] font-bold mb-2">Section Label</label>
+                                                <input
+                                                    type="text"
+                                                    value={currentVilla.detailPage?.overviewLabel || ''}
+                                                    onChange={(e) => {
+                                                        setVillas(prevVillas => {
+                                                            const updatedVillas = [...prevVillas];
+                                                            const villaIndex = updatedVillas.findIndex(v => v.id === activeVilla);
+                                                            if (villaIndex !== -1) {
+                                                                updatedVillas[villaIndex] = {
+                                                                    ...updatedVillas[villaIndex],
+                                                                    detailPage: {
+                                                                        ...(updatedVillas[villaIndex].detailPage || {}),
+                                                                        overviewLabel: e.target.value
+                                                                    }
+                                                                };
+                                                            }
+                                                            return updatedVillas;
+                                                        });
+                                                    }}
+                                                    className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
+                                                    placeholder="The Residence"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Inquiry Section */}
+                                    <div>
+                                        <h4 className="text-sm font-bold text-[#2C3539] mb-4">Inquiry Section</h4>
+                                        <div className="space-y-4">
+                                            <div>
+                                                <label className="block text-xs uppercase tracking-[0.3em] text-[#A89F91] font-bold mb-2">Heading</label>
+                                                <input
+                                                    type="text"
+                                                    value={currentVilla.detailPage?.inquiryHeading || ''}
+                                                    onChange={(e) => {
+                                                        const updatedVillas = [...villas];
+                                                        const villaIndex = updatedVillas.findIndex(v => v.id === activeVilla);
+                                                        if (villaIndex !== -1) {
+                                                            updatedVillas[villaIndex] = {
+                                                                ...updatedVillas[villaIndex],
+                                                                detailPage: {
+                                                                    ...updatedVillas[villaIndex].detailPage,
+                                                                    inquiryHeading: e.target.value
+                                                                }
+                                                            };
+                                                            setVillas(updatedVillas);
+                                                        }
+                                                    }}
+                                                    className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
+                                                    placeholder="Inquire for Ownership"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs uppercase tracking-[0.3em] text-[#A89F91] font-bold mb-2">Description</label>
+                                                <textarea
+                                                    value={currentVilla.detailPage?.inquiryDescription || ''}
+                                                    onChange={(e) => {
+                                                        const updatedVillas = [...villas];
+                                                        const villaIndex = updatedVillas.findIndex(v => v.id === activeVilla);
+                                                        if (villaIndex !== -1) {
+                                                            updatedVillas[villaIndex] = {
+                                                                ...updatedVillas[villaIndex],
+                                                                detailPage: {
+                                                                    ...updatedVillas[villaIndex].detailPage,
+                                                                    inquiryDescription: e.target.value
+                                                                }
+                                                            };
+                                                            setVillas(updatedVillas);
+                                                        }
+                                                    }}
+                                                    rows={3}
+                                                    className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
+                                                    placeholder="Grey House Villas are offered as a complete estate or individual residences..."
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs uppercase tracking-[0.3em] text-[#A89F91] font-bold mb-2">Button Text</label>
+                                                <input
+                                                    type="text"
+                                                    value={currentVilla.detailPage?.inquiryButtonText || ''}
+                                                    onChange={(e) => {
+                                                        const updatedVillas = [...villas];
+                                                        const villaIndex = updatedVillas.findIndex(v => v.id === activeVilla);
+                                                        if (villaIndex !== -1) {
+                                                            updatedVillas[villaIndex] = {
+                                                                ...updatedVillas[villaIndex],
+                                                                detailPage: {
+                                                                    ...updatedVillas[villaIndex].detailPage,
+                                                                    inquiryButtonText: e.target.value
+                                                                }
+                                                            };
+                                                            setVillas(updatedVillas);
+                                                        }
+                                                    }}
+                                                    className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
+                                                    placeholder="Request Brochure"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Gallery Section */}
+                                    <div>
+                                        <h4 className="text-sm font-bold text-[#2C3539] mb-4">Gallery Section</h4>
+                                        <div className="space-y-4">
+                                            <div>
+                                                <label className="block text-xs uppercase tracking-[0.3em] text-[#A89F91] font-bold mb-2">Section Label</label>
+                                                <input
+                                                    type="text"
+                                                    value={currentVilla.detailPage?.galleryLabel || ''}
+                                                    onChange={(e) => {
+                                                        const updatedVillas = [...villas];
+                                                        const villaIndex = updatedVillas.findIndex(v => v.id === activeVilla);
+                                                        if (villaIndex !== -1) {
+                                                            updatedVillas[villaIndex] = {
+                                                                ...updatedVillas[villaIndex],
+                                                                detailPage: {
+                                                                    ...updatedVillas[villaIndex].detailPage,
+                                                                    galleryLabel: e.target.value
+                                                                }
+                                                            };
+                                                            setVillas(updatedVillas);
+                                                        }
+                                                    }}
+                                                    className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
+                                                    placeholder="Gallery"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs uppercase tracking-[0.3em] text-[#A89F91] font-bold mb-2">Heading</label>
+                                                <input
+                                                    type="text"
+                                                    value={currentVilla.detailPage?.galleryHeading || ''}
+                                                    onChange={(e) => {
+                                                        const updatedVillas = [...villas];
+                                                        const villaIndex = updatedVillas.findIndex(v => v.id === activeVilla);
+                                                        if (villaIndex !== -1) {
+                                                            updatedVillas[villaIndex] = {
+                                                                ...updatedVillas[villaIndex],
+                                                                detailPage: {
+                                                                    ...updatedVillas[villaIndex].detailPage,
+                                                                    galleryHeading: e.target.value
+                                                                }
+                                                            };
+                                                            setVillas(updatedVillas);
+                                                        }
+                                                    }}
+                                                    className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
+                                                    placeholder="Visual Details."
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs uppercase tracking-[0.3em] text-[#A89F91] font-bold mb-2">Description</label>
+                                                <textarea
+                                                    value={currentVilla.detailPage?.galleryDescription || ''}
+                                                    onChange={(e) => {
+                                                        const updatedVillas = [...villas];
+                                                        const villaIndex = updatedVillas.findIndex(v => v.id === activeVilla);
+                                                        if (villaIndex !== -1) {
+                                                            updatedVillas[villaIndex] = {
+                                                                ...updatedVillas[villaIndex],
+                                                                detailPage: {
+                                                                    ...updatedVillas[villaIndex].detailPage,
+                                                                    galleryDescription: e.target.value
+                                                                }
+                                                            };
+                                                            setVillas(updatedVillas);
+                                                        }
+                                                    }}
+                                                    rows={2}
+                                                    className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
+                                                    placeholder="Click on any image to expand and explore..."
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Navigation Section */}
+                                    <div>
+                                        <h4 className="text-sm font-bold text-[#2C3539] mb-4">Navigation Section</h4>
+                                        <div className="space-y-4">
+                                            <div>
+                                                <label className="block text-xs uppercase tracking-[0.3em] text-[#A89F91] font-bold mb-2">Section Label</label>
+                                                <input
+                                                    type="text"
+                                                    value={currentVilla.detailPage?.navigationLabel || ''}
+                                                    onChange={(e) => {
+                                                        const updatedVillas = [...villas];
+                                                        const villaIndex = updatedVillas.findIndex(v => v.id === activeVilla);
+                                                        if (villaIndex !== -1) {
+                                                            updatedVillas[villaIndex] = {
+                                                                ...updatedVillas[villaIndex],
+                                                                detailPage: {
+                                                                    ...updatedVillas[villaIndex].detailPage,
+                                                                    navigationLabel: e.target.value
+                                                                }
+                                                            };
+                                                            setVillas(updatedVillas);
+                                                        }
+                                                    }}
+                                                    className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
+                                                    placeholder="Continue Exploring"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
