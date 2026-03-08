@@ -5,16 +5,6 @@
     "subtitle": "The Main House",
     "description": "A masterful 175m² two-story residence combining high-end Italian design with raw natural textures. Features multi-zone outdoor lighting and underfloor heating.",
     "image": "/VILLA_ONEIRO/image.png",
-    "detailPage": {
-      "overviewLabel": "The Residence",
-      "inquiryHeading": "Inquire for Ownership",
-      "inquiryDescription": "Grey House Villas are offered as a complete estate or individual residences. Each villa is delivered turnkey with full designer furnishings.",
-      "inquiryButtonText": "Request Brochure",
-      "galleryLabel": "Gallery",
-      "galleryHeading": "Visual Details.",
-      "galleryDescription": "Click on any image to expand and explore the intricate craftsmanship of Villa Oneiro.",
-      "navigationLabel": "Continue Exploring"
-    },
     "specs": [
       {
         "label": "Space",
@@ -60,16 +50,6 @@
     "subtitle": "The Sanctuary",
     "description": "A discreet suite tucked beneath the main outdoor pool. Featuring a large natural stone terrace seamlessly separated by a modern glass wall.",
     "image": "/OMORFI_SUITE/image1.png",
-    "detailPage": {
-      "overviewLabel": "The Residence",
-      "inquiryHeading": "Inquire for Ownership",
-      "inquiryDescription": "Grey House Villas are offered as a complete estate or individual residences. Each villa is delivered turnkey with full designer furnishings.",
-      "inquiryButtonText": "Request Brochure",
-      "galleryLabel": "Gallery",
-      "galleryHeading": "Visual Details.",
-      "galleryDescription": "Click on any image to expand and explore the intricate craftsmanship of Omorphy Sussssite.",
-      "navigationLabel": "Continue Exploring"
-    },
     "specs": [
       {
         "label": "Space",
@@ -113,16 +93,6 @@
     "subtitle": "The Private Enclave",
     "description": "Situated 50 meters below the main house, offering ultimate seclusion. Accessed via a private road with its own dedicated parking and terraced living spaces.",
     "image": "/Villa_PETRA/image1.png",
-    "detailPage": {
-      "overviewLabel": "The Residence",
-      "inquiryHeading": "Inquire for Ownership",
-      "inquiryDescription": "Grey House Villas are offered as a complete estate or individual residences. Each villa is delivered turnkey with full designer furnishings.",
-      "inquiryButtonText": "Request Brochure",
-      "galleryLabel": "Gallery",
-      "galleryHeading": "Visual Details.",
-      "galleryDescription": "Click on any image to expand and explore the intricate craftsmanship of Villa Pétra.",
-      "navigationLabel": "Continue Exploring"
-    },
     "specs": [
       {
         "label": "Space",
