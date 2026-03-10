@@ -322,6 +322,27 @@ async function startServer() {
     }
   });
 
+  // Helper function to clean malformed image URLs that might have been saved
+  const cleanDataUrls = (obj: any): any => {
+    if (typeof obj === 'string') {
+      if (obj.startsWith('/http://') || obj.startsWith('/https://')) {
+        return obj.substring(1); // Remove the leading slash
+      }
+      return obj;
+    }
+    if (Array.isArray(obj)) {
+      return obj.map(item => cleanDataUrls(item));
+    }
+    if (typeof obj === 'object' && obj !== null) {
+      const newObj: any = {};
+      for (const key in obj) {
+        newObj[key] = cleanDataUrls(obj[key]);
+      }
+      return newObj;
+    }
+    return obj;
+  };
+
   // Home page data endpoints
   app.get("/api/home", async (req, res) => {
     try {
@@ -341,13 +362,13 @@ async function startServer() {
           return res.json(localData);
         }
 
-        res.json(doc.data().data);
+        res.json(cleanDataUrls(doc.data().data));
       } else {
         // Use local JSON file
         const dataPath = path.join(process.cwd(), "src", "data", "home.json");
         const localDataRaw = await fs.readFile(dataPath, 'utf8');
         const localData = JSON.parse(localDataRaw);
-        res.json(localData);
+        res.json(cleanDataUrls(localData));
       }
     } catch (err) {
       console.error("Failed to fetch home data:", err);
@@ -399,13 +420,13 @@ async function startServer() {
           return res.json(localData);
         }
 
-        res.json(doc.data().data);
+        res.json(cleanDataUrls(doc.data().data));
       } else {
         // Use local JSON file
         const dataPath = path.join(process.cwd(), "src", "data", "villas.json");
         const localDataRaw = await fs.readFile(dataPath, 'utf8');
         const localData = JSON.parse(localDataRaw);
-        res.json(localData);
+        res.json(cleanDataUrls(localData));
       }
     } catch (err) {
       console.error("Failed to fetch villas:", err);

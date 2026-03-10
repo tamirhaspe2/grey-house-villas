@@ -5,46 +5,46 @@ import homeDataDefault from '../data/home.json';
 import { Villa } from '../types';
 
 interface HomeData {
-  hero: {
-    backgroundImage: string;
-    location: string;
-    title: string;
-    subtitle: string;
-    description: string;
-    button1: string;
-    button2: string;
-  };
-  philosophy: {
-    sectionLabel: string;
-    heading: string;
-    headingHighlight: string;
-    paragraph1: string;
-    paragraph2: string;
-    quote: string;
-    mainImage: string;
-    detailImage: string;
-  };
-  interior: {
-    sectionLabel: string;
-    heading: string;
-    headingHighlight: string;
-    description: string;
-    features: string[];
-    buttonText: string;
-    image1: string;
-    image2: string;
-  };
-  gallery: {
-    sectionLabel: string;
-    heading: string;
-    headingHighlight: string;
-    description: string;
-    images: string[];
-  };
-  residences: {
-    sectionLabel: string;
-    heading: string;
-  };
+    hero: {
+        backgroundImage: string;
+        location: string;
+        title: string;
+        subtitle: string;
+        description: string;
+        button1: string;
+        button2: string;
+    };
+    philosophy: {
+        sectionLabel: string;
+        heading: string;
+        headingHighlight: string;
+        paragraph1: string;
+        paragraph2: string;
+        quote: string;
+        mainImage: string;
+        detailImage: string;
+    };
+    interior: {
+        sectionLabel: string;
+        heading: string;
+        headingHighlight: string;
+        description: string;
+        features: string[];
+        buttonText: string;
+        image1: string;
+        image2: string;
+    };
+    gallery: {
+        sectionLabel: string;
+        heading: string;
+        headingHighlight: string;
+        description: string;
+        images: string[];
+    };
+    residences: {
+        sectionLabel: string;
+        heading: string;
+    };
 }
 
 export default function Admin() {
@@ -145,8 +145,8 @@ export default function Admin() {
                     return;
                 }
 
-                // Ensure URL starts with /
-                const imageUrl = url.startsWith('/') ? url : `/${url}`;
+                // Ensure local URLs start with /, keep absolute URLs as is
+                const imageUrl = (url.startsWith('http://') || url.startsWith('https://')) ? url : (url.startsWith('/') ? url : `/${url}`);
 
                 // Update local state with new image URL - use functional update to ensure we have latest state
                 setVillas(prevVillas => {
@@ -272,14 +272,14 @@ export default function Admin() {
                     return;
                 }
 
-                // Ensure URL starts with /
-                const imageUrl = url.startsWith('/') ? url : `/${url}`;
+                // Ensure local URLs start with /, keep absolute URLs as is
+                const imageUrl = (url.startsWith('http://') || url.startsWith('https://')) ? url : (url.startsWith('/') ? url : `/${url}`);
 
                 // Update home data state
                 setHomeData(prevData => {
                     const newData = JSON.parse(JSON.stringify(prevData)); // Deep clone
                     const keys = imageKey.split('.');
-                    
+
                     // Handle array indices (e.g., gallery.images.0)
                     if (keys.length === 3 && keys[0] === 'gallery' && keys[1] === 'images') {
                         const index = parseInt(keys[2]);
@@ -292,7 +292,7 @@ export default function Admin() {
                         }
                         current[keys[keys.length - 1]] = imageUrl;
                     }
-                    
+
                     return newData;
                 });
             } else {
@@ -385,7 +385,7 @@ export default function Admin() {
                 {/* Sidebar Navigation */}
                 <div className="lg:col-span-1 border-r border-gray-200 pr-0 lg:pr-8">
                     <h3 className="text-[10px] uppercase tracking-[0.3em] text-[#A89F91] font-bold mb-6">Navigation</h3>
-                    
+
                     {/* Section Selector */}
                     <div className="flex lg:flex-col overflow-x-auto lg:overflow-visible space-x-2 lg:space-x-0 lg:space-y-2 pb-4 lg:pb-0 mb-8">
                         <button
@@ -436,7 +436,7 @@ export default function Admin() {
                             {/* Hero Section */}
                             <div className="bg-white p-6 md:p-12 shadow-sm border border-gray-100 rounded-sm">
                                 <h2 className="text-4xl font-serif text-[#2C3539] mb-12">Home Page - Hero Section</h2>
-                                
+
                                 {/* Hero Background Image */}
                                 <div className="mb-8">
                                     <h3 className="text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-6 border-b border-gray-100 pb-4">Hero Background Image</h3>
@@ -483,7 +483,7 @@ export default function Admin() {
                                         <input
                                             type="text"
                                             value={homeData.hero.location}
-                                            onChange={(e) => setHomeData({...homeData, hero: {...homeData.hero, location: e.target.value}})}
+                                            onChange={(e) => setHomeData({ ...homeData, hero: { ...homeData.hero, location: e.target.value } })}
                                             className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                         />
                                     </div>
@@ -492,7 +492,7 @@ export default function Admin() {
                                         <input
                                             type="text"
                                             value={homeData.hero.title}
-                                            onChange={(e) => setHomeData({...homeData, hero: {...homeData.hero, title: e.target.value}})}
+                                            onChange={(e) => setHomeData({ ...homeData, hero: { ...homeData.hero, title: e.target.value } })}
                                             className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                         />
                                     </div>
@@ -501,7 +501,7 @@ export default function Admin() {
                                         <input
                                             type="text"
                                             value={homeData.hero.subtitle}
-                                            onChange={(e) => setHomeData({...homeData, hero: {...homeData.hero, subtitle: e.target.value}})}
+                                            onChange={(e) => setHomeData({ ...homeData, hero: { ...homeData.hero, subtitle: e.target.value } })}
                                             className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                         />
                                     </div>
@@ -509,7 +509,7 @@ export default function Admin() {
                                         <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Description</label>
                                         <textarea
                                             value={homeData.hero.description}
-                                            onChange={(e) => setHomeData({...homeData, hero: {...homeData.hero, description: e.target.value}})}
+                                            onChange={(e) => setHomeData({ ...homeData, hero: { ...homeData.hero, description: e.target.value } })}
                                             rows={3}
                                             className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                         />
@@ -520,7 +520,7 @@ export default function Admin() {
                                             <input
                                                 type="text"
                                                 value={homeData.hero.button1}
-                                                onChange={(e) => setHomeData({...homeData, hero: {...homeData.hero, button1: e.target.value}})}
+                                                onChange={(e) => setHomeData({ ...homeData, hero: { ...homeData.hero, button1: e.target.value } })}
                                                 className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                             />
                                         </div>
@@ -529,7 +529,7 @@ export default function Admin() {
                                             <input
                                                 type="text"
                                                 value={homeData.hero.button2}
-                                                onChange={(e) => setHomeData({...homeData, hero: {...homeData.hero, button2: e.target.value}})}
+                                                onChange={(e) => setHomeData({ ...homeData, hero: { ...homeData.hero, button2: e.target.value } })}
                                                 className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                             />
                                         </div>
@@ -540,7 +540,7 @@ export default function Admin() {
                             {/* Philosophy Section */}
                             <div className="bg-white p-6 md:p-12 shadow-sm border border-gray-100 rounded-sm">
                                 <h2 className="text-4xl font-serif text-[#2C3539] mb-12">Philosophy Section</h2>
-                                
+
                                 {/* Philosophy Images */}
                                 <div className="grid md:grid-cols-2 gap-6 mb-8">
                                     <div>
@@ -618,7 +618,7 @@ export default function Admin() {
                                         <input
                                             type="text"
                                             value={homeData.philosophy.sectionLabel}
-                                            onChange={(e) => setHomeData({...homeData, philosophy: {...homeData.philosophy, sectionLabel: e.target.value}})}
+                                            onChange={(e) => setHomeData({ ...homeData, philosophy: { ...homeData.philosophy, sectionLabel: e.target.value } })}
                                             className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                         />
                                     </div>
@@ -628,7 +628,7 @@ export default function Admin() {
                                             <input
                                                 type="text"
                                                 value={homeData.philosophy.heading}
-                                                onChange={(e) => setHomeData({...homeData, philosophy: {...homeData.philosophy, heading: e.target.value}})}
+                                                onChange={(e) => setHomeData({ ...homeData, philosophy: { ...homeData.philosophy, heading: e.target.value } })}
                                                 className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                             />
                                         </div>
@@ -637,7 +637,7 @@ export default function Admin() {
                                             <input
                                                 type="text"
                                                 value={homeData.philosophy.headingHighlight}
-                                                onChange={(e) => setHomeData({...homeData, philosophy: {...homeData.philosophy, headingHighlight: e.target.value}})}
+                                                onChange={(e) => setHomeData({ ...homeData, philosophy: { ...homeData.philosophy, headingHighlight: e.target.value } })}
                                                 className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                             />
                                         </div>
@@ -646,7 +646,7 @@ export default function Admin() {
                                         <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Paragraph 1</label>
                                         <textarea
                                             value={homeData.philosophy.paragraph1}
-                                            onChange={(e) => setHomeData({...homeData, philosophy: {...homeData.philosophy, paragraph1: e.target.value}})}
+                                            onChange={(e) => setHomeData({ ...homeData, philosophy: { ...homeData.philosophy, paragraph1: e.target.value } })}
                                             rows={3}
                                             className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                         />
@@ -655,7 +655,7 @@ export default function Admin() {
                                         <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Paragraph 2</label>
                                         <textarea
                                             value={homeData.philosophy.paragraph2}
-                                            onChange={(e) => setHomeData({...homeData, philosophy: {...homeData.philosophy, paragraph2: e.target.value}})}
+                                            onChange={(e) => setHomeData({ ...homeData, philosophy: { ...homeData.philosophy, paragraph2: e.target.value } })}
                                             rows={3}
                                             className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                         />
@@ -665,7 +665,7 @@ export default function Admin() {
                                         <input
                                             type="text"
                                             value={homeData.philosophy.quote}
-                                            onChange={(e) => setHomeData({...homeData, philosophy: {...homeData.philosophy, quote: e.target.value}})}
+                                            onChange={(e) => setHomeData({ ...homeData, philosophy: { ...homeData.philosophy, quote: e.target.value } })}
                                             className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                         />
                                     </div>
@@ -675,7 +675,7 @@ export default function Admin() {
                             {/* Interior Section */}
                             <div className="bg-white p-6 md:p-12 shadow-sm border border-gray-100 rounded-sm">
                                 <h2 className="text-4xl font-serif text-[#2C3539] mb-12">Interior Section</h2>
-                                
+
                                 {/* Interior Images */}
                                 <div className="grid md:grid-cols-2 gap-6 mb-8">
                                     <div>
@@ -753,7 +753,7 @@ export default function Admin() {
                                         <input
                                             type="text"
                                             value={homeData.interior.sectionLabel}
-                                            onChange={(e) => setHomeData({...homeData, interior: {...homeData.interior, sectionLabel: e.target.value}})}
+                                            onChange={(e) => setHomeData({ ...homeData, interior: { ...homeData.interior, sectionLabel: e.target.value } })}
                                             className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                         />
                                     </div>
@@ -763,7 +763,7 @@ export default function Admin() {
                                             <input
                                                 type="text"
                                                 value={homeData.interior.heading}
-                                                onChange={(e) => setHomeData({...homeData, interior: {...homeData.interior, heading: e.target.value}})}
+                                                onChange={(e) => setHomeData({ ...homeData, interior: { ...homeData.interior, heading: e.target.value } })}
                                                 className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                             />
                                         </div>
@@ -772,7 +772,7 @@ export default function Admin() {
                                             <input
                                                 type="text"
                                                 value={homeData.interior.headingHighlight}
-                                                onChange={(e) => setHomeData({...homeData, interior: {...homeData.interior, headingHighlight: e.target.value}})}
+                                                onChange={(e) => setHomeData({ ...homeData, interior: { ...homeData.interior, headingHighlight: e.target.value } })}
                                                 className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                             />
                                         </div>
@@ -781,7 +781,7 @@ export default function Admin() {
                                         <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Description</label>
                                         <textarea
                                             value={homeData.interior.description}
-                                            onChange={(e) => setHomeData({...homeData, interior: {...homeData.interior, description: e.target.value}})}
+                                            onChange={(e) => setHomeData({ ...homeData, interior: { ...homeData.interior, description: e.target.value } })}
                                             rows={4}
                                             className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                         />
@@ -790,7 +790,7 @@ export default function Admin() {
                                         <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Features (one per line)</label>
                                         <textarea
                                             value={homeData.interior.features.join('\n')}
-                                            onChange={(e) => setHomeData({...homeData, interior: {...homeData.interior, features: e.target.value.split('\n').filter(f => f.trim())}})}
+                                            onChange={(e) => setHomeData({ ...homeData, interior: { ...homeData.interior, features: e.target.value.split('\n').filter(f => f.trim()) } })}
                                             rows={6}
                                             className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                         />
@@ -800,7 +800,7 @@ export default function Admin() {
                                         <input
                                             type="text"
                                             value={homeData.interior.buttonText}
-                                            onChange={(e) => setHomeData({...homeData, interior: {...homeData.interior, buttonText: e.target.value}})}
+                                            onChange={(e) => setHomeData({ ...homeData, interior: { ...homeData.interior, buttonText: e.target.value } })}
                                             className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                         />
                                     </div>
@@ -810,7 +810,7 @@ export default function Admin() {
                             {/* Gallery Section */}
                             <div className="bg-white p-6 md:p-12 shadow-sm border border-gray-100 rounded-sm">
                                 <h2 className="text-4xl font-serif text-[#2C3539] mb-12">Gallery Section</h2>
-                                
+
                                 {/* Gallery Text Fields */}
                                 <div className="space-y-6 mb-8">
                                     <div>
@@ -818,7 +818,7 @@ export default function Admin() {
                                         <input
                                             type="text"
                                             value={homeData.gallery.sectionLabel}
-                                            onChange={(e) => setHomeData({...homeData, gallery: {...homeData.gallery, sectionLabel: e.target.value}})}
+                                            onChange={(e) => setHomeData({ ...homeData, gallery: { ...homeData.gallery, sectionLabel: e.target.value } })}
                                             className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                         />
                                     </div>
@@ -828,7 +828,7 @@ export default function Admin() {
                                             <input
                                                 type="text"
                                                 value={homeData.gallery.heading}
-                                                onChange={(e) => setHomeData({...homeData, gallery: {...homeData.gallery, heading: e.target.value}})}
+                                                onChange={(e) => setHomeData({ ...homeData, gallery: { ...homeData.gallery, heading: e.target.value } })}
                                                 className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                             />
                                         </div>
@@ -837,7 +837,7 @@ export default function Admin() {
                                             <input
                                                 type="text"
                                                 value={homeData.gallery.headingHighlight}
-                                                onChange={(e) => setHomeData({...homeData, gallery: {...homeData.gallery, headingHighlight: e.target.value}})}
+                                                onChange={(e) => setHomeData({ ...homeData, gallery: { ...homeData.gallery, headingHighlight: e.target.value } })}
                                                 className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                             />
                                         </div>
@@ -846,7 +846,7 @@ export default function Admin() {
                                         <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Description</label>
                                         <textarea
                                             value={homeData.gallery.description}
-                                            onChange={(e) => setHomeData({...homeData, gallery: {...homeData.gallery, description: e.target.value}})}
+                                            onChange={(e) => setHomeData({ ...homeData, gallery: { ...homeData.gallery, description: e.target.value } })}
                                             rows={3}
                                             className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                         />
@@ -912,7 +912,7 @@ export default function Admin() {
                                         <input
                                             type="text"
                                             value={homeData.residences.sectionLabel}
-                                            onChange={(e) => setHomeData({...homeData, residences: {...homeData.residences, sectionLabel: e.target.value}})}
+                                            onChange={(e) => setHomeData({ ...homeData, residences: { ...homeData.residences, sectionLabel: e.target.value } })}
                                             className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                         />
                                     </div>
@@ -921,7 +921,7 @@ export default function Admin() {
                                         <input
                                             type="text"
                                             value={homeData.residences.heading}
-                                            onChange={(e) => setHomeData({...homeData, residences: {...homeData.residences, heading: e.target.value}})}
+                                            onChange={(e) => setHomeData({ ...homeData, residences: { ...homeData.residences, heading: e.target.value } })}
                                             className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                         />
                                     </div>
