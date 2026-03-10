@@ -265,20 +265,19 @@ async function startServer() {
 
         stream.on('finish', async () => {
           try {
-            // Make the file publicly accessible
+            // First attempt to make the file publicly accessible directly from GCS
             await file.makePublic();
             console.log(`Image uploaded successfully to GCS: ${gcsFileName}`);
 
-            // Return the permanent public URL
+            // If public, return the permanent public direct URL
             const bucketName = process.env.GCS_BUCKET_NAME || 'greyvilla-images-prod';
             const publicUrl = `https://storage.googleapis.com/${bucketName}/${gcsFileName}`;
             res.json({ success: true, url: publicUrl });
           } catch (error) {
-            console.error("Error making file public:", error);
-            // Still return success with the URL even if makePublic fails
-            const bucketName = process.env.GCS_BUCKET_NAME || 'greyvilla-images-prod';
-            const publicUrl = `https://storage.googleapis.com/${bucketName}/${gcsFileName}`;
-            res.json({ success: true, url: publicUrl });
+            console.error("Error making file public in GCS (bucket is likely private). Falling back to proxied URL.", error.message);
+            // Since the bucket isn't public, return a URL that routes through our new proxy endpoint!
+            const proxyUrl = `/api/images/${gcsFileName}`;
+            res.json({ success: true, url: proxyUrl });
           }
         });
 
@@ -319,6 +318,42 @@ async function startServer() {
         }
       }
       res.status(500).json({ error: "Failed to process image upload" });
+    }
+  });
+
+  // Image Proxy Endpoint for private GCS buckets
+  app.get("/api/images/*", async (req, res) => {
+    try {
+      const imagePath = req.params[0];
+
+      if (useGCS && bucket) {
+        const file = bucket.file(imagePath);
+        const [exists] = await file.exists();
+        if (!exists) {
+          return res.status(404).send('Image not found');
+        }
+
+        // Serve directly from Google Cloud Storage with cache headers
+        res.setHeader('Cache-Control', 'public, max-age=31536000');
+        const readStream = file.createReadStream();
+        readStream.on('error', (err) => {
+          console.error("Error streaming image from GCS:", err);
+          res.status(500).send('Error streaming image');
+        });
+        readStream.pipe(res);
+      } else {
+        // Fallback for local files
+        const localPath = path.join(process.cwd(), 'public', imagePath);
+        if (fsSync.existsSync(localPath)) {
+          res.setHeader('Cache-Control', 'public, max-age=31536000');
+          res.sendFile(localPath);
+        } else {
+          res.status(404).send('Image not found');
+        }
+      }
+    } catch (e) {
+      console.error("Error in image proxy:", e);
+      res.status(500).send('Internal Server Error');
     }
   });
 
