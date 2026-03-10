@@ -452,7 +452,10 @@ export default function Admin() {
                                             alt="Hero background"
                                             className="w-full h-full object-cover"
                                             onError={(e) => {
-                                                console.error('Hero image failed to load:', homeData.hero.backgroundImage);
+                                                const target = e.target as HTMLImageElement;
+                                                target.onerror = null; // Prevent infinite loops
+                                                console.error('Hero background image failed to load:', homeData.hero.backgroundImage);
+                                                target.src = 'https://placehold.co/1200x800?text=Missing+Image';
                                             }}
                                         />
                                         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-4">
@@ -872,7 +875,10 @@ export default function Admin() {
                                                         alt={`Gallery ${idx}`}
                                                         className="w-full h-full object-cover"
                                                         onError={(e) => {
+                                                            const target = e.target as HTMLImageElement;
+                                                            target.onerror = null; // Prevent infinite loops
                                                             console.error('Gallery image failed to load:', img);
+                                                            target.src = 'https://placehold.co/600x400?text=Missing+Image';
                                                         }}
                                                     />
                                                     <div className="absolute top-2 left-2 bg-black/60 text-white text-[9px] uppercase tracking-wider px-2 py-1 rounded-sm backdrop-blur-sm z-10 transition-opacity group-hover:opacity-0">
@@ -947,8 +953,10 @@ export default function Admin() {
                                         alt={currentVilla.name}
                                         className="w-full h-full object-cover"
                                         onError={(e) => {
+                                            const target = e.target as HTMLImageElement;
+                                            target.onerror = null; // Prevent infinite loops
                                             console.error('Image failed to load:', currentVilla.image);
-                                            (e.target as HTMLImageElement).src = '/placeholder-image.png';
+                                            target.src = 'https://placehold.co/1200x800?text=Missing+Image';
                                         }}
                                     />
                                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-4">
@@ -1032,8 +1040,10 @@ export default function Admin() {
                                                     alt={`Gallery ${idx}`}
                                                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                                                     onError={(e) => {
+                                                        const target = e.target as HTMLImageElement;
+                                                        target.onerror = null; // Prevent infinite loops
                                                         console.error('Gallery image failed to load:', img);
-                                                        (e.target as HTMLImageElement).src = '/placeholder-image.png';
+                                                        target.src = 'https://placehold.co/600x400?text=Missing+Image';
                                                     }}
                                                 />
 

@@ -62,7 +62,9 @@ export default function VillaDetail({ villas }: VillaDetailProps) {
             alt={villa.name}
             className="w-full h-full object-cover"
             onError={(e) => {
-              console.error('Image failed to load:', villa.image);
+              const target = e.target as HTMLImageElement;
+              target.onerror = null;
+              target.src = 'https://placehold.co/1200x800?text=Missing+Image';
             }}
           />
           <div className="absolute inset-0 bg-black/30"></div>
@@ -186,7 +188,9 @@ export default function VillaDetail({ villas }: VillaDetailProps) {
                   alt={`${villa.name} detail ${idx + 1}`}
                   className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 md:group-hover:scale-105"
                   onError={(e) => {
-                    console.error('Gallery image failed to load:', img);
+                    const target = e.target as HTMLImageElement;
+                    target.onerror = null;
+                    target.src = 'https://placehold.co/600x400?text=Missing+Image';
                   }}
                 />
                 <div className={`absolute inset-0 bg-black/40 transition-colors flex items-center justify-center md:group-hover:bg-black/0 md:group-hover:opacity-100 ${activeIdx === idx ? 'bg-black/0 opacity-100' : 'opacity-0'}`}>

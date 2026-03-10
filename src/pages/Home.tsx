@@ -231,7 +231,9 @@ export default function Home({ villas }: HomeProps) {
                             alt={villa.name}
                             className="w-full h-full object-cover"
                             onError={(e) => {
-                              console.error('Image failed to load:', villa.image);
+                              const target = e.target as HTMLImageElement;
+                              target.onerror = null;
+                              target.src = 'https://placehold.co/600x400?text=Missing+Image';
                             }}
                           />
                           <div className="absolute top-6 left-6 bg-white/90 backdrop-blur px-4 py-1.5 text-[9px] font-bold tracking-[0.3em] uppercase text-[#8B6F5A]">
@@ -365,9 +367,10 @@ export default function Home({ villas }: HomeProps) {
                 alt={`Gallery ${idx}`}
                 className="w-full h-full object-cover transition-all duration-1000 scale-110 group-hover:scale-100"
                 onError={(e) => {
-                  console.error('Gallery image failed to load:', src);
-                }}
-              />
+                  const target = e.target as HTMLImageElement;
+                  target.onerror = null;
+                  target.src = 'https://placehold.co/1200x800?text=Missing+Image';
+                }} />
               <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors"></div>
             </motion.div>
           ))}
