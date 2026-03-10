@@ -55,17 +55,30 @@ interface HomeData {
 export default function Home({ villas }: HomeProps) {
   const [activeVillaIndex, setActiveVillaIndex] = useState(0);
   const [homeData, setHomeData] = useState<HomeData>(homeDataDefault as HomeData);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // Fetch home data from API
     fetch('/api/home')
       .then(res => res.json())
-      .then(data => setHomeData(data))
+      .then(data => {
+        setHomeData(data);
+        setIsLoading(false);
+      })
       .catch(() => {
         // Fallback to default data if API fails
         setHomeData(homeDataDefault as HomeData);
+        setIsLoading(false);
       });
   }, []);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#FDFCFB] flex items-center justify-center">
+        <div className="font-serif text-2xl tracking-widest uppercase text-[#2C3539] animate-pulse">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-[#FDFCFB] text-[#1A1A1A]">
