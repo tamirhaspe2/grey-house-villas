@@ -5,3 +5,27 @@
     scroll-behavior: smooth;
   }
 }
+
+.rdp-root {
+  --rdp-accent-color: #2C3539; 
+  --rdp-background-color: #F4F1ED;
+  --rdp-accent-background-color: #2C3539;
+  --rdp-day-selected-color: white;
+  --rdp-range_start-color: white;
+  --rdp-range_end-color: white;
+  --rdp-range_start-background: #1A202C;
+  --rdp-range_end-background: #1A202C;
+  --rdp-range_middle-background-color: #f7f6f2;
+  --rdp-range_middle-color: #2C3539;
+  --rdp-outline: 2px solid #2C3539;
+  --rdp-outline-selected: 2px solid rgba(44, 53, 57, 0.5);
+  --rdp-nav_button-disabled-opacity: 0.3;
+}
+
+.rdp-day {
+  border-radius: 0;
+  font-family: inherit;
+}
+.rdp-month_caption {
+  font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+}

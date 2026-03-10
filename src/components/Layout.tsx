@@ -83,8 +83,9 @@ export default function Layout({ children, villas }: LayoutProps) {
             <Users size={12} className="text-white/80" />
             <span className="font-semibold text-white">{viewers}</span> {viewers === 1 ? 'person' : 'people'} currently viewing this estate
           </span>
-          <span className="hidden md:inline opacity-30">|</span>
-          <span className="hidden md:inline">
+          {/* <span className="hidden md:inline opacity-30">|</span> */}
+          {/* <span className="hidden md:inline"> */}
+          <span className="hidden">
             Last opportunity: <span className="font-semibold text-white">only one Grey House Villa remains</span> before we're fully reserved. <Link to="/schedule-call" className="underline hover:text-white transition-colors ml-1">Click to schedule a call.</Link>
           </span>
         </div>
@@ -101,11 +102,23 @@ export default function Layout({ children, villas }: LayoutProps) {
             </Link>
 
             <div className="flex items-center gap-4 lg:gap-6">
-              <Link to="/schedule-call" className={`hidden sm:block px-8 py-2.5 text-[11px] uppercase tracking-widest border rounded-full transition-all duration-300 ${isScrolled || isDarkHeader
+              {/* <Link to="/schedule-call" className={`hidden sm:block px-8 py-2.5 text-[11px] uppercase tracking-widest border rounded-full transition-all duration-300 ${isScrolled || isDarkHeader
                 ? 'border-[#2C3539] text-[#2C3539] hover:bg-[#2C3539] hover:text-white'
                 : 'border-white text-white hover:bg-white hover:text-[#2C3539]'
                 }`}>
                 Get in Touch
+              </Link> */}
+              <a href="#contact" className={`hidden sm:block px-8 py-2.5 text-[11px] uppercase tracking-widest border rounded-full transition-all duration-300 ${isScrolled || isDarkHeader
+                ? 'border-[#2C3539] text-[#2C3539] hover:bg-[#2C3539] hover:text-white'
+                : 'border-white text-white hover:bg-white hover:text-[#2C3539]'
+                }`}>
+                Get in Touch
+              </a>
+              <Link to="/booking" className={`hidden sm:block px-8 py-2.5 text-[11px] uppercase tracking-widest border rounded-full transition-all duration-300 ${isScrolled || isDarkHeader
+                ? 'border-[#2C3539] text-[#2C3539] hover:bg-[#2C3539] hover:text-white'
+                : 'border-white text-white hover:bg-white hover:text-[#2C3539]'
+                }`}>
+                Book Now
               </Link>
 
               <button

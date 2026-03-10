@@ -27,6 +27,19 @@ db.exec(`
     message TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
+
+  CREATE TABLE IF NOT EXISTS bookings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    email TEXT NOT NULL,
+    check_in TEXT NOT NULL,
+    check_out TEXT NOT NULL,
+    guests TEXT,
+    message TEXT,
+    total INTEGER,
+    status TEXT DEFAULT 'pending',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
 `);
 
 async function startServer() {
@@ -74,6 +87,93 @@ async function startServer() {
     } catch (error) {
       console.error("Inquiry error:", error);
       res.status(500).json({ error: "Failed to process inquiry" });
+    }
+  });
+
+  // Get unavailable dates
+  app.get("/api/bookings/dates", async (req, res) => {
+    try {
+      let bookings: { from: string, to: string }[] = [];
+      if (useFirestore && dbFirestore) {
+        const snapshot = await dbFirestore.collection('bookings').where('status', 'in', ['confirmed', 'pending']).get();
+        snapshot.forEach((doc: any) => {
+          const data = doc.data();
+          if (data.checkIn && data.checkOut) {
+            bookings.push({ from: data.checkIn, to: data.checkOut });
+          }
+        });
+      } else {
+        const rows = db.prepare("SELECT check_in as from_date, check_out as to_date FROM bookings WHERE status IN ('confirmed', 'pending')").all() as any[];
+        bookings = rows.map(r => ({ from: r.from_date, to: r.to_date }));
+      }
+      res.json(bookings);
+    } catch (error) {
+      console.error("Failed to fetch booking dates:", error);
+      res.status(500).json({ error: "Failed to fetch booking dates" });
+    }
+  });
+
+  // Submit booking request
+  app.post("/api/booking", async (req, res) => {
+    const { name, email, checkIn, checkOut, guests, message, total } = req.body;
+    if (!name || !email || !checkIn || !checkOut) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    try {
+      const bookingData = {
+        name,
+        email,
+        checkIn,
+        checkOut,
+        guests: String(guests),
+        message: message || "",
+        total: Number(total) || 0,
+        status: 'pending',
+        createdAt: new Date().toISOString()
+      };
+
+      // 1. Save to Database
+      if (useFirestore && dbFirestore) {
+        await dbFirestore.collection('bookings').add(bookingData);
+      } else {
+        const stmt = db.prepare("INSERT INTO bookings (name, email, check_in, check_out, guests, message, total, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        stmt.run(name, email, checkIn, checkOut, bookingData.guests, bookingData.message, bookingData.total, bookingData.status, bookingData.createdAt);
+      }
+
+      // 2. Send Email Notification
+      if (resend && process.env.NOTIFICATION_EMAIL) {
+        try {
+          await resend.emails.send({
+            from: 'Grey House Villas <onboarding@resend.dev>',
+            to: process.env.NOTIFICATION_EMAIL,
+            subject: `New Booking Request: ${name}`,
+            html: `
+              <div style="font-family: sans-serif; padding: 20px; color: #333;">
+                <h2 style="color: #8B6F5A;">New Booking Request</h2>
+                <p><strong>Name:</strong> ${name}</p>
+                <p><strong>Email:</strong> ${email}</p>
+                <p><strong>Check-in:</strong> ${new Date(checkIn).toLocaleDateString()}</p>
+                <p><strong>Check-out:</strong> ${new Date(checkOut).toLocaleDateString()}</p>
+                <p><strong>Guests:</strong> ${guests}</p>
+                <p><strong>Estimated Total:</strong> €${total}</p>
+                <p><strong>Message:</strong> ${message || 'None'}</p>
+                <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+                <p style="font-size: 12px; color: #999;">This request was sent from the Grey House Villas website.</p>
+              </div>
+            `
+          });
+        } catch (emailError) {
+          console.error("Failed to send booking notification email:", emailError);
+          // Continue execution and treat as success even if email fails, 
+          // because the booking is saved to the db.
+        }
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Booking error:", error);
+      res.status(500).json({ error: "Failed to process booking" });
     }
   });
 

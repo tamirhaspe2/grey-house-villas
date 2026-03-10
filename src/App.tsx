@@ -6,6 +6,7 @@ import VillaDetail from './pages/VillaDetail';
 import Testimonials from './pages/Testimonials';
 import Admin from './pages/Admin';
 import ScheduleCall from './pages/ScheduleCall';
+import Booking from './pages/Booking';
 import { getVillas } from './constants';
 import { Villa } from './types';
 
@@ -39,6 +40,7 @@ export default function App() {
               <Route path="/villas/:id" element={<VillaDetail villas={villas} />} />
               <Route path="/testimonials" element={<Testimonials />} />
               <Route path="/schedule-call" element={<ScheduleCall />} />
+              <Route path="/booking" element={<Booking />} />
             </Routes>
           </Layout>
         } />
