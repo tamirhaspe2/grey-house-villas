@@ -52,10 +52,14 @@ interface HomeData {
   };
 }
 
+const GALLERY_VISIBLE = 5; // how many images visible in accordion
+const GALLERY_AUTOPLAY_MS = 4000;
+
 export default function Home({ villas }: HomeProps) {
   const [activeVillaIndex, setActiveVillaIndex] = useState(0);
   const [homeData, setHomeData] = useState<HomeData>(homeDataDefault as HomeData);
   const [isLoading, setIsLoading] = useState(true);
+  const [galleryIndex, setGalleryIndex] = useState(0);
 
   useEffect(() => {
     // Fetch home data from API
@@ -71,6 +75,16 @@ export default function Home({ villas }: HomeProps) {
         setIsLoading(false);
       });
   }, []);
+
+  // Rolling accordion gallery autoplay
+  useEffect(() => {
+    const imgs = homeData.gallery.images;
+    if (imgs.length === 0) return;
+    const t = setInterval(() => {
+      setGalleryIndex((i) => (i + 1) % imgs.length);
+    }, GALLERY_AUTOPLAY_MS);
+    return () => clearInterval(t);
+  }, [homeData.gallery.images]);
 
   if (isLoading) {
     return (
@@ -350,8 +364,8 @@ export default function Home({ villas }: HomeProps) {
         </div>
       </section>
 
-      {/* Gallery Grid - Atmospheric Recipe */}
-      <section id="gallery" className="py-32 bg-[#1A1A1A] text-white">
+      {/* Gallery - Rolling Accordion */}
+      <section id="gallery" className="py-32 bg-[#1A1A1A] text-white overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 mb-20">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
             <div>
@@ -364,28 +378,69 @@ export default function Home({ villas }: HomeProps) {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-1 px-1">
-          {homeData.gallery.images.map((src, idx) => (
-            <motion.div
+        <div className="relative w-full h-[60vh] overflow-hidden">
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="flex items-stretch justify-center gap-1 h-full w-full max-w-[95vw]">
+              <AnimatePresence mode="popLayout" initial={false}>
+                {(() => {
+                  const imgs = homeData.gallery.images;
+                  const n = imgs.length;
+                  if (n === 0) return null;
+                  const radius = Math.floor(GALLERY_VISIBLE / 2);
+                  const indices: number[] = [];
+                  for (let i = -radius; i <= radius; i++) {
+                    indices.push(((galleryIndex + i) % n + n) % n);
+                  }
+                  const centerIdx = radius;
+                  return indices.map((imgIdx, slotIdx) => {
+                    const isCenter = slotIdx === centerIdx;
+                    const fromLeft = slotIdx < centerIdx;
+                    return (
+                      <motion.div
+                        key={imgIdx}
+                        layout
+                        initial={{ opacity: 0, x: fromLeft ? -150 : 150 }}
+                        animate={{
+                          opacity: 1,
+                          x: 0,
+                          flex: isCenter ? 4 : 1,
+                          minWidth: isCenter ? '40%' : '10%',
+                        }}
+                        exit={{ opacity: 0, x: fromLeft ? -150 : 150 }}
+                        transition={{ duration: 0.7, ease: [0.25, 1, 0.5, 1] }}
+                        className="relative overflow-hidden cursor-pointer rounded-sm shrink-0"
+                        onClick={() => setGalleryIndex(imgIdx)}
+                      >
+                        <img
+                          src={imgs[imgIdx]}
+                          alt={`Gallery ${imgIdx}`}
+                          className="absolute inset-0 w-full h-full object-cover"
+                          draggable={false}
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.onerror = null;
+                            target.src = 'https://placehold.co/1200x800?text=Missing+Image';
+                          }}
+                        />
+                        <div className={`absolute inset-0 transition-colors duration-500 ${isCenter ? 'bg-transparent' : 'bg-black/50'}`} />
+                      </motion.div>
+                    );
+                  });
+                })()}
+              </AnimatePresence>
+            </div>
+          </div>
+        </div>
+
+        {/* Progress dots */}
+        <div className="flex justify-center gap-2 mt-8">
+          {homeData.gallery.images.map((_, idx) => (
+            <button
               key={idx}
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 1, delay: idx * 0.1 }}
-              className="aspect-[4/5] overflow-hidden group relative"
-            >
-              <img
-                key={src}
-                src={src}
-                alt={`Gallery ${idx}`}
-                className="w-full h-full object-cover transition-all duration-1000 scale-110 group-hover:scale-100"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.onerror = null;
-                  target.src = 'https://placehold.co/1200x800?text=Missing+Image';
-                }} />
-              <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors"></div>
-            </motion.div>
+              onClick={() => setGalleryIndex(idx)}
+              className={`w-2 h-2 rounded-full transition-all duration-300 ${galleryIndex === idx ? 'bg-white w-8' : 'bg-white/40 hover:bg-white/60'}`}
+              aria-label={`Go to image ${idx + 1}`}
+            />
           ))}
         </div>
       </section>
