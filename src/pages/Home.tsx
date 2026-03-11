@@ -272,7 +272,7 @@ export default function Home({ villas }: HomeProps) {
                               to={`/villas/${villa.id}`}
                               className="w-full sm:w-auto px-10 py-4 bg-[#2C3539] text-white text-[10px] uppercase tracking-[0.3em] font-bold hover:bg-[#8B6F5A] transition-all duration-300 text-center"
                             >
-                              Explore Villa
+                              Explore Option
                             </Link>
                             <Link
                               to={`/villas/${villa.id}`}

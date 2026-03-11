@@ -91,7 +91,7 @@ export default function VillaDetail({ villas }: VillaDetailProps) {
       <section className="py-32 px-6">
         <div className="max-w-7xl mx-auto grid lg:grid-cols-12 gap-20">
           <div className="lg:col-span-7">
-            <span className="text-[10px] uppercase tracking-[0.4em] text-[#A89F91] mb-8 block">The Residence</span>
+            <span className="text-[10px] uppercase tracking-[0.4em] text-[#A89F91] mb-8 block">The Details</span>
             <h2 className="text-3xl md:text-5xl font-serif text-[#2C3539] leading-tight mb-12">
               {villa.description}
             </h2>

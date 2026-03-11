@@ -1,22 +1,22 @@
 [
   {
     "id": "villa-oneiro",
-    "name": "Villa Oneiro",
-    "subtitle": "The Main House",
-    "description": "A masterful 175m² two-story residence combining high-end Italian design with raw natural textures. Features multi-zone outdoor lighting and underfloor heating.",
+    "name": "Oneiro",
+    "subtitle": "The Main House & Suite",
+    "description": "A masterful 175m² two-story residence combining high-end Italian design with raw natural textures, plus a discreet 25m² suite tucked beneath the main outdoor pool. Features multi-zone outdoor lighting, underfloor heating, and expansive natural stone terraces.",
     "image": "/VILLA_ONEIRO/image.png",
     "specs": [
       {
         "label": "Space",
-        "value": "120m² Downstairs | 55m² Upstairs"
+        "value": "200m² Total (Main House + Suite)"
       },
       {
         "label": "Bedrooms",
-        "value": "2 Bedrooms (12000 BTU AC)"
+        "value": "3 Bedrooms (12000 BTU AC each)"
       },
       {
         "label": "Baths",
-        "value": "2.5 Baths (Luxury showers, heated mirrors)"
+        "value": "3.5 Baths (Luxury showers, heated mirrors)"
       },
       {
         "label": "Kitchen",
@@ -24,7 +24,7 @@
       }
     ],
     "gallery": [
-      "/VILLA_ONEIRO/1772668497663-image.png",
+      "/api/images/VILLA_ONEIRO/1773108371579-image.png",
       "/VILLA_ONEIRO/image1.png",
       "/VILLA_ONEIRO/image2.png",
       "/VILLA_ONEIRO/image3.png",
@@ -41,34 +41,7 @@
       "/VILLA_ONEIRO/image14.png",
       "/VILLA_ONEIRO/image15.png",
       "/VILLA_ONEIRO/image16.png",
-      "/VILLA_ONEIRO/1772653659092-image17.png"
-    ]
-  },
-  {
-    "id": "omorfi-suite",
-    "name": "Omorphy Suite",
-    "subtitle": "The Sanctuary",
-    "description": "A discreet suite tucked beneath the main outdoor pool. Featuring a large natural stone terrace seamlessly separated by a modern glass wall.",
-    "image": "/OMORFI_SUITE/image1.png",
-    "specs": [
-      {
-        "label": "Space",
-        "value": "25m² Suite Space"
-      },
-      {
-        "label": "Bedrooms",
-        "value": "1 Bedroom (12000 BTU AC)"
-      },
-      {
-        "label": "Baths",
-        "value": "Luxury shower & single sink"
-      },
-      {
-        "label": "Kitchen",
-        "value": "Kitchenette with Induction Hob"
-      }
-    ],
-    "gallery": [
+      "/VILLA_ONEIRO/1772653659092-image17.png",
       "/OMORFI_SUITE/image1.png",
       "/OMORFI_SUITE/image2.png",
       "/OMORFI_SUITE/image3.png",
@@ -112,6 +85,80 @@
       }
     ],
     "gallery": [
+      "/Villa_PETRA/1772668867122-___________-profile-qr.png",
+      "/Villa_PETRA/image2.png",
+      "/Villa_PETRA/image3.png",
+      "/Villa_PETRA/image4.png",
+      "/Villa_PETRA/image5.png",
+      "/Villa_PETRA/image6.png",
+      "/Villa_PETRA/image7.png",
+      "/Villa_PETRA/image8.png",
+      "/Villa_PETRA/image9.png",
+      "/Villa_PETRA/image10.png",
+      "/Villa_PETRA/image11.png",
+      "/Villa_PETRA/image12.png",
+      "/Villa_PETRA/image13.png"
+    ]
+  },
+  {
+    "id": "grey-estate",
+    "name": "Grey Estate",
+    "subtitle": "The Ultimate Sanctuary",
+    "description": "The complete 3000m² private estate experience. Includes Villa Oneiro, the Omorfi Suite, and Villa Pétra. Exclusive access to the main saltwater pool, outdoor pizza oven, multiple terraces, and the private plunge pool down at Pétra.",
+    "image": "/VILLA_ONEIRO/image.png",
+    "specs": [
+      {
+        "label": "Space",
+        "value": "250m² Total Living Space"
+      },
+      {
+        "label": "Bedrooms",
+        "value": "4 Bedrooms"
+      },
+      {
+        "label": "Baths",
+        "value": "4.5 Baths"
+      },
+      {
+        "label": "Amenities",
+        "value": "Main Pool, Plunge Pool, Pizza Oven"
+      }
+    ],
+    "gallery": [
+      "/api/images/VILLA_ONEIRO/1773108371579-image.png",
+      "/VILLA_ONEIRO/image1.png",
+      "/VILLA_ONEIRO/image2.png",
+      "/VILLA_ONEIRO/image3.png",
+      "/VILLA_ONEIRO/image4.png",
+      "/VILLA_ONEIRO/image5.png",
+      "/VILLA_ONEIRO/image6.png",
+      "/VILLA_ONEIRO/image7.png",
+      "/VILLA_ONEIRO/image8.png",
+      "/VILLA_ONEIRO/image9.png",
+      "/VILLA_ONEIRO/image10.png",
+      "/VILLA_ONEIRO/image11.png",
+      "/VILLA_ONEIRO/image12.png",
+      "/VILLA_ONEIRO/image13.png",
+      "/VILLA_ONEIRO/image14.png",
+      "/VILLA_ONEIRO/image15.png",
+      "/VILLA_ONEIRO/image16.png",
+      "/VILLA_ONEIRO/1772653659092-image17.png",
+      "/OMORFI_SUITE/image1.png",
+      "/OMORFI_SUITE/image2.png",
+      "/OMORFI_SUITE/image3.png",
+      "/OMORFI_SUITE/image4.png",
+      "/OMORFI_SUITE/image5.png",
+      "/OMORFI_SUITE/image6.png",
+      "/OMORFI_SUITE/image7.png",
+      "/OMORFI_SUITE/image8.png",
+      "/OMORFI_SUITE/image9.png",
+      "/OMORFI_SUITE/image10.png",
+      "/OMORFI_SUITE/image11.png",
+      "/OMORFI_SUITE/image12.png",
+      "/OMORFI_SUITE/image13.png",
+      "/OMORFI_SUITE/image14.png",
+      "/OMORFI_SUITE/image15.png",
+      "/OMORFI_SUITE/image16.png",
       "/Villa_PETRA/1772668867122-___________-profile-qr.png",
       "/Villa_PETRA/image2.png",
       "/Villa_PETRA/image3.png",

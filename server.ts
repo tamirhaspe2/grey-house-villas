@@ -34,6 +34,7 @@ db.exec(`
     email TEXT NOT NULL,
     check_in TEXT NOT NULL,
     check_out TEXT NOT NULL,
+    package_type TEXT,
     guests TEXT,
     message TEXT,
     total INTEGER,
@@ -90,12 +91,31 @@ async function startServer() {
     }
   });
 
-  // Get unavailable dates
+  // Get unavailable dates based on selected package
   app.get("/api/bookings/dates", async (req, res) => {
     try {
+      const packageType = req.query.package as string;
+      if (!packageType || !['A', 'B', 'C'].includes(packageType)) {
+        return res.json([]);
+      }
+
+      let conflictingPackages: string[];
+      // Overlap logic:
+      // A (Oneiro) conflicts with A, C
+      // B (Petra) conflicts with B, C
+      // C (Grey Estate) conflicts with A, B, C
+      if (packageType === 'A') conflictingPackages = ['A', 'C'];
+      else if (packageType === 'B') conflictingPackages = ['B', 'C'];
+      else conflictingPackages = ['A', 'B', 'C'];
+
       let bookings: { from: string, to: string }[] = [];
+
       if (useFirestore && dbFirestore) {
-        const snapshot = await dbFirestore.collection('bookings').where('status', 'in', ['confirmed', 'pending']).get();
+        const snapshot = await dbFirestore.collection('bookings')
+          .where('status', 'in', ['confirmed', 'pending'])
+          .where('packageType', 'in', conflictingPackages)
+          .get();
+
         snapshot.forEach((doc: any) => {
           const data = doc.data();
           if (data.checkIn && data.checkOut) {
@@ -103,7 +123,10 @@ async function startServer() {
           }
         });
       } else {
-        const rows = db.prepare("SELECT check_in as from_date, check_out as to_date FROM bookings WHERE status IN ('confirmed', 'pending')").all() as any[];
+        // Build safe query for dynamic 'in' clause in SQLite
+        const placeholders = conflictingPackages.map(() => '?').join(',');
+        const queryStr = `SELECT check_in as from_date, check_out as to_date FROM bookings WHERE status IN ('confirmed', 'pending') AND package_type IN (${placeholders})`;
+        const rows = db.prepare(queryStr).all(...conflictingPackages) as any[];
         bookings = rows.map(r => ({ from: r.from_date, to: r.to_date }));
       }
       res.json(bookings);
@@ -115,8 +138,8 @@ async function startServer() {
 
   // Submit booking request
   app.post("/api/booking", async (req, res) => {
-    const { name, email, checkIn, checkOut, guests, message, total } = req.body;
-    if (!name || !email || !checkIn || !checkOut) {
+    const { name, email, checkIn, checkOut, guests, message, total, packageType } = req.body;
+    if (!name || !email || !checkIn || !checkOut || !packageType) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
@@ -126,6 +149,7 @@ async function startServer() {
         email,
         checkIn,
         checkOut,
+        packageType,
         guests: String(guests),
         message: message || "",
         total: Number(total) || 0,
@@ -133,12 +157,20 @@ async function startServer() {
         createdAt: new Date().toISOString()
       };
 
+      const packageNames: Record<string, string> = {
+        'A': 'Oneiro',
+        'B': 'Villa Pétra',
+        'C': 'Grey Estate'
+      };
+
+      const readablePackage = packageNames[packageType] || packageType;
+
       // 1. Save to Database
       if (useFirestore && dbFirestore) {
         await dbFirestore.collection('bookings').add(bookingData);
       } else {
-        const stmt = db.prepare("INSERT INTO bookings (name, email, check_in, check_out, guests, message, total, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        stmt.run(name, email, checkIn, checkOut, bookingData.guests, bookingData.message, bookingData.total, bookingData.status, bookingData.createdAt);
+        const stmt = db.prepare("INSERT INTO bookings (name, email, check_in, check_out, package_type, guests, message, total, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        stmt.run(name, email, checkIn, checkOut, packageType, bookingData.guests, bookingData.message, bookingData.total, bookingData.status, bookingData.createdAt);
       }
 
       // 2. Send Email Notification
@@ -147,10 +179,11 @@ async function startServer() {
           await resend.emails.send({
             from: 'Grey House Villas <onboarding@resend.dev>',
             to: process.env.NOTIFICATION_EMAIL,
-            subject: `New Booking Request: ${name}`,
+            subject: `New Booking Request: ${name} [${readablePackage}]`,
             html: `
               <div style="font-family: sans-serif; padding: 20px; color: #333;">
                 <h2 style="color: #8B6F5A;">New Booking Request</h2>
+                <p><strong>Package:</strong> ${readablePackage}</p>
                 <p><strong>Name:</strong> ${name}</p>
                 <p><strong>Email:</strong> ${email}</p>
                 <p><strong>Check-in:</strong> ${new Date(checkIn).toLocaleDateString()}</p>

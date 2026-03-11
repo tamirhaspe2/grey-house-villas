@@ -6,6 +6,7 @@ import { format, differenceInDays } from 'date-fns';
 import 'react-day-picker/style.css';
 
 export default function Booking() {
+    const [selectedPackage, setSelectedPackage] = useState<'A' | 'B' | 'C' | 'none'>('none');
     const [date, setDate] = useState<DateRange | undefined>();
     const [guests, setGuests] = useState('2');
     const [name, setName] = useState('');
@@ -16,8 +17,13 @@ export default function Booking() {
     const [disabledDates, setDisabledDates] = useState<DateRange[]>([]);
 
     useEffect(() => {
-        // Fetch booked dates to disable them on the calendar
-        fetch('/api/bookings/dates')
+        if (selectedPackage === 'none') {
+            setDisabledDates([]);
+            return;
+        }
+
+        // Fetch booked dates for the selected package
+        fetch(`/api/bookings/dates?package=${selectedPackage}`)
             .then(res => res.json())
             .then(data => {
                 if (Array.isArray(data)) {
@@ -29,10 +35,18 @@ export default function Booking() {
                 }
             })
             .catch(err => console.error("Failed to load disabled dates", err));
-    }, []);
+    }, [selectedPackage]);
 
-    // Assume nightly rate for demo
-    const nightlyRate = 850;
+    // Nightly rates for demo
+    const rates = {
+        'none': 0,
+        'A': 850, // Oneiro
+        'B': 450, // Petra
+        'C': 1200 // Grey Estate
+    };
+
+    // @ts-ignore
+    const nightlyRate = rates[selectedPackage] || 0;
 
     const nights = date?.from && date?.to ? differenceInDays(date.to, date.from) : 0;
     const total = nights > 0 ? nights * nightlyRate : 0;
@@ -53,6 +67,7 @@ export default function Booking() {
                     email,
                     guests,
                     message,
+                    packageType: selectedPackage,
                     checkIn: date.from.toISOString(),
                     checkOut: date.to.toISOString(),
                     total
@@ -88,8 +103,45 @@ export default function Booking() {
                         Reserve Your Stay
                     </h1>
                     <p className="text-[#4A5568] text-sm mb-10 leading-relaxed font-light">
-                        Select your dates to request a booking at Grey House. We will review your request and contact you directly to arrange payment and details.
+                        Select an option to request a booking at Grey House. We will review your request and contact you directly to arrange payment and details.
                     </p>
+
+                    <div className="mb-10 space-y-3">
+                        <label className="block text-[10px] uppercase tracking-wider text-gray-500 mb-4">Choose Your Experience</label>
+
+                        <button
+                            onClick={() => setSelectedPackage('A')}
+                            className={`w-full text-left p-4 border transition-all ${selectedPackage === 'A' ? 'border-[#2C3539] bg-[#F4F1ED]' : 'border-gray-200 hover:border-gray-300 bg-transparent'}`}
+                        >
+                            <div className="flex justify-between">
+                                <span className="font-serif text-[#1A202C]">Oneiro</span>
+                                <span className="text-xs text-gray-500">€850 / night</span>
+                            </div>
+                            <div className="text-xs text-gray-500 mt-1 font-light">Main House + Suite (3 Beds, 3.5 Baths)</div>
+                        </button>
+
+                        <button
+                            onClick={() => setSelectedPackage('B')}
+                            className={`w-full text-left p-4 border transition-all ${selectedPackage === 'B' ? 'border-[#2C3539] bg-[#F4F1ED]' : 'border-gray-200 hover:border-gray-300 bg-transparent'}`}
+                        >
+                            <div className="flex justify-between">
+                                <span className="font-serif text-[#1A202C]">Villa Pétra</span>
+                                <span className="text-xs text-gray-500">€450 / night</span>
+                            </div>
+                            <div className="text-xs text-gray-500 mt-1 font-light">The Private Enclave (1 Bed, 1 Bath)</div>
+                        </button>
+
+                        <button
+                            onClick={() => setSelectedPackage('C')}
+                            className={`w-full text-left p-4 border transition-all ${selectedPackage === 'C' ? 'border-[#2C3539] bg-[#F4F1ED]' : 'border-gray-200 hover:border-gray-300 bg-transparent'}`}
+                        >
+                            <div className="flex justify-between">
+                                <span className="font-serif text-[#1A202C]">Grey Estate</span>
+                                <span className="text-xs text-gray-500">€1200 / night</span>
+                            </div>
+                            <div className="text-xs text-gray-500 mt-1 font-light">The Ultimate Sanctuary (All 4 Beds & Both Pools)</div>
+                        </button>
+                    </div>
 
                     {submitStatus === 'success' ? (
                         <div className="my-auto bg-[#F4F1ED] p-8 text-center rounded">
@@ -98,7 +150,7 @@ export default function Booking() {
                                 Thank you for your interest in Grey House. We have received your booking request for {date?.from ? format(date.from, 'PPP') : ''} to {date?.to ? format(date.to, 'PPP') : ''}. Our concierge team will be in touch shortly.
                             </p>
                         </div>
-                    ) : (
+                    ) : selectedPackage !== 'none' ? (
                         <form className="space-y-6 flex-grow flex flex-col" onSubmit={handleBookingRequest}>
                             <div className="space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
@@ -190,7 +242,7 @@ export default function Booking() {
                                 <p className="text-[10px] text-gray-400 text-center mt-4">You won't be charged yet. This is a booking request.</p>
                             </div>
                         </form>
-                    )}
+                    ) : null}
                 </div>
 
                 {/* Right Pane - Calendar Selection */}
