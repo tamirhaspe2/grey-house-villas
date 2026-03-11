@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, Maximize, Home as HomeIcon, Droplets, Wind, Check } from 'lucide-react';
+import { ArrowRight, Maximize, Home as HomeIcon, Droplets, Wind, Check, X } from 'lucide-react';
 import { Villa } from '../types';
 import homeDataDefault from '../data/home.json';
 
@@ -16,8 +16,8 @@ interface HomeData {
     title: string;
     subtitle: string;
     description: string;
-    button1: string;
     button2: string;
+    videoUrl?: string;
   };
   philosophy: {
     sectionLabel: string;
@@ -60,6 +60,7 @@ export default function Home({ villas }: HomeProps) {
   const [homeData, setHomeData] = useState<HomeData>(homeDataDefault as HomeData);
   const [isLoading, setIsLoading] = useState(true);
   const [galleryIndex, setGalleryIndex] = useState(0);
+  const [isVideoVisible, setIsVideoVisible] = useState(true);
 
   useEffect(() => {
     // Fetch home data from API
@@ -149,6 +150,38 @@ export default function Home({ villas }: HomeProps) {
         >
           <div className="w-[1px] h-16 bg-gradient-to-b from-white/50 to-transparent"></div>
         </motion.div>
+
+        {/* Floating Hero Video */}
+        <AnimatePresence>
+          {homeData.hero.videoUrl && isVideoVisible && (
+            <motion.div
+              initial={{ opacity: 0, y: 50, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 50, scale: 0.9 }}
+              transition={{ duration: 0.8, ease: [0.25, 1, 0.5, 1], delay: 1 }}
+              // className="absolute bottom-6 right-6 md:bottom-12 md:right-12 z-40 w-48 md:w-72 aspect-video rounded-sm overflow-hidden shadow-2xl border border-white/20 group cursor-pointer"
+              className="absolute bottom-6 right-6 md:bottom-0 md:right-0 z-40 w-48 md:w-140 aspect-video rounded-sm overflow-hidden shadow-2xl border border-white/20 group cursor-pointer"
+            >
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsVideoVisible(false);
+                }}
+                className="absolute top-2 right-2 z-50 w-6 h-6 bg-black/40 hover:bg-black/80 backdrop-blur-md flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <X size={12} />
+              </button>
+              <video
+                src={homeData.hero.videoUrl}
+                autoPlay
+                muted
+                loop
+                playsInline
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </section>
 
       {/* Architectural Philosophy - Warm Organic Recipe */}

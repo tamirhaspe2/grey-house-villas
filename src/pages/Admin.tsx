@@ -11,8 +11,8 @@ interface HomeData {
         title: string;
         subtitle: string;
         description: string;
-        button1: string;
         button2: string;
+        videoUrl?: string;
     };
     philosophy: {
         sectionLabel: string;
@@ -237,14 +237,14 @@ export default function Admin() {
 
     const handleHomeImageUpload = async (file: File, imageKey: string, folder: string = '') => {
         // Validate file
-        if (!file || !file.type.startsWith('image/')) {
-            alert('Please select a valid image file.');
+        if (!file || (!file.type.startsWith('image/') && !file.type.startsWith('video/'))) {
+            alert('Please select a valid image or video file.');
             return;
         }
 
-        // Validate file size (10MB limit)
-        if (file.size > 10 * 1024 * 1024) {
-            alert('Image size must be less than 10MB.');
+        // Validate file size (50MB limit)
+        if (file.size > 50 * 1024 * 1024) {
+            alert('File size must be less than 50MB.');
             return;
         }
 
@@ -475,6 +475,54 @@ export default function Admin() {
                                                     }}
                                                 />
                                             </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Hero Floating Video */}
+                                <div className="mb-8">
+                                    <h3 className="text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-6 border-b border-gray-100 pb-4">Hero Floating Video (Optional)</h3>
+                                    <div className="relative group rounded-sm overflow-hidden border border-gray-200 aspect-video max-w-sm bg-gray-50 flex items-center justify-center">
+                                        {uploadingImage === 'home-hero.videoUrl' && (
+                                            <div className="absolute inset-0 bg-black/70 z-30 flex items-center justify-center">
+                                                <div className="text-white text-sm">Uploading...</div>
+                                            </div>
+                                        )}
+                                        {homeData.hero.videoUrl ? (
+                                            <video
+                                                src={homeData.hero.videoUrl}
+                                                className="w-full h-full object-cover"
+                                                controls
+                                                muted
+                                            />
+                                        ) : (
+                                            <span className="text-gray-400 text-xs uppercase tracking-widest">No Video Selected</span>
+                                        )}
+                                        <div className={`absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-4 ${!homeData.hero.videoUrl ? 'opacity-100 bg-transparent' : ''}`}>
+                                            <ImageIcon className="text-[#2C3539] drop-shadow-md hidden" size={40} strokeWidth={1.5} />
+                                            <label className={`cursor-pointer bg-white text-[#2C3539] px-6 py-2.5 text-xs font-bold uppercase tracking-widest border border-[#2C3539] hover:bg-[#8B6F5A] hover:text-white hover:border-[#8B6F5A] transition-colors shadow-sm ${uploadingImage === 'home-hero.videoUrl' ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                                                {uploadingImage === 'home-hero.videoUrl' ? 'Uploading...' : (homeData.hero.videoUrl ? 'Replace Video' : 'Upload Video')}
+                                                <input
+                                                    type="file"
+                                                    accept="video/*"
+                                                    className="hidden"
+                                                    disabled={uploadingImage === 'home-hero.videoUrl'}
+                                                    onChange={(e) => {
+                                                        if (e.target.files?.[0]) {
+                                                            handleHomeImageUpload(e.target.files[0], 'hero.videoUrl', 'home');
+                                                            e.target.value = '';
+                                                        }
+                                                    }}
+                                                />
+                                            </label>
+                                            {homeData.hero.videoUrl && (
+                                                <button
+                                                    onClick={() => setHomeData(prev => ({ ...prev, hero: { ...prev.hero, videoUrl: '' } }))}
+                                                    className="text-white text-[10px] uppercase tracking-widest hover:text-rose-400 transition-colors"
+                                                >
+                                                    Remove Video
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
