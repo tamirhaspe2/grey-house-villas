@@ -936,8 +936,75 @@ export default function Admin() {
                         </div>
                     ) : currentVilla && (
                         <div className="bg-white p-6 md:p-12 shadow-sm border border-gray-100 rounded-sm">
-                            <h2 className="text-4xl font-serif text-[#2C3539] mb-3">{currentVilla.name}</h2>
-                            <p className="text-[#A89F91] text-xs tracking-[0.2em] uppercase mb-12">{currentVilla.subtitle}</p>
+                            <h2 className="text-4xl font-serif text-[#2C3539] mb-8">{currentVilla.name} Settings</h2>
+
+                            {/* Text Fields */}
+                            <div className="space-y-6 mb-12">
+                                <div>
+                                    <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Name</label>
+                                    <input
+                                        type="text"
+                                        value={currentVilla.name}
+                                        onChange={(e) => setVillas(villas.map(v => v.id === activeVilla ? { ...v, name: e.target.value } : v))}
+                                        className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none font-serif text-xl"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Subtitle</label>
+                                    <input
+                                        type="text"
+                                        value={currentVilla.subtitle}
+                                        onChange={(e) => setVillas(villas.map(v => v.id === activeVilla ? { ...v, subtitle: e.target.value } : v))}
+                                        className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Description</label>
+                                    <textarea
+                                        value={currentVilla.description}
+                                        onChange={(e) => setVillas(villas.map(v => v.id === activeVilla ? { ...v, description: e.target.value } : v))}
+                                        rows={5}
+                                        className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-4">Specs</label>
+                                    <div className="space-y-3">
+                                        {currentVilla.specs.map((spec, specIdx) => (
+                                            <div key={specIdx} className="flex gap-4 items-center">
+                                                <div className="w-1/3">
+                                                    <input
+                                                        type="text"
+                                                        value={spec.label}
+                                                        onChange={(e) => {
+                                                            const newSpecs = [...currentVilla.specs];
+                                                            newSpecs[specIdx] = { ...spec, label: e.target.value };
+                                                            setVillas(villas.map(v => v.id === activeVilla ? { ...v, specs: newSpecs } : v));
+                                                        }}
+                                                        placeholder="Label"
+                                                        className="w-full border border-gray-200 px-3 py-2 text-sm focus:border-[#2C3539] outline-none"
+                                                    />
+                                                </div>
+                                                <div className="w-2/3">
+                                                    <input
+                                                        type="text"
+                                                        value={spec.value}
+                                                        onChange={(e) => {
+                                                            const newSpecs = [...currentVilla.specs];
+                                                            newSpecs[specIdx] = { ...spec, value: e.target.value };
+                                                            setVillas(villas.map(v => v.id === activeVilla ? { ...v, specs: newSpecs } : v));
+                                                        }}
+                                                        placeholder="Value"
+                                                        className="w-full border border-gray-200 px-3 py-2 text-sm focus:border-[#2C3539] outline-none"
+                                                    />
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
 
                             {/* Hero Image Edit */}
                             <div className="mb-20">
