@@ -133,7 +133,8 @@ export default function Home({ villas }: HomeProps) {
               <a href="#villas" className="px-10 py-4 bg-white text-black text-[10px] uppercase tracking-[0.3em] font-bold hover:bg-[#D4C3B3] transition-all duration-500">
                 {homeData.hero.button1}
               </a>
-              <a href="#estate" className="text-white text-[10px] uppercase tracking-[0.3em] font-bold flex items-center group">
+              {/* <a href="#estate" className="text-white text-[10px] uppercase tracking-[0.3em] font-bold flex items-center group"> */}
+              <a href="#gallery" className="text-white text-[10px] uppercase tracking-[0.3em] font-bold flex items-center group">
                 {homeData.hero.button2} <ArrowRight size={14} className="ml-3 group-hover:translate-x-2 transition-transform" />
               </a>
             </div>
