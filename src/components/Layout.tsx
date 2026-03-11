@@ -92,11 +92,13 @@ export default function Layout({ children, villas }: LayoutProps) {
 
         {/* Global Header */}
         <header
-          className={`w-full transition-all duration-500 border-b border-transparent ${isScrolled || isDarkHeader ? 'bg-white/95 backdrop-blur-md shadow-sm border-gray-100 py-4' : 'bg-transparent py-6'
+          // className={`w-full transition-all duration-500 border-b border-transparent ${isScrolled || isDarkHeader ? 'bg-white/95 backdrop-blur-md shadow-sm border-gray-100 py-4' : 'bg-transparent py-6'
+          className={`w-full transition-all duration-500 border-b border-transparent ${isScrolled || isDarkHeader ? 'bg-white/95 backdrop-blur-md shadow-sm border-gray-100 py-4' : 'bg-white/95 backdrop-blur-md shadow-sm border-gray-100 py-4'
             }`}
         >
           <div className="max-w-[1800px] px-6 lg:px-12 flex justify-between items-center mx-auto">
-            <Link to="/" className={`font-serif text-2xl lg:text-3xl tracking-wider uppercase transition-colors ${isScrolled || isDarkHeader ? 'text-[#2C3539]' : 'text-white drop-shadow-md'}`}>
+            {/* <Link to="/" className={`font-serif text-2xl lg:text-3xl tracking-wider uppercase transition-colors ${isScrolled || isDarkHeader ? 'text-[#2C3539]' : 'text-white drop-shadow-md'}`}> */}
+            <Link to="/" className={`font-serif text-2xl lg:text-3xl tracking-wider uppercase transition-colors ${isScrolled || isDarkHeader ? 'text-[#2C3539]' : 'text-[#2C3539]'}`}>
               Grey House
               <div className={`text-[9px] tracking-[0.4em] mt-1 transition-opacity ${isScrolled || isDarkHeader ? 'opacity-60' : 'opacity-80'}`}>By Katouna</div>
             </Link>
@@ -110,13 +112,15 @@ export default function Layout({ children, villas }: LayoutProps) {
               </Link> */}
               <a href="#contact" className={`hidden sm:block px-8 py-2.5 text-[11px] uppercase tracking-widest border rounded-full transition-all duration-300 ${isScrolled || isDarkHeader
                 ? 'border-[#2C3539] text-[#2C3539] hover:bg-[#2C3539] hover:text-white'
-                : 'border-white text-white hover:bg-white hover:text-[#2C3539]'
+                // : 'border-white text-white hover:bg-white hover:text-[#2C3539]'
+                : 'border-[#2C3539] text-[#2C3539] hover:bg-[#2C3539] hover:text-white'
                 }`}>
                 Get in Touch
               </a>
               <Link to="/booking" className={`hidden sm:block px-8 py-2.5 text-[11px] uppercase tracking-widest border rounded-full transition-all duration-300 ${isScrolled || isDarkHeader
                 ? 'border-[#2C3539] text-[#2C3539] hover:bg-[#2C3539] hover:text-white'
-                : 'border-white text-white hover:bg-white hover:text-[#2C3539]'
+                // : 'border-white text-white hover:bg-white hover:text-[#2C3539]'
+                : 'border-[#2C3539] text-[#2C3539] hover:bg-[#2C3539] hover:text-white'
                 }`}>
                 Book Now
               </Link>
@@ -126,7 +130,8 @@ export default function Layout({ children, villas }: LayoutProps) {
                   ? 'border-[#2C3539] text-[#2C3539] bg-white'
                   : isScrolled || isDarkHeader
                     ? 'border-[#2C3539] text-[#2C3539]'
-                    : 'border-white text-white'
+                    // : 'border-white text-white'
+                    : 'border-[#2C3539] text-[#2C3539]'
                   }`}
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               >

@@ -97,7 +97,7 @@ export default function Home({ villas }: HomeProps) {
               console.error('Hero image failed to load:', homeData.hero.backgroundImage);
             }}
           />
-          <div className="absolute inset-0 bg-black/40"></div>
+          <div className="absolute inset-0 bg-black/20"></div>
         </div>
 
         <div className="relative z-10 text-center px-6 max-w-5xl mx-auto">
