@@ -37,6 +37,11 @@ export default function Booking() {
             .catch(err => console.error("Failed to load disabled dates", err));
     }, [selectedPackage]);
 
+    // Reset selected dates whenever the package changes
+    useEffect(() => {
+        setDate(undefined);
+    }, [selectedPackage]);
+
     // Nightly rates for demo
     const rates = {
         'none': 0,
@@ -258,17 +263,28 @@ export default function Booking() {
                         </div>
                     </div>
 
-                    <div className="bg-[#FDFCFB] p-4 lg:p-8 rounded-xl border border-gray-100 shadow-sm w-full max-w-[700px] overflow-x-auto flex justify-center">
+                    <div className="relative bg-[#FDFCFB] p-4 lg:p-8 rounded-xl border border-gray-100 shadow-sm w-full max-w-[700px] overflow-x-auto flex justify-center">
                         <DayPicker
                             mode="range"
                             selected={date}
-                            onSelect={setDate}
+                            onSelect={selectedPackage === 'none' ? undefined : setDate}
                             numberOfMonths={window.innerWidth > 768 ? 2 : 1}
                             pagedNavigation
-                            disabled={[{ before: new Date() }, ...disabledDates]} // Disable past dates and booked dates
-                            className="bg-transparent"
+                            disabled={
+                                selectedPackage === 'none'
+                                    ? [{ from: new Date(1900, 0, 1), to: new Date(2100, 11, 31) }]
+                                    : [{ before: new Date() }, ...disabledDates]
+                            } // Disable all dates until a package is chosen, then past + booked dates
+                            className="bg-transparent opacity-60"
                             style={{ margin: 0 }}
                         />
+                        {selectedPackage === 'none' && (
+                            <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                                <div className="bg-[#FDFCFB]/90 px-6 py-3 rounded-full border border-dashed border-gray-300 text-xs uppercase tracking-[0.18em] text-gray-500 text-center">
+                                    Select an experience on the left to enable dates
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-[600px]">
