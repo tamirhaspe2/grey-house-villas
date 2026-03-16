@@ -91,6 +91,46 @@ async function startServer() {
     }
   });
 
+  // Helper: get conflicting package codes for a package type
+  const getConflictingPackages = (packageType: string): string[] => {
+    if (packageType === 'A') return ['A', 'C'];
+    if (packageType === 'B') return ['B', 'C'];
+    if (packageType === 'C') return ['A', 'B', 'C'];
+    return [];
+  };
+
+  // Helper: fetch existing booking ranges for packages (used by GET dates and overlap check)
+  const getBookedRanges = async (conflictingPackages: string[]): Promise<{ from: string; to: string }[]> => {
+    if (conflictingPackages.length === 0) return [];
+    if (useFirestore && dbFirestore) {
+      const snapshot = await dbFirestore.collection('bookings')
+        .where('status', 'in', ['confirmed', 'pending'])
+        .where('packageType', 'in', conflictingPackages)
+        .get();
+      const out: { from: string; to: string }[] = [];
+      snapshot.forEach((doc: any) => {
+        const data = doc.data();
+        if (data.checkIn && data.checkOut) out.push({ from: data.checkIn, to: data.checkOut });
+      });
+      return out;
+    }
+    const placeholders = conflictingPackages.map(() => '?').join(',');
+    const queryStr = `SELECT check_in as from_date, check_out as to_date FROM bookings WHERE status IN ('confirmed', 'pending') AND package_type IN (${placeholders})`;
+    const rows = db.prepare(queryStr).all(...conflictingPackages) as { from_date: string; to_date: string }[];
+    return rows.map(r => ({ from: r.from_date, to: r.to_date }));
+  };
+
+  // Normalize to date-only (noon UTC) to avoid timezone issues when comparing
+  const toDateOnly = (d: Date): Date => {
+    const s = d.toISOString();
+    const datePart = s.slice(0, 10);
+    return new Date(datePart + 'T12:00:00.000Z');
+  };
+
+  // Two ranges overlap if start1 < end2 && start2 < end1
+  const rangesOverlap = (start1: Date, end1: Date, start2: Date, end2: Date): boolean =>
+    start1 < end2 && start2 < end1;
+
   // Get unavailable dates based on selected package
   app.get("/api/bookings/dates", async (req, res) => {
     try {
@@ -98,37 +138,8 @@ async function startServer() {
       if (!packageType || !['A', 'B', 'C'].includes(packageType)) {
         return res.json([]);
       }
-
-      let conflictingPackages: string[];
-      // Overlap logic:
-      // A (Oneiro) conflicts with A, C
-      // B (Petra) conflicts with B, C
-      // C (Grey Estate) conflicts with A, B, C
-      if (packageType === 'A') conflictingPackages = ['A', 'C'];
-      else if (packageType === 'B') conflictingPackages = ['B', 'C'];
-      else conflictingPackages = ['A', 'B', 'C'];
-
-      let bookings: { from: string, to: string }[] = [];
-
-      if (useFirestore && dbFirestore) {
-        const snapshot = await dbFirestore.collection('bookings')
-          .where('status', 'in', ['confirmed', 'pending'])
-          .where('packageType', 'in', conflictingPackages)
-          .get();
-
-        snapshot.forEach((doc: any) => {
-          const data = doc.data();
-          if (data.checkIn && data.checkOut) {
-            bookings.push({ from: data.checkIn, to: data.checkOut });
-          }
-        });
-      } else {
-        // Build safe query for dynamic 'in' clause in SQLite
-        const placeholders = conflictingPackages.map(() => '?').join(',');
-        const queryStr = `SELECT check_in as from_date, check_out as to_date FROM bookings WHERE status IN ('confirmed', 'pending') AND package_type IN (${placeholders})`;
-        const rows = db.prepare(queryStr).all(...conflictingPackages) as any[];
-        bookings = rows.map(r => ({ from: r.from_date, to: r.to_date }));
-      }
+      const conflictingPackages = getConflictingPackages(packageType);
+      const bookings = await getBookedRanges(conflictingPackages);
       res.json(bookings);
     } catch (error) {
       console.error("Failed to fetch booking dates:", error);
@@ -144,6 +155,22 @@ async function startServer() {
     }
 
     try {
+      const conflictingPackages = getConflictingPackages(packageType);
+      const existingRanges = await getBookedRanges(conflictingPackages);
+      const newStart = toDateOnly(new Date(checkIn));
+      const newEnd = toDateOnly(new Date(checkOut));
+
+      for (const range of existingRanges) {
+        const start = toDateOnly(new Date(range.from));
+        const end = toDateOnly(new Date(range.to));
+        if (rangesOverlap(newStart, newEnd, start, end)) {
+          return res.status(400).json({
+            error: "dates_unavailable",
+            message: "Some of these dates are no longer available. Please choose different dates."
+          });
+        }
+      }
+
       const bookingData = {
         name,
         email,
@@ -172,6 +199,9 @@ async function startServer() {
         const stmt = db.prepare("INSERT INTO bookings (name, email, check_in, check_out, package_type, guests, message, total, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         stmt.run(name, email, checkIn, checkOut, packageType, bookingData.guests, bookingData.message, bookingData.total, bookingData.status, bookingData.createdAt);
       }
+
+      // Notify all clients so booking calendars refresh immediately
+      io.emit("bookings:updated");
 
       // 2. Send Email Notification
       if (resend && process.env.NOTIFICATION_EMAIL) {

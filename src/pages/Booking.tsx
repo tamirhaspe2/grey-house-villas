@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { ArrowLeft, Calendar as CalendarIcon, Info, CreditCard } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { DayPicker, DateRange } from 'react-day-picker';
 import { format, differenceInDays } from 'date-fns';
+import { io } from 'socket.io-client';
 import 'react-day-picker/style.css';
 
 export default function Booking() {
@@ -14,20 +15,15 @@ export default function Booking() {
     const [message, setMessage] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+    const [submitError, setSubmitError] = useState<string>('');
     const [disabledDates, setDisabledDates] = useState<DateRange[]>([]);
 
-    useEffect(() => {
-        if (selectedPackage === 'none') {
-            setDisabledDates([]);
-            return;
-        }
-
-        // Fetch booked dates for the selected package
-        fetch(`/api/bookings/dates?package=${selectedPackage}`)
+    const fetchDisabledDates = useCallback((packageType: 'A' | 'B' | 'C') => {
+        fetch(`/api/bookings/dates?package=${packageType}`)
             .then(res => res.json())
             .then(data => {
                 if (Array.isArray(data)) {
-                    const parsedDates = data.map((d: any) => ({
+                    const parsedDates = data.map((d: { from: string; to: string }) => ({
                         from: new Date(d.from),
                         to: new Date(d.to)
                     }));
@@ -35,7 +31,41 @@ export default function Booking() {
                 }
             })
             .catch(err => console.error("Failed to load disabled dates", err));
-    }, [selectedPackage]);
+    }, []);
+
+    useEffect(() => {
+        if (selectedPackage === 'none') {
+            setDisabledDates([]);
+            return;
+        }
+        fetchDisabledDates(selectedPackage);
+    }, [selectedPackage, fetchDisabledDates]);
+
+    // When someone else books, refresh calendar so taken dates update immediately
+    useEffect(() => {
+        const socket = io();
+        socket.on('bookings:updated', () => {
+            if (selectedPackage !== 'none') {
+                fetchDisabledDates(selectedPackage);
+            }
+        });
+        return () => { socket.disconnect(); };
+    }, [selectedPackage, fetchDisabledDates]);
+
+    // When user switches back to this tab/window, refetch so duplicated tabs see latest availability
+    useEffect(() => {
+        const onFocus = () => {
+            if (selectedPackage !== 'none') {
+                fetchDisabledDates(selectedPackage);
+            }
+        };
+        document.addEventListener('visibilitychange', onFocus);
+        window.addEventListener('focus', onFocus);
+        return () => {
+            document.removeEventListener('visibilitychange', onFocus);
+            window.removeEventListener('focus', onFocus);
+        };
+    }, [selectedPackage, fetchDisabledDates]);
 
     // Reset selected dates whenever the package changes
     useEffect(() => {
@@ -56,12 +86,27 @@ export default function Booking() {
     const nights = date?.from && date?.to ? differenceInDays(date.to, date.from) : 0;
     const total = nights > 0 ? nights * nightlyRate : 0;
 
+    // Date-only (midnight) for overlap comparison
+    const toDateOnly = (d: Date): Date => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const rangesOverlap = (a: Date, b: Date, from: Date, to: Date): boolean =>
+        toDateOnly(a) < toDateOnly(to) && toDateOnly(from) < toDateOnly(b);
+
+    const selectionIncludesDisabled = (range: DateRange | undefined): boolean => {
+        if (!range?.from || !range?.to || disabledDates.length === 0) return false;
+        const start = toDateOnly(range.from);
+        const end = toDateOnly(range.to);
+        return disabledDates.some(
+            (d) => d.from && d.to && rangesOverlap(range.from!, range.to!, d.from, d.to)
+        );
+    };
+
     const handleBookingRequest = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!date?.from || !date?.to) return;
 
         setIsSubmitting(true);
         setSubmitStatus('idle');
+        setSubmitError('');
 
         try {
             const response = await fetch('/api/booking', {
@@ -79,13 +124,22 @@ export default function Booking() {
                 })
             });
 
+            const data = await response.json().catch(() => ({}));
+
             if (response.ok) {
                 setSubmitStatus('success');
+            } else if (response.status === 400 && data.error === 'dates_unavailable') {
+                setSubmitStatus('error');
+                setSubmitError(data.message || 'Some of these dates are no longer available. Please choose different dates.');
+                setDate(undefined);
+                if (selectedPackage !== 'none') fetchDisabledDates(selectedPackage);
             } else {
                 setSubmitStatus('error');
+                setSubmitError('Something went wrong. Please try again.');
             }
         } catch (err) {
             setSubmitStatus('error');
+            setSubmitError('Something went wrong. Please try again.');
         } finally {
             setIsSubmitting(false);
         }
@@ -234,6 +288,9 @@ export default function Booking() {
                                     )}
                                 </div>
 
+                                {submitStatus === 'error' && submitError && (
+                                    <p className="text-rose-600 text-sm mb-4 text-center">{submitError}</p>
+                                )}
                                 <button
                                     type="submit"
                                     disabled={!date?.from || !date?.to || isSubmitting}
@@ -267,7 +324,19 @@ export default function Booking() {
                         <DayPicker
                             mode="range"
                             selected={date}
-                            onSelect={selectedPackage === 'none' ? undefined : setDate}
+                            onSelect={
+                                selectedPackage === 'none'
+                                    ? undefined
+                                    : (range) => {
+                                          if (selectionIncludesDisabled(range)) {
+                                              setSubmitError('Your selection includes dates that are already taken. Please choose different dates.');
+                                              setDate(undefined);
+                                              return;
+                                          }
+                                          setDate(range);
+                                          setSubmitError('');
+                                      }
+                            }
                             numberOfMonths={window.innerWidth > 768 ? 2 : 1}
                             pagedNavigation
                             disabled={
@@ -275,7 +344,7 @@ export default function Booking() {
                                     ? [{ from: new Date(1900, 0, 1), to: new Date(2100, 11, 31) }]
                                     : [{ before: new Date() }, ...disabledDates]
                             } // Disable all dates until a package is chosen, then past + booked dates
-                            className="bg-transparent opacity-60"
+                            className={`bg-transparent ${selectedPackage === 'none' ? 'opacity-60' : ''}`}
                             style={{ margin: 0 }}
                         />
                         {selectedPackage === 'none' && (
