@@ -52,8 +52,9 @@ export default function Admin() {
     const [password, setPassword] = useState('');
     const [loginError, setLoginError] = useState('');
 
-    const [villas, setVillas] = useState<Villa[]>(villasData as Villa[]);
-    const [activeVilla, setActiveVilla] = useState<string>(villasData[0].id);
+    // IMPORTANT: don't trust bundled JSON in production; always sync from /api/villas after login
+    const [villas, setVillas] = useState<Villa[]>([]);
+    const [activeVilla, setActiveVilla] = useState<string>('');
     const [activeSection, setActiveSection] = useState<'villas' | 'home'>('villas');
     const [homeData, setHomeData] = useState<HomeData>(homeDataDefault as HomeData);
 
@@ -69,6 +70,29 @@ export default function Admin() {
                 .then(data => setHomeData(data))
                 .catch(() => setHomeData(homeDataDefault as HomeData));
         }
+    }, [isAuthenticated]);
+
+    // Load villas data on mount (after auth)
+    useEffect(() => {
+        if (!isAuthenticated) return;
+
+        fetch('/api/villas', { cache: 'no-store' })
+            .then(res => res.json())
+            .then((data: Villa[]) => {
+                const nextVillas = Array.isArray(data) && data.length ? data : (villasData as Villa[]);
+                setVillas(nextVillas);
+
+                // Keep current selection if it still exists; otherwise fall back to first villa
+                setActiveVilla(prev => {
+                    const stillExists = prev && nextVillas.some(v => v.id === prev);
+                    return stillExists ? prev : (nextVillas[0]?.id ?? '');
+                });
+            })
+            .catch(() => {
+                const fallback = (villasData as Villa[]);
+                setVillas(fallback);
+                setActiveVilla(prev => prev || (fallback[0]?.id ?? ''));
+            });
     }, [isAuthenticated]);
 
     // Verify auth on mount
