@@ -61,6 +61,16 @@ export default function Admin() {
     const [isSaving, setIsSaving] = useState(false);
     const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
     const [uploadingImage, setUploadingImage] = useState<string | null>(null); // Track which image is uploading
+    const [dragOverIndex, setDragOverIndex] = useState<number | null>(null); // For drag-and-drop reorder feedback
+
+    // Reorder array: move item from fromIndex to toIndex (used for gallery drag-and-drop)
+    const reorderArray = <T,>(arr: T[], fromIndex: number, toIndex: number): T[] => {
+        if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0 || fromIndex >= arr.length || toIndex >= arr.length) return arr;
+        const out = [...arr];
+        const [item] = out.splice(fromIndex, 1);
+        out.splice(toIndex, 0, item);
+        return out;
+    };
 
     // Load home data on mount
     useEffect(() => {
@@ -936,24 +946,49 @@ export default function Admin() {
                                     </div>
                                 </div>
 
-                                {/* Gallery Images */}
+                                {/* Gallery Images - drag to reorder, order saved on Save Changes */}
                                 <div>
-                                    <h3 className="text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-6 border-b border-gray-100 pb-4">Gallery Images ({homeData.gallery.images.length})</h3>
+                                    <h3 className="text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-6 border-b border-gray-100 pb-4">Gallery Images ({homeData.gallery.images.length}) — drag to reorder</h3>
                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                         {homeData.gallery.images.map((img, idx) => {
                                             const isUploading = uploadingImage === `home-gallery.images.${idx}`;
                                             return (
-                                                <div key={idx} className="relative group rounded-sm overflow-hidden border border-gray-200 aspect-[4/5]">
+                                                <div
+                                                    key={img}
+                                                    draggable
+                                                    onDragStart={(e) => {
+                                                        e.dataTransfer.setData('text/plain', String(idx));
+                                                        e.dataTransfer.effectAllowed = 'move';
+                                                    }}
+                                                    onDragOver={(e) => {
+                                                        e.preventDefault();
+                                                        e.dataTransfer.dropEffect = 'move';
+                                                        setDragOverIndex(idx);
+                                                    }}
+                                                    onDragLeave={() => setDragOverIndex(null)}
+                                                    onDrop={(e) => {
+                                                        e.preventDefault();
+                                                        const from = parseInt(e.dataTransfer.getData('text/plain'), 10);
+                                                        if (Number.isNaN(from) || from === idx) {
+                                                            setDragOverIndex(null);
+                                                            return;
+                                                        }
+                                                        const reordered = reorderArray(homeData.gallery.images, from, idx);
+                                                        setHomeData({ ...homeData, gallery: { ...homeData.gallery, images: reordered } });
+                                                        setDragOverIndex(null);
+                                                    }}
+                                                    className={`relative group rounded-sm overflow-hidden border aspect-[4/5] cursor-grab active:cursor-grabbing select-none ${dragOverIndex === idx ? 'border-[#8B6F5A] ring-2 ring-[#8B6F5A]/40' : 'border-gray-200'}`}
+                                                >
                                                     {isUploading && (
                                                         <div className="absolute inset-0 bg-black/70 z-30 flex items-center justify-center">
                                                             <div className="text-white text-xs">Uploading...</div>
                                                         </div>
                                                     )}
                                                     <img
-                                                        key={img}
                                                         src={img}
-                                                        alt={`Gallery ${idx}`}
-                                                        className="w-full h-full object-cover"
+                                                        alt={`Gallery ${idx + 1}`}
+                                                        draggable={false}
+                                                        className="w-full h-full object-cover pointer-events-none"
                                                         onError={(e) => {
                                                             const target = e.target as HTMLImageElement;
                                                             target.onerror = null; // Prevent infinite loops
@@ -1225,14 +1260,39 @@ export default function Admin() {
                                 </div>
                             </div>
 
-                            {/* Gallery Edit */}
+                            {/* Gallery Edit - drag to reorder, order saved on Save Changes */}
                             <div>
-                                <h3 className="text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-6 border-b border-gray-100 pb-4">Gallery Images ({currentVilla.gallery.length})</h3>
+                                <h3 className="text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-6 border-b border-gray-100 pb-4">Gallery Images ({currentVilla.gallery.length}) — drag to reorder</h3>
                                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                                     {currentVilla.gallery.map((img, idx) => {
                                         const isUploading = uploadingImage === `gallery-${activeVilla}-${idx}`;
                                         return (
-                                            <div key={idx} className="relative group rounded-sm overflow-hidden border border-gray-200 aspect-[2/3]">
+                                            <div
+                                                key={img}
+                                                draggable
+                                                onDragStart={(e) => {
+                                                    e.dataTransfer.setData('text/plain', String(idx));
+                                                    e.dataTransfer.effectAllowed = 'move';
+                                                }}
+                                                onDragOver={(e) => {
+                                                    e.preventDefault();
+                                                    e.dataTransfer.dropEffect = 'move';
+                                                    setDragOverIndex(idx);
+                                                }}
+                                                onDragLeave={() => setDragOverIndex(null)}
+                                                onDrop={(e) => {
+                                                    e.preventDefault();
+                                                    const from = parseInt(e.dataTransfer.getData('text/plain'), 10);
+                                                    if (Number.isNaN(from) || from === idx) {
+                                                        setDragOverIndex(null);
+                                                        return;
+                                                    }
+                                                    const reordered = reorderArray(currentVilla.gallery, from, idx);
+                                                    setVillas(villas.map(v => v.id === activeVilla ? { ...v, gallery: reordered } : v));
+                                                    setDragOverIndex(null);
+                                                }}
+                                                className={`relative group rounded-sm overflow-hidden border aspect-[2/3] cursor-grab active:cursor-grabbing select-none ${dragOverIndex === idx ? 'border-[#8B6F5A] ring-2 ring-[#8B6F5A]/40' : 'border-gray-200'}`}
+                                            >
                                                 {isUploading && (
                                                     <div className="absolute inset-0 bg-black/70 z-30 flex items-center justify-center">
                                                         <div className="text-white text-xs">Uploading...</div>
@@ -1240,8 +1300,9 @@ export default function Admin() {
                                                 )}
                                                 <img
                                                     src={img}
-                                                    alt={`Gallery ${idx}`}
-                                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                                    alt={`Gallery ${idx + 1}`}
+                                                    draggable={false}
+                                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 pointer-events-none"
                                                     onError={(e) => {
                                                         const target = e.target as HTMLImageElement;
                                                         target.onerror = null; // Prevent infinite loops
