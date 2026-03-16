@@ -103,30 +103,27 @@ export default function Layout({ children, villas }: LayoutProps) {
               <div className={`text-[9px] tracking-[0.4em] mt-1 transition-opacity ${isScrolled || isDarkHeader ? 'opacity-60' : 'opacity-80'}`}>By Katouna</div>
             </Link>
 
-            <div className="flex items-center gap-4 lg:gap-6">
-              {/* <Link to="/schedule-call" className={`hidden sm:block px-8 py-2.5 text-[11px] uppercase tracking-widest border rounded-full transition-all duration-300 ${isScrolled || isDarkHeader
+            <div className="flex items-center gap-3 sm:gap-4 lg:gap-6">
+              <a href="#contact" className={`hidden sm:inline-flex min-h-[44px] items-center justify-center px-6 sm:px-8 py-2.5 text-[11px] uppercase tracking-widest border rounded-full transition-all duration-300 touch-manipulation ${isScrolled || isDarkHeader
                 ? 'border-[#2C3539] text-[#2C3539] hover:bg-[#2C3539] hover:text-white'
-                : 'border-white text-white hover:bg-white hover:text-[#2C3539]'
-                }`}>
-                Get in Touch
-              </Link> */}
-              <a href="#contact" className={`hidden sm:block px-8 py-2.5 text-[11px] uppercase tracking-widest border rounded-full transition-all duration-300 ${isScrolled || isDarkHeader
-                ? 'border-[#2C3539] text-[#2C3539] hover:bg-[#2C3539] hover:text-white'
-                // : 'border-white text-white hover:bg-white hover:text-[#2C3539]'
                 : 'border-[#2C3539] text-[#2C3539] hover:bg-[#2C3539] hover:text-white'
                 }`}>
                 Get in Touch
               </a>
-              <Link to="/booking" className={`hidden sm:block px-8 py-2.5 text-[11px] uppercase tracking-widest border rounded-full transition-all duration-300 ${isScrolled || isDarkHeader
-                ? 'border-[#2C3539] text-[#2C3539] hover:bg-[#2C3539] hover:text-white'
-                // : 'border-white text-white hover:bg-white hover:text-[#2C3539]'
-                : 'border-[#2C3539] text-[#2C3539] hover:bg-[#2C3539] hover:text-white'
-                }`}>
+              <Link
+                to="/booking"
+                className={`hidden sm:inline-flex min-h-[44px] items-center justify-center px-6 sm:px-8 py-2.5 text-[11px] uppercase tracking-widest border rounded-full transition-all duration-300 touch-manipulation ${isScrolled || isDarkHeader
+                  ? 'border-[#2C3539] text-[#2C3539] hover:bg-[#2C3539] hover:text-white'
+                  : 'border-[#2C3539] text-[#2C3539] hover:bg-[#2C3539] hover:text-white'
+                }`}
+              >
                 Book Now
               </Link>
 
               <button
-                className={`p-3 border transition-all duration-300 z-[80] relative ${mobileMenuOpen
+                type="button"
+                aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+                className={`min-w-[44px] min-h-[44px] p-3 border transition-all duration-300 z-[80] relative flex items-center justify-center touch-manipulation ${mobileMenuOpen
                   ? 'border-[#2C3539] text-[#2C3539] bg-white'
                   : isScrolled || isDarkHeader
                     ? 'border-[#2C3539] text-[#2C3539]'
@@ -176,19 +173,26 @@ export default function Layout({ children, villas }: LayoutProps) {
                       initial={{ x: -20, opacity: 0 }}
                       animate={{ x: 0, opacity: 1 }}
                       exit={{ x: -20, opacity: 0 }}
-                      className="flex flex-col space-y-6"
+                      className="flex flex-col space-y-2"
                     >
-                      <Link to="/" className="text-3xl font-serif text-[#2C3539] hover:text-[#A89F91] transition-colors">Home</Link>
+                      <Link to="/" onClick={() => setMobileMenuOpen(false)} className="min-h-[48px] flex items-center text-3xl font-serif text-[#2C3539] hover:text-[#A89F91] transition-colors py-2">Home</Link>
                       <button
                         onClick={() => setActiveSubMenu('villas')}
-                        className="text-3xl font-serif text-[#2C3539] hover:text-[#A89F91] transition-colors flex items-center group text-left"
+                        className="min-h-[48px] text-left text-3xl font-serif text-[#2C3539] hover:text-[#A89F91] transition-colors flex items-center group py-2 touch-manipulation"
                       >
                         Villas <ChevronDown size={20} className="-rotate-90 ml-2 opacity-40 group-hover:opacity-100 transition-opacity" />
                       </button>
-                      <Link to="/testimonials" onClick={() => setMobileMenuOpen(false)} className="text-3xl font-serif text-[#2C3539] hover:text-[#A89F91] transition-colors">Testimonials</Link>
-                      <a href="/#gallery" onClick={() => setMobileMenuOpen(false)} className="text-3xl font-serif text-[#2C3539] hover:text-[#A89F91] transition-colors flex items-center group">
+                      <Link to="/testimonials" onClick={() => setMobileMenuOpen(false)} className="min-h-[48px] flex items-center text-3xl font-serif text-[#2C3539] hover:text-[#A89F91] transition-colors py-2">Testimonials</Link>
+                      <a href="/#gallery" onClick={() => setMobileMenuOpen(false)} className="min-h-[48px] flex items-center text-3xl font-serif text-[#2C3539] hover:text-[#A89F91] transition-colors py-2 group">
                         Gallery <ChevronDown size={20} className="-rotate-90 ml-2 opacity-40 group-hover:opacity-100 transition-opacity" />
                       </a>
+                      <Link
+                        to="/booking"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="min-h-[48px] flex items-center mt-4 px-6 py-3 rounded-full bg-[#2C3539] text-white text-[11px] uppercase tracking-widest font-bold hover:bg-[#8B6F5A] transition-colors touch-manipulation w-fit"
+                      >
+                        Book Now
+                      </Link>
                     </motion.nav>
                   ) : (
                     <motion.div

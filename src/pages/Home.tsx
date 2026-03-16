@@ -97,9 +97,10 @@ export default function Home({ villas }: HomeProps) {
 
   return (
     <div className="bg-[#FDFCFB] text-[#1A1A1A]">
-      {/* Hero Section - Editorial Recipe */}
-      <section className="relative h-screen flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 z-0">
+      {/* Hero Section - Editorial Recipe: fully responsive, text never clipped or covered */}
+      <section className="relative min-h-screen flex items-center justify-center">
+        {/* Background only: clip image to section, content stays above */}
+        <div className="absolute inset-0 z-0 overflow-hidden">
           <motion.img
             initial={{ scale: 1.1 }}
             animate={{ scale: 1 }}
@@ -107,36 +108,44 @@ export default function Home({ villas }: HomeProps) {
             key={homeData.hero.backgroundImage}
             src={homeData.hero.backgroundImage}
             alt="Breathtaking view from Lefkas"
-            className="w-full h-full object-cover"
+            className="absolute inset-0 w-full h-full object-cover object-center"
+            style={{ minHeight: '100%', minWidth: '100%' }}
             onError={(e) => {
               console.error('Hero image failed to load:', homeData.hero.backgroundImage);
             }}
           />
-          <div className="absolute inset-0 bg-black/20"></div>
+          <div className="absolute inset-0 bg-black/25 pointer-events-none" aria-hidden />
         </div>
 
-        <div className="relative z-10 text-center px-6 max-w-5xl mx-auto">
+        {/* Content: never clipped, safe padding so video (when visible) doesn’t overlap on narrow widths */}
+        <div className="relative z-10 w-full min-w-0 text-center px-4 py-20 sm:px-6 md:px-8 max-w-5xl mx-auto box-border">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.5 }}
+            className="flex flex-col items-center min-w-0 w-full"
           >
-            <span className="inline-block text-[10px] uppercase tracking-[0.5em] text-white/80 mb-8 border-b border-white/20 pb-2">
+            <span className="inline-block text-[10px] uppercase tracking-[0.5em] text-white/80 mb-4 sm:mb-8 border-b border-white/20 pb-2">
               {homeData.hero.location}
             </span>
-            <h1 className="text-5xl md:text-8xl lg:text-9xl font-serif text-white leading-[0.85] mb-12 tracking-tight">
+            <h1
+              className="font-serif text-white leading-[0.9] mb-8 sm:mb-12 tracking-tight w-full break-words"
+              style={{ fontSize: 'clamp(2.25rem, 6vw + 1.5rem, 8rem)' }}
+            >
               {homeData.hero.title} <br /> <span className="italic font-light opacity-90">{homeData.hero.subtitle}</span>
             </h1>
-            <p className="text-lg md:text-xl text-white/90 font-light max-w-2xl mx-auto mb-12 leading-relaxed">
+            <p
+              className="text-white/90 font-light w-full max-w-2xl mx-auto mb-8 sm:mb-12 leading-relaxed break-words"
+              style={{ fontSize: 'clamp(0.9375rem, 1.5vw + 0.75rem, 1.25rem)' }}
+            >
               {homeData.hero.description}
             </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-              <a href="#villas" className="px-10 py-4 bg-white text-black text-[10px] uppercase tracking-[0.3em] font-bold hover:bg-[#D4C3B3] transition-all duration-500">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 flex-wrap">
+              <a href="#villas" className="min-h-[44px] inline-flex items-center justify-center px-8 sm:px-10 py-3.5 sm:py-4 bg-white text-black text-[10px] uppercase tracking-[0.3em] font-bold hover:bg-[#D4C3B3] transition-all duration-500 shrink-0">
                 {homeData.hero.button1}
               </a>
-              {/* <a href="#estate" className="text-white text-[10px] uppercase tracking-[0.3em] font-bold flex items-center group"> */}
-              <a href="#gallery" className="text-white text-[10px] uppercase tracking-[0.3em] font-bold flex items-center group">
-                {homeData.hero.button2} <ArrowRight size={14} className="ml-3 group-hover:translate-x-2 transition-transform" />
+              <a href="#gallery" className="min-h-[44px] inline-flex items-center justify-center text-white text-[10px] uppercase tracking-[0.3em] font-bold group shrink-0">
+                {homeData.hero.button2} <ArrowRight size={14} className="ml-3 group-hover:translate-x-2 transition-transform shrink-0" />
               </a>
             </div>
           </motion.div>
@@ -159,24 +168,26 @@ export default function Home({ villas }: HomeProps) {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 50, scale: 0.9 }}
               transition={{ duration: 0.8, ease: [0.25, 1, 0.5, 1], delay: 1 }}
-              // className="absolute bottom-6 right-6 md:bottom-12 md:right-12 z-40 w-48 md:w-72 aspect-video rounded-sm overflow-hidden shadow-2xl border border-white/20 group cursor-pointer"
-              className="absolute bottom-6 right-6 md:bottom-0 md:right-0 z-40 w-48 md:w-140 aspect-video rounded-sm overflow-hidden shadow-2xl border border-white/20 group cursor-pointer"
+              className="absolute bottom-8 right-8 z-40 w-72 lg:w-80 aspect-video rounded-sm overflow-hidden shadow-2xl border border-white/20 group cursor-pointer hidden md:block"
             >
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   setIsVideoVisible(false);
                 }}
-                className="absolute top-2 right-2 z-50 w-6 h-6 bg-black/40 hover:bg-black/80 backdrop-blur-md flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                className="absolute top-2 right-2 z-50 w-8 h-8 min-w-[44px] min-h-[44px] bg-black/40 hover:bg-black/80 backdrop-blur-md flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity touch-manipulation"
+                aria-label="Close video"
               >
                 <X size={12} />
               </button>
               <video
                 src={homeData.hero.videoUrl}
+                poster={homeData.hero.backgroundImage}
                 autoPlay
                 muted
                 loop
                 playsInline
+                preload="metadata"
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
               />
             </motion.div>
