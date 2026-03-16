@@ -104,8 +104,15 @@ export default function Layout({ children, villas }: LayoutProps) {
             </Link>
 
             <div className="flex items-center gap-3 sm:gap-4 lg:gap-6">
+              {/* <Link to="/schedule-call" className={`hidden sm:block px-8 py-2.5 text-[11px] uppercase tracking-widest border rounded-full transition-all duration-300 ${isScrolled || isDarkHeader
+                ? 'border-[#2C3539] text-[#2C3539] hover:bg-[#2C3539] hover:text-white'
+                : 'border-white text-white hover:bg-white hover:text-[#2C3539]'
+                }`}>
+                Get in Touch
+              </Link> */}
               <a href="#contact" className={`hidden sm:inline-flex min-h-[44px] items-center justify-center px-6 sm:px-8 py-2.5 text-[11px] uppercase tracking-widest border rounded-full transition-all duration-300 touch-manipulation ${isScrolled || isDarkHeader
                 ? 'border-[#2C3539] text-[#2C3539] hover:bg-[#2C3539] hover:text-white'
+                // : 'border-white text-white hover:bg-white hover:text-[#2C3539]'
                 : 'border-[#2C3539] text-[#2C3539] hover:bg-[#2C3539] hover:text-white'
                 }`}>
                 Get in Touch
@@ -114,6 +121,7 @@ export default function Layout({ children, villas }: LayoutProps) {
                 to="/booking"
                 className={`hidden sm:inline-flex min-h-[44px] items-center justify-center px-6 sm:px-8 py-2.5 text-[11px] uppercase tracking-widest border rounded-full transition-all duration-300 touch-manipulation ${isScrolled || isDarkHeader
                   ? 'border-[#2C3539] text-[#2C3539] hover:bg-[#2C3539] hover:text-white'
+                  // : 'border-white text-white hover:bg-white hover:text-[#2C3539]'
                   : 'border-[#2C3539] text-[#2C3539] hover:bg-[#2C3539] hover:text-white'
                 }`}
               >
@@ -234,13 +242,14 @@ export default function Layout({ children, villas }: LayoutProps) {
                     <Linkedin size={18} />
                   </a>
                 </div>
-                <Link
+                {/* <Link
                   to="/schedule-call"
                   onClick={() => setMobileMenuOpen(false)}
                   className="inline-block border border-[#8B6F5A] text-[#8B6F5A] px-10 py-3.5 rounded-full uppercase tracking-widest text-[10px] font-bold hover:bg-[#8B6F5A] hover:text-white transition-all duration-300"
                 >
                   Get in Touch
-                </Link>
+                </Link> */}
+                
               </div>
             </motion.div>
           </>
