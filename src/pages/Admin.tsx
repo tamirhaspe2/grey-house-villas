@@ -1077,7 +1077,7 @@ export default function Admin() {
                                                         className="w-full border border-gray-200 px-3 py-2 text-sm focus:border-[#2C3539] outline-none"
                                                     />
                                                 </div>
-                                                <div className="w-2/3">
+                                                <div className="flex-1">
                                                     <input
                                                         type="text"
                                                         value={spec.value}
@@ -1090,8 +1090,29 @@ export default function Admin() {
                                                         className="w-full border border-gray-200 px-3 py-2 text-sm focus:border-[#2C3539] outline-none"
                                                     />
                                                 </div>
+                                                <button
+                                                    onClick={() => {
+                                                        const newSpecs = [...currentVilla.specs];
+                                                        newSpecs.splice(specIdx, 1);
+                                                        setVillas(villas.map(v => v.id === activeVilla ? { ...v, specs: newSpecs } : v));
+                                                    }}
+                                                    className="w-8 h-8 flex items-center justify-center text-gray-400 hover:bg-rose-50 hover:text-rose-500 rounded transition-colors flex-shrink-0"
+                                                    title="Remove Spec"
+                                                >
+                                                    <X size={16} />
+                                                </button>
                                             </div>
                                         ))}
+                                        <button
+                                            onClick={() => {
+                                                const newSpecs = [...currentVilla.specs, { label: '', value: '' }];
+                                                setVillas(villas.map(v => v.id === activeVilla ? { ...v, specs: newSpecs } : v));
+                                            }}
+                                            className="mt-4 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#2C3539] hover:text-[#8B6F5A] transition-colors"
+                                        >
+                                            <span className="w-5 h-5 flex items-center justify-center border border-current rounded-full text-base leading-none pb-[1px]">+</span>
+                                            Add Spec
+                                        </button>
                                     </div>
                                 </div>
                             </div>
