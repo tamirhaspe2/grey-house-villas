@@ -101,7 +101,7 @@ export default function Admin() {
 
     const currentVilla = villas.find(v => v.id === activeVilla);
 
-    const handleImageUpload = async (file: File, folder: string, index: number | 'hero') => {
+    const handleImageUpload = async (file: File, folder: string, index: number | 'hero' | 'new') => {
         // Create unique key for this upload
         const uploadKey = index === 'hero' ? `hero-${activeVilla}` : `gallery-${activeVilla}-${index}`;
 
@@ -162,6 +162,14 @@ export default function Admin() {
                         updatedVillas[villaIndex] = {
                             ...updatedVillas[villaIndex],
                             image: imageUrl
+                        };
+                    } else if (index === 'new') {
+                        if (!updatedVillas[villaIndex].gallery) {
+                            updatedVillas[villaIndex].gallery = [];
+                        }
+                        updatedVillas[villaIndex] = {
+                            ...updatedVillas[villaIndex],
+                            gallery: [...updatedVillas[villaIndex].gallery, imageUrl]
                         };
                     } else {
                         const galleryIndex = index as number;
@@ -949,10 +957,45 @@ export default function Admin() {
                                                                 }}
                                                             />
                                                         </label>
+                                                        <button
+                                                            onClick={() => {
+                                                                const newImages = [...homeData.gallery.images];
+                                                                newImages.splice(idx, 1);
+                                                                setHomeData({ ...homeData, gallery: { ...homeData.gallery, images: newImages } });
+                                                            }}
+                                                            className="text-white text-[10px] uppercase tracking-widest hover:text-red-400 transition-colors"
+                                                        >
+                                                            Remove
+                                                        </button>
                                                     </div>
                                                 </div>
                                             );
                                         })}
+
+                                        {/* Add New Home Gallery Image */}
+                                        <div className="relative group rounded-sm overflow-hidden border-2 border-dashed border-gray-300 aspect-[4/5] flex items-center justify-center hover:border-[#8B6F5A] transition-colors cursor-pointer bg-gray-50">
+                                            {uploadingImage === `home-gallery.images.new` && (
+                                                <div className="absolute inset-0 bg-black/70 z-30 flex items-center justify-center">
+                                                    <div className="text-white text-xs">Uploading...</div>
+                                                </div>
+                                            )}
+                                            <div className="flex flex-col items-center opacity-60 group-hover:opacity-100 transition-opacity">
+                                                <Camera className="text-[#2C3539] mb-2" size={24} />
+                                                <span className="text-[#2C3539] text-[10px] uppercase tracking-widest font-bold">Add Image</span>
+                                            </div>
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                                                disabled={uploadingImage === `home-gallery.images.new`}
+                                                onChange={(e) => {
+                                                    if (e.target.files?.[0]) {
+                                                        handleHomeImageUpload(e.target.files[0], `gallery.images.${homeData.gallery.images.length}`, 'home');
+                                                        e.target.value = '';
+                                                    }
+                                                }}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1227,10 +1270,50 @@ export default function Admin() {
                                                             }}
                                                         />
                                                     </label>
+                                                    <button
+                                                        onClick={() => {
+                                                            const newGallery = [...currentVilla.gallery];
+                                                            newGallery.splice(idx, 1);
+                                                            setVillas(villas.map(v => v.id === activeVilla ? { ...v, gallery: newGallery } : v));
+                                                        }}
+                                                        className="text-white text-[10px] uppercase tracking-widest hover:text-red-400 transition-colors transform translate-y-4 group-hover:translate-y-0"
+                                                    >
+                                                        Remove
+                                                    </button>
                                                 </div>
                                             </div>
                                         );
                                     })}
+
+                                    {/* Add New Villa Gallery Image */}
+                                    <div className="relative group rounded-sm overflow-hidden border-2 border-dashed border-gray-300 aspect-[2/3] flex items-center justify-center hover:border-[#8B6F5A] transition-colors cursor-pointer bg-gray-50">
+                                        {uploadingImage === `gallery-${activeVilla}-new` && (
+                                            <div className="absolute inset-0 bg-black/70 z-30 flex items-center justify-center">
+                                                <div className="text-white text-xs">Uploading...</div>
+                                            </div>
+                                        )}
+                                        <div className="flex flex-col items-center opacity-60 group-hover:opacity-100 transition-opacity">
+                                            <Camera className="text-[#2C3539] mb-2" size={24} />
+                                            <span className="text-[#2C3539] text-[10px] uppercase tracking-widest font-bold">Add Image</span>
+                                        </div>
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                                            disabled={uploadingImage === `gallery-${activeVilla}-new`}
+                                            onChange={(e) => {
+                                                if (e.target.files?.[0]) {
+                                                    const folderName = currentVilla.id === 'villa-oneiro' ? 'VILLA_ONEIRO' :
+                                                        currentVilla.id === 'omorfi-suite' ? 'OMORFI_SUITE' :
+                                                            currentVilla.id === 'villa-petra' ? 'Villa_PETRA' : 'UPLOADS';
+
+                                                    // Pass "new" as index, handleImageUpload needs to handle this mode
+                                                    handleImageUpload(e.target.files[0], folderName, "new");
+                                                    e.target.value = '';
+                                                }
+                                            }}
+                                        />
+                                    </div>
                                 </div>
                             </div>
 
