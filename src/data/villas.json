@@ -61,7 +61,7 @@
     ],
     "gallerySections": [
       {
-        "title": "Visual Details.",
+        "title": "",
         "images": [
           "/api/images/VILLA_ONEIRO/1773108371579-image.png",
           "/VILLA_ONEIRO/image1.png",
@@ -100,9 +100,9 @@
         ]
       },
       {
-        "title": "",
+        "title": "sss",
         "images": [
-          "/VILLA_ONEIRO/1773773444419-image9.png"
+          "/VILLA_ONEIRO/1773779092671-image1.png"
         ]
       }
     ]

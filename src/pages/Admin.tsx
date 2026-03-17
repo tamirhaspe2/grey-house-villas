@@ -101,12 +101,29 @@ export default function Admin() {
     };
 
     const normalizeVillaGallerySections = (villa: Villa): Villa => {
-        if (Array.isArray((villa as any).gallerySections) && (villa as any).gallerySections.length > 0) return villa;
         const legacy = Array.isArray((villa as any).gallery) ? (villa as any).gallery : [];
-        return {
+        const sections = Array.isArray((villa as any).gallerySections) ? (villa as any).gallerySections : [];
+
+        const out = {
             ...villa,
-            gallerySections: [{ title: 'Visual Details.', images: legacy }],
+            gallerySections: sections.length > 0 ? sections : [{ title: 'Visual Details.', images: legacy }],
         } as any;
+
+        const hasLegacy = legacy.length > 0;
+        const allSectionImagesEmpty = (out.gallerySections || []).every((s: any) => !Array.isArray(s.images) || s.images.length === 0);
+        if (hasLegacy && allSectionImagesEmpty) {
+            out.gallerySections = [
+                { ...(out.gallerySections?.[0] || { title: 'Visual Details.', images: [] }), images: legacy },
+                ...(out.gallerySections || []).slice(1),
+            ];
+        }
+
+        // Lock Petra to one accordion in Admin
+        if (out.id === 'villa-petra') {
+            out.gallerySections = (out.gallerySections || []).slice(0, 1);
+        }
+
+        return out;
     };
 
     // Load home data on mount
@@ -1169,6 +1186,11 @@ export default function Admin() {
                     ) : currentVilla && (
                         <div className="bg-white p-6 md:p-12 shadow-sm border border-gray-100 rounded-sm">
                             <h2 className="text-4xl font-serif text-[#2C3539] mb-8">{currentVilla.name} Settings</h2>
+                            {currentVilla.id === 'grey-estate' && (
+                                <div className="mb-8 bg-[#F4F1ED] border border-[#D4C3B3] px-6 py-4 text-sm text-[#2C3539]">
+                                    Grey Estate galleries are derived from Villa Oneiro (accordion 1 &amp; 2) and Villa Pétra (accordion 1). Edit those villas to update Grey Estate.
+                                </div>
+                            )}
 
                             {/* Text Fields */}
                             <div className="space-y-6 mb-12">
@@ -1343,6 +1365,7 @@ export default function Admin() {
                             </div>
 
                             {/* Gallery Edit - multiple accordions with editable titles */}
+                            {currentVilla.id !== 'grey-estate' && (
                             <div className="space-y-10">
                                 <div className="flex items-center justify-between gap-4">
                                     <h3 className="text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold border-b border-gray-100 pb-4 flex-1">
@@ -1350,12 +1373,13 @@ export default function Admin() {
                                     </h3>
                                     <button
                                         type="button"
+                                        disabled={currentVilla.id === 'villa-petra' || currentVilla.id === 'grey-estate'}
                                         onClick={() => {
                                             const sections = Array.isArray((currentVilla as any).gallerySections) ? [...(currentVilla as any).gallerySections] : [];
                                             sections.push({ title: '', images: [] });
                                             setVillas(villas.map(v => v.id === activeVilla ? { ...(v as any), gallerySections: sections } as any : v));
                                         }}
-                                        className="px-4 py-2 text-[10px] uppercase tracking-widest font-bold border border-[#2C3539] text-[#2C3539] hover:bg-[#2C3539] hover:text-white transition-colors"
+                                        className="px-4 py-2 text-[10px] uppercase tracking-widest font-bold border border-[#2C3539] text-[#2C3539] hover:bg-[#2C3539] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-[#2C3539]"
                                     >
                                         Add Accordion
                                     </button>
@@ -1383,12 +1407,16 @@ export default function Admin() {
                                                 <div className="flex items-center gap-3">
                                                     <button
                                                         type="button"
+                                                        disabled={
+                                                            currentVilla.id === 'grey-estate' ||
+                                                            (currentVilla.id === 'villa-petra' && (Array.isArray((currentVilla as any).gallerySections) ? (currentVilla as any).gallerySections.length : 1) <= 1)
+                                                        }
                                                         onClick={() => {
                                                             const nextSections = Array.isArray((currentVilla as any).gallerySections) ? [...(currentVilla as any).gallerySections] : [];
                                                             nextSections.splice(sectionIdx, 1);
                                                             setVillas(villas.map(v => v.id === activeVilla ? { ...(v as any), gallerySections: nextSections.length ? nextSections : [{ title: 'Visual Details.', images: [] }] } as any : v));
                                                         }}
-                                                        className="text-[10px] uppercase tracking-widest font-bold text-red-600 hover:text-red-700 transition-colors"
+                                                        className="text-[10px] uppercase tracking-widest font-bold text-red-600 hover:text-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-red-600"
                                                     >
                                                         Remove Accordion
                                                     </button>
@@ -1580,6 +1608,7 @@ export default function Admin() {
                                     );
                                 })}
                             </div>
+                            )}
 
                         </div>
                     )}

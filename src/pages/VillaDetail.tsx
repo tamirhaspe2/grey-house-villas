@@ -58,42 +58,22 @@ export default function VillaDetail({ villas }: VillaDetailProps) {
       const oneiro = villas.find(v => v.id === 'villa-oneiro');
       const petra = villas.find(v => v.id === 'villa-petra');
 
-      // Omorfi is not a standalone "villa page" entry in villas.json, but its photos exist in Oneiro/Grey Estate legacy galleries.
-      // We still render a middle accordion so Grey Estate always has 3 accordions as requested.
       const oneiroSections = oneiro ? normalizeSections(oneiro) : [{ title: 'Visual Details.', images: [] }];
       const petraSections = petra ? normalizeSections(petra) : [{ title: 'Visual Details.', images: [] }];
 
-      // Split legacy mixed gallery into an "Omorfi Suite" accordion if present
-      const omorfiFromLegacy = ((): string[] => {
-        const legacy = Array.isArray((villa as any).gallery) ? ((villa as any).gallery as string[]) : [];
-        return legacy.filter((p) => typeof p === 'string' && p.includes('/OMORFI_SUITE/'));
-      })();
+      // Grey Estate must ALWAYS be exactly 3 accordions:
+      // 1) Oneiro accordion #1
+      // 2) Oneiro accordion #2 (you can title it "Omorfi Suite" in Oneiro admin if you want)
+      // 3) Petra accordion #1
+      const oneiroA = oneiroSections[0] ?? { title: oneiro?.name || 'Oneiro', images: [] };
+      const oneiroB = oneiroSections[1] ?? { title: '', images: [] };
+      const petraA = petraSections[0] ?? { title: petra?.name || 'Villa Pétra', images: [] };
 
-      // IMPORTANT: Grey Estate should reflect ALL accordions created under Oneiro and Petra.
-      // If you add a new accordion in Oneiro/Petra, it will show up here automatically.
-      const derived: { title: string; images: string[] }[] = [];
-
-      if (oneiro) {
-        for (const s of oneiroSections) {
-          derived.push({
-            title: s.title || oneiro.name,
-            images: Array.isArray(s.images) ? s.images : [],
-          });
-        }
-      }
-
-      derived.push({ title: 'Omorfi Suite', images: omorfiFromLegacy });
-
-      if (petra) {
-        for (const s of petraSections) {
-          derived.push({
-            title: s.title || petra.name,
-            images: Array.isArray(s.images) ? s.images : [],
-          });
-        }
-      }
-
-      return derived;
+      return [
+        { title: oneiroA.title || oneiro?.name || 'Oneiro', images: Array.isArray(oneiroA.images) ? oneiroA.images : [] },
+        { title: oneiroB.title || 'Omorfi Suite', images: Array.isArray(oneiroB.images) ? oneiroB.images : [] },
+        { title: petraA.title || petra?.name || 'Villa Pétra', images: Array.isArray(petraA.images) ? petraA.images : [] },
+      ];
     }
 
     return normalizeSections(villa);
