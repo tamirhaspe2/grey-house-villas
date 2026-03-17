@@ -46,6 +46,34 @@ export default function VillaDetail({ villas }: VillaDetailProps) {
     return <Navigate to="/" replace />;
   }
 
+  const normalizeSections = (v: Villa): { title: string; images: string[] }[] => {
+    if (Array.isArray(v.gallerySections) && v.gallerySections.length > 0) return v.gallerySections;
+    const legacy = Array.isArray(v.gallery) ? v.gallery : [];
+    return [{ title: 'Visual Details.', images: legacy }];
+  };
+
+  const resolveSectionsForPage = (): { title: string; images: string[] }[] => {
+    // Grey Estate should mirror the other villas. Any edits to those galleries reflect here automatically.
+    if (villa.id === 'grey-estate') {
+      const oneiro = villas.find(v => v.id === 'villa-oneiro');
+      const omorfi = villas.find(v => v.id === 'omorfi-suite');
+      const petra = villas.find(v => v.id === 'villa-petra');
+
+      const sources = [oneiro, omorfi, petra].filter(Boolean) as Villa[];
+      return sources.map((src) => {
+        const sections = normalizeSections(src);
+        return {
+          title: src.name,
+          images: sections.flatMap(s => s.images),
+        };
+      });
+    }
+
+    return normalizeSections(villa);
+  };
+
+  const gallerySections = resolveSectionsForPage().filter(s => Array.isArray(s.images));
+
   return (
     <div className="bg-[#FDFCFB] min-h-screen">
       {/* Hero Section */}
@@ -133,72 +161,80 @@ export default function VillaDetail({ villas }: VillaDetailProps) {
         </div>
       </section>
 
-      {/* Gallery Grid - Masonry-like */}
+      {/* Gallery Accordions */}
       <section className="py-32 bg-white px-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row md:items-end justify-between mb-20 gap-8">
-            <div>
-              <span className="text-[10px] uppercase tracking-[0.4em] text-[#A89F91] mb-4 block">Gallery</span>
-              <h2 className="text-4xl md:text-5xl font-serif text-[#2C3539]">Visual Details.</h2>
-            </div>
-            <p className="text-gray-500 font-light max-w-sm">
-              Click on any image to expand and explore the intricate craftsmanship of {villa.name}.
-            </p>
-          </div>
-
-          <div
-            className="flex w-full h-[60vh] md:h-[80vh] gap-1 md:gap-2 overflow-hidden select-none touch-pan-y"
-            onTouchMove={(e) => {
-              const touch = e.touches[0];
-              const el = document.elementFromPoint(touch.clientX, touch.clientY);
-              const item = el?.closest('.gallery-item');
-              if (item) {
-                const idx = parseInt(item.getAttribute('data-idx') || '-1', 10);
-                if (idx !== -1 && activeIdx !== idx) {
-                  setActiveIdx(idx);
-                }
-              }
-            }}
-          >
-            {villa.gallery.map((img, idx) => (
-              <motion.div
-                key={`${img}-${idx}`}
-                data-idx={idx}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.02 }}
-                className={`gallery-item relative cursor-pointer overflow-hidden rounded-sm flex-1 md:hover:flex-[8] transition-all duration-500 ease-out ${activeIdx === idx ? 'flex-[8]' : ''}`}
-                onClick={(e) => {
-                  const isMobile = window.matchMedia('(hover: none)').matches || window.innerWidth < 1024;
-                  if (isMobile) {
-                    if (activeIdx === idx) {
-                      setSelectedImage(img);
-                    } else {
-                      setActiveIdx(idx);
-                    }
-                  } else {
-                    setSelectedImage(img);
-                  }
-                }}
-              >
-                <img
-                  key={img}
-                  src={img}
-                  alt={`${villa.name} detail ${idx + 1}`}
-                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 md:group-hover:scale-105"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.onerror = null;
-                    target.src = 'https://placehold.co/600x400?text=Missing+Image';
-                  }}
-                />
-                <div className={`absolute inset-0 bg-black/40 transition-colors flex items-center justify-center md:group-hover:bg-black/0 md:group-hover:opacity-100 ${activeIdx === idx ? 'bg-black/0 opacity-100' : 'opacity-0'}`}>
-                  <Maximize className={`text-white transition-opacity md:opacity-0 md:group-hover:opacity-100 ${activeIdx === idx ? 'opacity-100' : 'opacity-0'}`} size={24} />
+        <div className="max-w-7xl mx-auto space-y-24">
+          {gallerySections.map((section, sectionIdx) => {
+            const images = section.images || [];
+            const localActiveIdx = activeIdx;
+            return (
+              <div key={`${section.title}-${sectionIdx}`}>
+                <div className="flex flex-col md:flex-row md:items-end justify-between mb-20 gap-8">
+                  <div>
+                    <span className="text-[10px] uppercase tracking-[0.4em] text-[#A89F91] mb-4 block">Gallery</span>
+                    <h2 className="text-4xl md:text-5xl font-serif text-[#2C3539]">{section.title || 'Visual Details.'}</h2>
+                  </div>
+                  <p className="text-gray-500 font-light max-w-sm">
+                    Click on any image to expand and explore the intricate craftsmanship of {villa.name}.
+                  </p>
                 </div>
-              </motion.div>
-            ))}
-          </div>
+
+                <div
+                  className="flex w-full h-[60vh] md:h-[80vh] gap-1 md:gap-2 overflow-hidden select-none touch-pan-y"
+                  onTouchMove={(e) => {
+                    const touch = e.touches[0];
+                    const el = document.elementFromPoint(touch.clientX, touch.clientY);
+                    const item = el?.closest(`.gallery-item-${sectionIdx}`);
+                    if (item) {
+                      const idx = parseInt(item.getAttribute('data-idx') || '-1', 10);
+                      if (idx !== -1 && localActiveIdx !== idx) {
+                        setActiveIdx(idx);
+                      }
+                    }
+                  }}
+                >
+                  {images.map((img, idx) => (
+                    <motion.div
+                      key={`${img}-${idx}`}
+                      data-idx={idx}
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: idx * 0.02 }}
+                      className={`gallery-item-${sectionIdx} relative cursor-pointer overflow-hidden rounded-sm flex-1 md:hover:flex-[8] transition-all duration-500 ease-out ${localActiveIdx === idx ? 'flex-[8]' : ''}`}
+                      onClick={() => {
+                        const isMobile = window.matchMedia('(hover: none)').matches || window.innerWidth < 1024;
+                        if (isMobile) {
+                          if (localActiveIdx === idx) {
+                            setSelectedImage(img);
+                          } else {
+                            setActiveIdx(idx);
+                          }
+                        } else {
+                          setSelectedImage(img);
+                        }
+                      }}
+                    >
+                      <img
+                        key={img}
+                        src={img}
+                        alt={`${villa.name} detail ${idx + 1}`}
+                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 md:group-hover:scale-105"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.onerror = null;
+                          target.src = 'https://placehold.co/600x400?text=Missing+Image';
+                        }}
+                      />
+                      <div className={`absolute inset-0 bg-black/40 transition-colors flex items-center justify-center md:group-hover:bg-black/0 md:group-hover:opacity-100 ${localActiveIdx === idx ? 'bg-black/0 opacity-100' : 'opacity-0'}`}>
+                        <Maximize className={`text-white transition-opacity md:opacity-0 md:group-hover:opacity-100 ${localActiveIdx === idx ? 'opacity-100' : 'opacity-0'}`} size={24} />
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </section>
 

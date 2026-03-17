@@ -72,6 +72,15 @@ export default function Admin() {
         return out;
     };
 
+    const normalizeVillaGallerySections = (villa: Villa): Villa => {
+        if (Array.isArray((villa as any).gallerySections) && (villa as any).gallerySections.length > 0) return villa;
+        const legacy = Array.isArray((villa as any).gallery) ? (villa as any).gallery : [];
+        return {
+            ...villa,
+            gallerySections: [{ title: 'Visual Details.', images: legacy }],
+        } as any;
+    };
+
     // Load home data on mount
     useEffect(() => {
         if (isAuthenticated) {
@@ -89,7 +98,20 @@ export default function Admin() {
         fetch('/api/villas', { cache: 'no-store' })
             .then(res => res.json())
             .then((data: Villa[]) => {
-                const nextVillas = Array.isArray(data) && data.length ? data : (villasData as Villa[]);
+                const base = Array.isArray(data) && data.length ? data : (villasData as Villa[]);
+                const nextVillas = base.map(normalizeVillaGallerySections).map((v) => {
+                    // Oneiro should start with two gallery accordions (2nd can be empty; user will fill it)
+                    if (v.id === 'villa-oneiro') {
+                        const sections = Array.isArray((v as any).gallerySections) ? (v as any).gallerySections : [];
+                        if (sections.length < 2) {
+                            return {
+                                ...v,
+                                gallerySections: [...sections, { title: '', images: [] }],
+                            } as any;
+                        }
+                    }
+                    return v;
+                });
                 setVillas(nextVillas);
 
                 // Keep current selection if it still exists; otherwise fall back to first villa
@@ -99,7 +121,15 @@ export default function Admin() {
                 });
             })
             .catch(() => {
-                const fallback = (villasData as Villa[]);
+                const fallback = (villasData as Villa[]).map(normalizeVillaGallerySections).map((v) => {
+                    if (v.id === 'villa-oneiro') {
+                        const sections = Array.isArray((v as any).gallerySections) ? (v as any).gallerySections : [];
+                        if (sections.length < 2) {
+                            return { ...v, gallerySections: [...sections, { title: '', images: [] }] } as any;
+                        }
+                    }
+                    return v;
+                });
                 setVillas(fallback);
                 setActiveVilla(prev => prev || (fallback[0]?.id ?? ''));
             });
@@ -135,9 +165,12 @@ export default function Admin() {
 
     const currentVilla = villas.find(v => v.id === activeVilla);
 
-    const handleImageUpload = async (file: File, folder: string, index: number | 'hero' | 'new') => {
+    const handleImageUpload = async (file: File, folder: string, index: number | 'hero' | 'new', sectionIndex?: number) => {
         // Create unique key for this upload
-        const uploadKey = index === 'hero' ? `hero-${activeVilla}` : `gallery-${activeVilla}-${index}`;
+        const uploadKey =
+            index === 'hero'
+                ? `hero-${activeVilla}`
+                : `gallery-${activeVilla}-${typeof sectionIndex === 'number' ? `s${sectionIndex}-` : ''}${index}`;
 
         // Validate file
         if (!file || !file.type.startsWith('image/')) {
@@ -197,25 +230,48 @@ export default function Admin() {
                             ...updatedVillas[villaIndex],
                             image: imageUrl
                         };
-                    } else if (index === 'new') {
-                        if (!updatedVillas[villaIndex].gallery) {
-                            updatedVillas[villaIndex].gallery = [];
-                        }
-                        updatedVillas[villaIndex] = {
-                            ...updatedVillas[villaIndex],
-                            gallery: [...updatedVillas[villaIndex].gallery, imageUrl]
-                        };
                     } else {
-                        const galleryIndex = index as number;
-                        if (!updatedVillas[villaIndex].gallery) {
-                            updatedVillas[villaIndex].gallery = [];
+                        // Prefer new multi-section model when present; fall back to legacy `gallery`
+                        const hasSections = Array.isArray((updatedVillas[villaIndex] as any).gallerySections);
+                        if (hasSections) {
+                            const sections = [...((updatedVillas[villaIndex] as any).gallerySections || [])];
+                            const sIdx = typeof sectionIndex === 'number' ? sectionIndex : 0;
+                            if (!sections[sIdx]) sections[sIdx] = { title: '', images: [] };
+                            const images = [...(sections[sIdx].images || [])];
+
+                            if (index === 'new') {
+                                images.push(imageUrl);
+                            } else {
+                                const imgIdx = index as number;
+                                images[imgIdx] = imageUrl;
+                            }
+
+                            sections[sIdx] = { ...sections[sIdx], images };
+                            updatedVillas[villaIndex] = { ...(updatedVillas[villaIndex] as any), gallerySections: sections } as any;
+                        } else {
+                            if (index === 'new') {
+                                if (!(updatedVillas[villaIndex] as any).gallery) {
+                                    (updatedVillas[villaIndex] as any).gallery = [];
+                                }
+                                updatedVillas[villaIndex] = {
+                                    ...updatedVillas[villaIndex],
+                                    gallery: [...((updatedVillas[villaIndex] as any).gallery || []), imageUrl]
+                                } as any;
+                            } else {
+                                const galleryIndex = index as number;
+                                if (!(updatedVillas[villaIndex] as any).gallery) {
+                                    (updatedVillas[villaIndex] as any).gallery = [];
+                                }
+                                const newGallery = [...((updatedVillas[villaIndex] as any).gallery || [])];
+                                newGallery[galleryIndex] = imageUrl;
+                                updatedVillas[villaIndex] = {
+                                    ...updatedVillas[villaIndex],
+                                    gallery: newGallery
+                                } as any;
+                            }
                         }
-                        const newGallery = [...updatedVillas[villaIndex].gallery];
-                        newGallery[galleryIndex] = imageUrl;
-                        updatedVillas[villaIndex] = {
-                            ...updatedVillas[villaIndex],
-                            gallery: newGallery
-                        };
+                    } else {
+                        // (handled above)
                     }
 
                     return updatedVillas;
@@ -1260,167 +1316,207 @@ export default function Admin() {
                                 </div>
                             </div>
 
-                            {/* Gallery Edit - drag to reorder, order saved on Save Changes */}
-                            <div>
-                                <h3 className="text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-6 border-b border-gray-100 pb-4">Gallery Images ({currentVilla.gallery.length}) — drag to reorder</h3>
-                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                                    {currentVilla.gallery.map((img, idx) => {
-                                        const isUploading = uploadingImage === `gallery-${activeVilla}-${idx}`;
-                                        return (
-                                            <div
-                                                key={img}
-                                                draggable
-                                                onDragStart={(e) => {
-                                                    e.dataTransfer.setData('text/plain', String(idx));
-                                                    e.dataTransfer.effectAllowed = 'move';
-                                                }}
-                                                onDragOver={(e) => {
-                                                    e.preventDefault();
-                                                    e.dataTransfer.dropEffect = 'move';
-                                                    setDragOverIndex(idx);
-                                                }}
-                                                onDragLeave={() => setDragOverIndex(null)}
-                                                onDrop={(e) => {
-                                                    e.preventDefault();
-                                                    const from = parseInt(e.dataTransfer.getData('text/plain'), 10);
-                                                    if (Number.isNaN(from) || from === idx) {
-                                                        setDragOverIndex(null);
-                                                        return;
-                                                    }
-                                                    const reordered = reorderArray(currentVilla.gallery, from, idx);
-                                                    setVillas(villas.map(v => v.id === activeVilla ? { ...v, gallery: reordered } : v));
-                                                    setDragOverIndex(null);
-                                                }}
-                                                className={`relative group rounded-sm overflow-hidden border aspect-[2/3] cursor-grab active:cursor-grabbing select-none ${dragOverIndex === idx ? 'border-[#8B6F5A] ring-2 ring-[#8B6F5A]/40' : 'border-gray-200'}`}
-                                            >
-                                                {isUploading && (
-                                                    <div className="absolute inset-0 bg-black/70 z-30 flex items-center justify-center">
-                                                        <div className="text-white text-xs">Uploading...</div>
-                                                    </div>
-                                                )}
-                                                <img
-                                                    src={img}
-                                                    alt={`Gallery ${idx + 1}`}
-                                                    draggable={false}
-                                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 pointer-events-none"
-                                                    onError={(e) => {
-                                                        const target = e.target as HTMLImageElement;
-                                                        target.onerror = null; // Prevent infinite loops
-                                                        console.error('Gallery image failed to load:', img);
-                                                        target.src = 'https://placehold.co/600x400?text=Missing+Image';
-                                                    }}
-                                                />
+                            {/* Gallery Edit - multiple accordions with editable titles */}
+                            <div className="space-y-10">
+                                <div className="flex items-center justify-between gap-4">
+                                    <h3 className="text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold border-b border-gray-100 pb-4 flex-1">
+                                        Galleries — drag to reorder
+                                    </h3>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const sections = Array.isArray((currentVilla as any).gallerySections) ? [...(currentVilla as any).gallerySections] : [];
+                                            sections.push({ title: '', images: [] });
+                                            setVillas(villas.map(v => v.id === activeVilla ? { ...(v as any), gallerySections: sections } as any : v));
+                                        }}
+                                        className="px-4 py-2 text-[10px] uppercase tracking-widest font-bold border border-[#2C3539] text-[#2C3539] hover:bg-[#2C3539] hover:text-white transition-colors"
+                                    >
+                                        Add Accordion
+                                    </button>
+                                </div>
 
-                                                {/* Image Number / Indicator overlay */}
-                                                <div className="absolute top-2 left-2 bg-black/60 text-white text-[9px] uppercase tracking-wider px-2 py-1 rounded-sm backdrop-blur-sm z-10 transition-opacity group-hover:opacity-0">
-                                                    Image {idx + 1}
-                                                </div>
-
-                                                {/* Hover Overlay */}
-                                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col items-center justify-center gap-4 z-20">
-                                                    <Camera className="text-white drop-shadow-md transform -translate-y-4 group-hover:translate-y-0 transition-transform duration-300" size={28} strokeWidth={1.5} />
-                                                    <label className={`cursor-pointer bg-white/90 text-[#2C3539] px-4 py-2 text-[10px] font-bold uppercase tracking-wider hover:bg-[#8B6F5A] hover:text-white transition-colors text-center w-3/4 transform translate-y-4 group-hover:translate-y-0 shadow-lg ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                                                        {isUploading ? 'Uploading...' : 'Replace'}
-                                                        <input
-                                                            type="file"
-                                                            accept="image/*"
-                                                            className="hidden"
-                                                            disabled={isUploading}
-                                                            onChange={(e) => {
-                                                                if (e.target.files?.[0]) {
-                                                                    // Extract folder name from image path
-                                                                    // Handles both local paths (/VILLA_ONEIRO/image.png) and GCS URLs (https://storage.googleapis.com/bucket/VILLA_ONEIRO/image.png)
-                                                                    let imagePath = img;
-                                                                    // Fix malformed URLs that might have leading slash before https://
-                                                                    if (imagePath.startsWith('/https://') || imagePath.startsWith('/http://')) {
-                                                                        imagePath = imagePath.substring(1);
-                                                                    }
-                                                                    let folderName = '';
-
-                                                                    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
-                                                                        // GCS URL: extract folder from path
-                                                                        try {
-                                                                            const url = new URL(imagePath);
-                                                                            const pathParts = url.pathname.split('/').filter(part => part);
-                                                                            // Path is usually: bucket/folder/filename, so folder is second part
-                                                                            if (pathParts.length >= 2) {
-                                                                                folderName = pathParts[1]; // Skip bucket name, get folder
-                                                                            } else {
-                                                                                // Fallback: try to get from villa ID
-                                                                                folderName = currentVilla.id === 'villa-oneiro' ? 'VILLA_ONEIRO' :
-                                                                                    currentVilla.id === 'omorfi-suite' ? 'OMORFI_SUITE' :
-                                                                                        currentVilla.id === 'villa-petra' ? 'Villa_PETRA' : '';
-                                                                            }
-                                                                        } catch (err) {
-                                                                            // If URL parsing fails, use villa ID mapping
-                                                                            folderName = currentVilla.id === 'villa-oneiro' ? 'VILLA_ONEIRO' :
-                                                                                currentVilla.id === 'omorfi-suite' ? 'OMORFI_SUITE' :
-                                                                                    currentVilla.id === 'villa-petra' ? 'Villa_PETRA' : '';
-                                                                        }
-                                                                    } else {
-                                                                        // Local path: /VILLA_ONEIRO/image.png
-                                                                        const pathParts = imagePath.split('/').filter(part => part);
-                                                                        folderName = pathParts.length > 0 ? pathParts[0] : '';
-                                                                    }
-
-                                                                    if (!folderName) {
-                                                                        alert('Could not determine folder for this image. Please check the image path.');
-                                                                        e.target.value = '';
-                                                                        return;
-                                                                    }
-
-                                                                    handleImageUpload(e.target.files[0], folderName, idx);
-                                                                    // Reset input to allow re-uploading the same file
-                                                                    e.target.value = '';
-                                                                }
-                                                            }}
-                                                        />
-                                                    </label>
-                                                    <button
-                                                        onClick={() => {
-                                                            const newGallery = [...currentVilla.gallery];
-                                                            newGallery.splice(idx, 1);
-                                                            setVillas(villas.map(v => v.id === activeVilla ? { ...v, gallery: newGallery } : v));
+                                {(Array.isArray((currentVilla as any).gallerySections) ? (currentVilla as any).gallerySections : [{ title: 'Visual Details.', images: (currentVilla as any).gallery || [] }]).map((section: any, sectionIdx: number) => {
+                                    const images: string[] = Array.isArray(section.images) ? section.images : [];
+                                    return (
+                                        <div key={`section-${sectionIdx}`} className="border border-gray-100 bg-[#FDFCFB] p-4 md:p-6 rounded-sm">
+                                            <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
+                                                <div className="flex-1">
+                                                    <label className="block text-[10px] uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Accordion Title</label>
+                                                    <input
+                                                        type="text"
+                                                        value={section.title || ''}
+                                                        onChange={(e) => {
+                                                            const nextSections = Array.isArray((currentVilla as any).gallerySections) ? [...(currentVilla as any).gallerySections] : [];
+                                                            nextSections[sectionIdx] = { ...nextSections[sectionIdx], title: e.target.value };
+                                                            setVillas(villas.map(v => v.id === activeVilla ? { ...(v as any), gallerySections: nextSections } as any : v));
                                                         }}
-                                                        className="text-white text-[10px] uppercase tracking-widest hover:text-red-400 transition-colors transform translate-y-4 group-hover:translate-y-0"
+                                                        placeholder="e.g. Visual Details."
+                                                        className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none bg-white"
+                                                    />
+                                                </div>
+                                                <div className="flex items-center gap-3">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            const nextSections = Array.isArray((currentVilla as any).gallerySections) ? [...(currentVilla as any).gallerySections] : [];
+                                                            nextSections.splice(sectionIdx, 1);
+                                                            setVillas(villas.map(v => v.id === activeVilla ? { ...(v as any), gallerySections: nextSections.length ? nextSections : [{ title: 'Visual Details.', images: [] }] } as any : v));
+                                                        }}
+                                                        className="text-[10px] uppercase tracking-widest font-bold text-red-600 hover:text-red-700 transition-colors"
                                                     >
-                                                        Remove
+                                                        Remove Accordion
                                                     </button>
                                                 </div>
                                             </div>
-                                        );
-                                    })}
 
-                                    {/* Add New Villa Gallery Image */}
-                                    <div className="relative group rounded-sm overflow-hidden border-2 border-dashed border-gray-300 aspect-[2/3] flex items-center justify-center hover:border-[#8B6F5A] transition-colors cursor-pointer bg-gray-50">
-                                        {uploadingImage === `gallery-${activeVilla}-new` && (
-                                            <div className="absolute inset-0 bg-black/70 z-30 flex items-center justify-center">
-                                                <div className="text-white text-xs">Uploading...</div>
+                                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                                                {images.map((img, idx) => {
+                                                    const dragKey = sectionIdx * 1000 + idx;
+                                                    const isUploading = uploadingImage === `gallery-${activeVilla}-s${sectionIdx}-${idx}`;
+                                                    return (
+                                                        <div
+                                                            key={img}
+                                                            draggable
+                                                            onDragStart={(e) => {
+                                                                e.dataTransfer.setData('text/plain', JSON.stringify({ sectionIdx, idx }));
+                                                                e.dataTransfer.effectAllowed = 'move';
+                                                            }}
+                                                            onDragOver={(e) => {
+                                                                e.preventDefault();
+                                                                e.dataTransfer.dropEffect = 'move';
+                                                                setDragOverIndex(dragKey);
+                                                            }}
+                                                            onDragLeave={() => setDragOverIndex(null)}
+                                                            onDrop={(e) => {
+                                                                e.preventDefault();
+                                                                const raw = e.dataTransfer.getData('text/plain');
+                                                                let parsed: any = null;
+                                                                try { parsed = JSON.parse(raw); } catch { parsed = null; }
+                                                                if (!parsed || parsed.sectionIdx !== sectionIdx || typeof parsed.idx !== 'number') {
+                                                                    setDragOverIndex(null);
+                                                                    return;
+                                                                }
+                                                                const from = parsed.idx as number;
+                                                                if (from === idx) {
+                                                                    setDragOverIndex(null);
+                                                                    return;
+                                                                }
+                                                                const nextSections = Array.isArray((currentVilla as any).gallerySections) ? [...(currentVilla as any).gallerySections] : [];
+                                                                const nextImages = reorderArray(images, from, idx);
+                                                                nextSections[sectionIdx] = { ...nextSections[sectionIdx], images: nextImages };
+                                                                setVillas(villas.map(v => v.id === activeVilla ? { ...(v as any), gallerySections: nextSections } as any : v));
+                                                                setDragOverIndex(null);
+                                                            }}
+                                                            className={`relative group rounded-sm overflow-hidden border aspect-[2/3] cursor-grab active:cursor-grabbing select-none ${dragOverIndex === dragKey ? 'border-[#8B6F5A] ring-2 ring-[#8B6F5A]/40' : 'border-gray-200'}`}
+                                                        >
+                                                            {isUploading && (
+                                                                <div className="absolute inset-0 bg-black/70 z-30 flex items-center justify-center">
+                                                                    <div className="text-white text-xs">Uploading...</div>
+                                                                </div>
+                                                            )}
+                                                            <img
+                                                                src={img}
+                                                                alt={`Gallery ${idx + 1}`}
+                                                                draggable={false}
+                                                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 pointer-events-none"
+                                                                onError={(e) => {
+                                                                    const target = e.target as HTMLImageElement;
+                                                                    target.onerror = null;
+                                                                    console.error('Gallery image failed to load:', img);
+                                                                    target.src = 'https://placehold.co/600x400?text=Missing+Image';
+                                                                }}
+                                                            />
+
+                                                            <div className="absolute top-2 left-2 bg-black/60 text-white text-[9px] uppercase tracking-wider px-2 py-1 rounded-sm backdrop-blur-sm z-10 transition-opacity group-hover:opacity-0">
+                                                                Image {idx + 1}
+                                                            </div>
+
+                                                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col items-center justify-center gap-4 z-20">
+                                                                <Camera className="text-white drop-shadow-md transform -translate-y-4 group-hover:translate-y-0 transition-transform duration-300" size={28} strokeWidth={1.5} />
+                                                                <label className={`cursor-pointer bg-white/90 text-[#2C3539] px-4 py-2 text-[10px] font-bold uppercase tracking-wider hover:bg-[#8B6F5A] hover:text-white transition-colors text-center w-3/4 transform translate-y-4 group-hover:translate-y-0 shadow-lg ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                                                                    {isUploading ? 'Uploading...' : 'Replace'}
+                                                                    <input
+                                                                        type="file"
+                                                                        accept="image/*"
+                                                                        className="hidden"
+                                                                        disabled={isUploading}
+                                                                        onChange={(e) => {
+                                                                            if (e.target.files?.[0]) {
+                                                                                let imagePath = img;
+                                                                                if (imagePath.startsWith('/https://') || imagePath.startsWith('/http://')) imagePath = imagePath.substring(1);
+                                                                                let folderName = '';
+
+                                                                                if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+                                                                                    try {
+                                                                                        const url = new URL(imagePath);
+                                                                                        const pathParts = url.pathname.split('/').filter(part => part);
+                                                                                        if (pathParts.length >= 2) folderName = pathParts[1];
+                                                                                    } catch { /* ignore */ }
+                                                                                } else {
+                                                                                    const pathParts = imagePath.split('/').filter(part => part);
+                                                                                    folderName = pathParts.length > 0 ? pathParts[0] : '';
+                                                                                }
+
+                                                                                if (!folderName) {
+                                                                                    folderName = currentVilla.id === 'villa-oneiro' ? 'VILLA_ONEIRO'
+                                                                                        : currentVilla.id === 'omorfi-suite' ? 'OMORFI_SUITE'
+                                                                                            : currentVilla.id === 'villa-petra' ? 'Villa_PETRA' : 'UPLOADS';
+                                                                                }
+
+                                                                                handleImageUpload(e.target.files[0], folderName, idx, sectionIdx);
+                                                                                e.target.value = '';
+                                                                            }
+                                                                        }}
+                                                                    />
+                                                                </label>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        const nextSections = Array.isArray((currentVilla as any).gallerySections) ? [...(currentVilla as any).gallerySections] : [];
+                                                                        const nextImages = [...images];
+                                                                        nextImages.splice(idx, 1);
+                                                                        nextSections[sectionIdx] = { ...nextSections[sectionIdx], images: nextImages };
+                                                                        setVillas(villas.map(v => v.id === activeVilla ? { ...(v as any), gallerySections: nextSections } as any : v));
+                                                                    }}
+                                                                    className="text-white text-[10px] uppercase tracking-widest hover:text-red-400 transition-colors transform translate-y-4 group-hover:translate-y-0"
+                                                                >
+                                                                    Remove
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+
+                                                <div className="relative group rounded-sm overflow-hidden border-2 border-dashed border-gray-300 aspect-[2/3] flex items-center justify-center hover:border-[#8B6F5A] transition-colors cursor-pointer bg-gray-50">
+                                                    {uploadingImage === `gallery-${activeVilla}-s${sectionIdx}-new` && (
+                                                        <div className="absolute inset-0 bg-black/70 z-30 flex items-center justify-center">
+                                                            <div className="text-white text-xs">Uploading...</div>
+                                                        </div>
+                                                    )}
+                                                    <div className="flex flex-col items-center opacity-60 group-hover:opacity-100 transition-opacity">
+                                                        <Camera className="text-[#2C3539] mb-2" size={24} />
+                                                        <span className="text-[#2C3539] text-[10px] uppercase tracking-widest font-bold">Add Image</span>
+                                                    </div>
+                                                    <input
+                                                        type="file"
+                                                        accept="image/*"
+                                                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                                                        disabled={uploadingImage === `gallery-${activeVilla}-s${sectionIdx}-new`}
+                                                        onChange={(e) => {
+                                                            if (e.target.files?.[0]) {
+                                                                const folderName = currentVilla.id === 'villa-oneiro' ? 'VILLA_ONEIRO'
+                                                                    : currentVilla.id === 'omorfi-suite' ? 'OMORFI_SUITE'
+                                                                        : currentVilla.id === 'villa-petra' ? 'Villa_PETRA' : 'UPLOADS';
+                                                                handleImageUpload(e.target.files[0], folderName, "new", sectionIdx);
+                                                                e.target.value = '';
+                                                            }
+                                                        }}
+                                                    />
+                                                </div>
                                             </div>
-                                        )}
-                                        <div className="flex flex-col items-center opacity-60 group-hover:opacity-100 transition-opacity">
-                                            <Camera className="text-[#2C3539] mb-2" size={24} />
-                                            <span className="text-[#2C3539] text-[10px] uppercase tracking-widest font-bold">Add Image</span>
                                         </div>
-                                        <input
-                                            type="file"
-                                            accept="image/*"
-                                            className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                                            disabled={uploadingImage === `gallery-${activeVilla}-new`}
-                                            onChange={(e) => {
-                                                if (e.target.files?.[0]) {
-                                                    const folderName = currentVilla.id === 'villa-oneiro' ? 'VILLA_ONEIRO' :
-                                                        currentVilla.id === 'omorfi-suite' ? 'OMORFI_SUITE' :
-                                                            currentVilla.id === 'villa-petra' ? 'Villa_PETRA' : 'UPLOADS';
-
-                                                    // Pass "new" as index, handleImageUpload needs to handle this mode
-                                                    handleImageUpload(e.target.files[0], folderName, "new");
-                                                    e.target.value = '';
-                                                }
-                                            }}
-                                        />
-                                    </div>
-                                </div>
+                                    );
+                                })}
                             </div>
 
                         </div>
