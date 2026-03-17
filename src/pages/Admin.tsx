@@ -72,6 +72,34 @@ export default function Admin() {
         return out;
     };
 
+    // Move image between accordions (or within) and return updated sections
+    const moveGalleryImage = (
+        sections: { title: string; images: string[] }[],
+        fromSectionIdx: number,
+        fromIdx: number,
+        toSectionIdx: number,
+        toIdx: number
+    ): { title: string; images: string[] }[] => {
+        if (!Array.isArray(sections) || sections.length === 0) return sections;
+        if (!sections[fromSectionIdx] || !sections[toSectionIdx]) return sections;
+
+        const out = sections.map((s) => ({ ...s, images: Array.isArray(s.images) ? [...s.images] : [] }));
+        const fromImages = out[fromSectionIdx].images;
+        const toImages = out[toSectionIdx].images;
+
+        if (fromIdx < 0 || fromIdx >= fromImages.length) return sections;
+
+        const [moved] = fromImages.splice(fromIdx, 1);
+        if (typeof moved !== 'string') return sections;
+
+        const safeToIdx = Math.max(0, Math.min(toIdx, toImages.length));
+        toImages.splice(safeToIdx, 0, moved);
+
+        out[fromSectionIdx] = { ...out[fromSectionIdx], images: fromImages };
+        out[toSectionIdx] = { ...out[toSectionIdx], images: toImages };
+        return out;
+    };
+
     const normalizeVillaGallerySections = (villa: Villa): Villa => {
         if (Array.isArray((villa as any).gallerySections) && (villa as any).gallerySections.length > 0) return villa;
         const legacy = Array.isArray((villa as any).gallery) ? (villa as any).gallery : [];
@@ -1390,18 +1418,29 @@ export default function Admin() {
                                                                 const raw = e.dataTransfer.getData('text/plain');
                                                                 let parsed: any = null;
                                                                 try { parsed = JSON.parse(raw); } catch { parsed = null; }
-                                                                if (!parsed || parsed.sectionIdx !== sectionIdx || typeof parsed.idx !== 'number') {
+                                                                if (!parsed || typeof parsed.sectionIdx !== 'number' || typeof parsed.idx !== 'number') {
                                                                     setDragOverIndex(null);
                                                                     return;
                                                                 }
-                                                                const from = parsed.idx as number;
-                                                                if (from === idx) {
+                                                                const fromSectionIdx = parsed.sectionIdx as number;
+                                                                const fromIdx = parsed.idx as number;
+
+                                                                // No-op
+                                                                if (fromSectionIdx === sectionIdx && fromIdx === idx) {
                                                                     setDragOverIndex(null);
                                                                     return;
                                                                 }
                                                                 const nextSections = Array.isArray((currentVilla as any).gallerySections) ? [...(currentVilla as any).gallerySections] : [];
-                                                                const nextImages = reorderArray(images, from, idx);
-                                                                nextSections[sectionIdx] = { ...nextSections[sectionIdx], images: nextImages };
+
+                                                                // Move within same accordion OR across accordions
+                                                                if (fromSectionIdx === sectionIdx) {
+                                                                    const nextImages = reorderArray(images, fromIdx, idx);
+                                                                    nextSections[sectionIdx] = { ...nextSections[sectionIdx], images: nextImages };
+                                                                } else {
+                                                                    const moved = moveGalleryImage(nextSections as any, fromSectionIdx, fromIdx, sectionIdx, idx);
+                                                                    // also allow highlighting to clear
+                                                                    for (let i = 0; i < moved.length; i++) nextSections[i] = moved[i] as any;
+                                                                }
                                                                 setVillas(villas.map(v => v.id === activeVilla ? { ...(v as any), gallerySections: nextSections } as any : v));
                                                                 setDragOverIndex(null);
                                                             }}
@@ -1485,7 +1524,32 @@ export default function Admin() {
                                                     );
                                                 })}
 
-                                                <div className="relative group rounded-sm overflow-hidden border-2 border-dashed border-gray-300 aspect-[2/3] flex items-center justify-center hover:border-[#8B6F5A] transition-colors cursor-pointer bg-gray-50">
+                                                <div
+                                                    className="relative group rounded-sm overflow-hidden border-2 border-dashed border-gray-300 aspect-[2/3] flex items-center justify-center hover:border-[#8B6F5A] transition-colors cursor-pointer bg-gray-50"
+                                                    onDragOver={(e) => {
+                                                        e.preventDefault();
+                                                        e.dataTransfer.dropEffect = 'move';
+                                                        setDragOverIndex(sectionIdx * 1000 + 999);
+                                                    }}
+                                                    onDragLeave={() => setDragOverIndex(null)}
+                                                    onDrop={(e) => {
+                                                        e.preventDefault();
+                                                        const raw = e.dataTransfer.getData('text/plain');
+                                                        let parsed: any = null;
+                                                        try { parsed = JSON.parse(raw); } catch { parsed = null; }
+                                                        if (!parsed || typeof parsed.sectionIdx !== 'number' || typeof parsed.idx !== 'number') {
+                                                            setDragOverIndex(null);
+                                                            return;
+                                                        }
+                                                        const fromSectionIdx = parsed.sectionIdx as number;
+                                                        const fromIdx = parsed.idx as number;
+                                                        const nextSections = Array.isArray((currentVilla as any).gallerySections) ? [...(currentVilla as any).gallerySections] : [];
+                                                        const moved = moveGalleryImage(nextSections as any, fromSectionIdx, fromIdx, sectionIdx, (Array.isArray(nextSections[sectionIdx]?.images) ? nextSections[sectionIdx].images.length : 0));
+                                                        for (let i = 0; i < moved.length; i++) nextSections[i] = moved[i] as any;
+                                                        setVillas(villas.map(v => v.id === activeVilla ? { ...(v as any), gallerySections: nextSections } as any : v));
+                                                        setDragOverIndex(null);
+                                                    }}
+                                                >
                                                     {uploadingImage === `gallery-${activeVilla}-s${sectionIdx}-new` && (
                                                         <div className="absolute inset-0 bg-black/70 z-30 flex items-center justify-center">
                                                             <div className="text-white text-xs">Uploading...</div>
