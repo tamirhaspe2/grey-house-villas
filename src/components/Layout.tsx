@@ -72,7 +72,7 @@ export default function Layout({ children, villas }: LayoutProps) {
   };
 
   const isDarkHeader = location.pathname !== '/';
-
+// sss
   return (
     <div className="min-h-screen bg-[#FDFCFB] text-[#2C3539] font-sans selection:bg-[#D4C3B3] selection:text-white">
       {/* Fixed Top Navigation Container */}
