@@ -58,6 +58,53 @@
       "/OMORFI_SUITE/image14.png",
       "/OMORFI_SUITE/image15.png",
       "/OMORFI_SUITE/image16.png"
+    ],
+    "gallerySections": [
+      {
+        "title": "Visual Details.",
+        "images": [
+          "/api/images/VILLA_ONEIRO/1773108371579-image.png",
+          "/VILLA_ONEIRO/image1.png",
+          "/VILLA_ONEIRO/image2.png",
+          "/VILLA_ONEIRO/image3.png",
+          "/VILLA_ONEIRO/image4.png",
+          "/VILLA_ONEIRO/image5.png",
+          "/VILLA_ONEIRO/image6.png",
+          "/VILLA_ONEIRO/image7.png",
+          "/VILLA_ONEIRO/image8.png",
+          "/VILLA_ONEIRO/image9.png",
+          "/VILLA_ONEIRO/image10.png",
+          "/VILLA_ONEIRO/image11.png",
+          "/VILLA_ONEIRO/image12.png",
+          "/VILLA_ONEIRO/image13.png",
+          "/VILLA_ONEIRO/image14.png",
+          "/VILLA_ONEIRO/image15.png",
+          "/VILLA_ONEIRO/image16.png",
+          "/VILLA_ONEIRO/1772653659092-image17.png",
+          "/OMORFI_SUITE/image1.png",
+          "/OMORFI_SUITE/image2.png",
+          "/OMORFI_SUITE/image3.png",
+          "/OMORFI_SUITE/image4.png",
+          "/OMORFI_SUITE/image5.png",
+          "/OMORFI_SUITE/image6.png",
+          "/OMORFI_SUITE/image7.png",
+          "/OMORFI_SUITE/image8.png",
+          "/OMORFI_SUITE/image9.png",
+          "/OMORFI_SUITE/image10.png",
+          "/OMORFI_SUITE/image11.png",
+          "/OMORFI_SUITE/image12.png",
+          "/OMORFI_SUITE/image13.png",
+          "/OMORFI_SUITE/image14.png",
+          "/OMORFI_SUITE/image15.png",
+          "/OMORFI_SUITE/image16.png"
+        ]
+      },
+      {
+        "title": "",
+        "images": [
+          "/VILLA_ONEIRO/1773773444419-image9.png"
+        ]
+      }
     ]
   },
   {
@@ -98,6 +145,26 @@
       "/Villa_PETRA/image11.png",
       "/Villa_PETRA/image12.png",
       "/Villa_PETRA/image13.png"
+    ],
+    "gallerySections": [
+      {
+        "title": "Visual Details.",
+        "images": [
+          "/Villa_PETRA/1772668867122-___________-profile-qr.png",
+          "/Villa_PETRA/image2.png",
+          "/Villa_PETRA/image3.png",
+          "/Villa_PETRA/image4.png",
+          "/Villa_PETRA/image5.png",
+          "/Villa_PETRA/image6.png",
+          "/Villa_PETRA/image7.png",
+          "/Villa_PETRA/image8.png",
+          "/Villa_PETRA/image9.png",
+          "/Villa_PETRA/image10.png",
+          "/Villa_PETRA/image11.png",
+          "/Villa_PETRA/image12.png",
+          "/Villa_PETRA/image13.png"
+        ]
+      }
     ]
   },
   {
@@ -172,6 +239,60 @@
       "/Villa_PETRA/image11.png",
       "/Villa_PETRA/image12.png",
       "/Villa_PETRA/image13.png"
+    ],
+    "gallerySections": [
+      {
+        "title": "Visual Details.",
+        "images": [
+          "/api/images/VILLA_ONEIRO/1773108371579-image.png",
+          "/VILLA_ONEIRO/image1.png",
+          "/VILLA_ONEIRO/image2.png",
+          "/VILLA_ONEIRO/image3.png",
+          "/VILLA_ONEIRO/image4.png",
+          "/VILLA_ONEIRO/image5.png",
+          "/VILLA_ONEIRO/image6.png",
+          "/VILLA_ONEIRO/image7.png",
+          "/VILLA_ONEIRO/image8.png",
+          "/VILLA_ONEIRO/image9.png",
+          "/VILLA_ONEIRO/image10.png",
+          "/VILLA_ONEIRO/image11.png",
+          "/VILLA_ONEIRO/image12.png",
+          "/VILLA_ONEIRO/image13.png",
+          "/VILLA_ONEIRO/image14.png",
+          "/VILLA_ONEIRO/image15.png",
+          "/VILLA_ONEIRO/image16.png",
+          "/VILLA_ONEIRO/1772653659092-image17.png",
+          "/OMORFI_SUITE/image1.png",
+          "/OMORFI_SUITE/image2.png",
+          "/OMORFI_SUITE/image3.png",
+          "/OMORFI_SUITE/image4.png",
+          "/OMORFI_SUITE/image5.png",
+          "/OMORFI_SUITE/image6.png",
+          "/OMORFI_SUITE/image7.png",
+          "/OMORFI_SUITE/image8.png",
+          "/OMORFI_SUITE/image9.png",
+          "/OMORFI_SUITE/image10.png",
+          "/OMORFI_SUITE/image11.png",
+          "/OMORFI_SUITE/image12.png",
+          "/OMORFI_SUITE/image13.png",
+          "/OMORFI_SUITE/image14.png",
+          "/OMORFI_SUITE/image15.png",
+          "/OMORFI_SUITE/image16.png",
+          "/Villa_PETRA/1772668867122-___________-profile-qr.png",
+          "/Villa_PETRA/image2.png",
+          "/Villa_PETRA/image3.png",
+          "/Villa_PETRA/image4.png",
+          "/Villa_PETRA/image5.png",
+          "/Villa_PETRA/image6.png",
+          "/Villa_PETRA/image7.png",
+          "/Villa_PETRA/image8.png",
+          "/Villa_PETRA/image9.png",
+          "/Villa_PETRA/image10.png",
+          "/Villa_PETRA/image11.png",
+          "/Villa_PETRA/image12.png",
+          "/Villa_PETRA/image13.png"
+        ]
+      }
     ]
   }
 ]

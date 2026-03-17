@@ -8,10 +8,18 @@ export const VILLAS: Villa[] = villasData as Villa[];
 const normalizeVillaGallery = (villa: Villa): Villa => {
     if (Array.isArray(villa.gallerySections) && villa.gallerySections.length > 0) return villa;
     const legacy = Array.isArray(villa.gallery) ? villa.gallery : [];
-    return {
+    const out: Villa = {
         ...villa,
         gallerySections: [{ title: 'Visual Details.', images: legacy }],
     };
+    // Oneiro should always have two accordions (2nd can be empty for custom content)
+    if (out.id === 'villa-oneiro') {
+        const sections = out.gallerySections || [];
+        if (sections.length < 2) {
+            out.gallerySections = [...sections, { title: '', images: [] }];
+        }
+    }
+    return out;
 };
 
 // Also provide async function to fetch from API (for dynamic updates)

@@ -270,8 +270,6 @@ export default function Admin() {
                                 } as any;
                             }
                         }
-                    } else {
-                        // (handled above)
                     }
 
                     return updatedVillas;

@@ -110,18 +110,24 @@ export default function Layout({ children, villas }: LayoutProps) {
                 }`}>
                 Get in Touch
               </Link> */}
-              <a href="#contact" className={`hidden sm:inline-flex min-h-[44px] items-center justify-center px-6 sm:px-8 py-2.5 text-[11px] uppercase tracking-widest border rounded-full transition-all duration-300 touch-manipulation ${isScrolled || isDarkHeader
-                ? 'border-[#2C3539] text-[#2C3539] hover:bg-[#2C3539] hover:text-white'
-                // : 'border-white text-white hover:bg-white hover:text-[#2C3539]'
-                : 'border-[#2C3539] text-[#2C3539] hover:bg-[#2C3539] hover:text-white'
-                }`}>
+              {/* : 'border-white text-white hover:bg-white hover:text-[#2C3539]' */}
+              <a
+                href="#contact"
+                className={
+                  `hidden sm:inline-flex min-h-[44px] items-center justify-center px-6 sm:px-8 py-2.5 text-[11px] uppercase tracking-widest border rounded-full transition-all duration-300 touch-manipulation ${
+                    isScrolled || isDarkHeader
+                      ? 'border-[#2C3539] text-[#2C3539] hover:bg-[#2C3539] hover:text-white'
+                      : 'border-[#2C3539] text-[#2C3539] hover:bg-[#2C3539] hover:text-white'
+                  }`
+                }
+              >
                 Get in Touch
               </a>
               <Link
                 to="/booking"
+                // : 'border-white text-white hover:bg-white hover:text-[#2C3539]'
                 className={`hidden sm:inline-flex min-h-[44px] items-center justify-center px-6 sm:px-8 py-2.5 text-[11px] uppercase tracking-widest border rounded-full transition-all duration-300 touch-manipulation ${isScrolled || isDarkHeader
                   ? 'border-[#2C3539] text-[#2C3539] hover:bg-[#2C3539] hover:text-white'
-                  // : 'border-white text-white hover:bg-white hover:text-[#2C3539]'
                   : 'border-[#2C3539] text-[#2C3539] hover:bg-[#2C3539] hover:text-white'
                 }`}
               >
