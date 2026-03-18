@@ -5,6 +5,7 @@ import { Menu, X, Users, Instagram, Facebook, Linkedin, ChevronDown, Mail, Phone
 import { io, Socket } from 'socket.io-client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Villa } from '../types';
+import homeDataDefault from '../data/home.json';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -45,6 +46,19 @@ export default function Layout({ children, villas }: LayoutProps) {
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+
+  const [footer, setFooter] = useState<any>((homeDataDefault as any).footer ?? null);
+
+  useEffect(() => {
+    fetch('/api/home')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && data.footer) setFooter(data.footer);
+      })
+      .catch(() => {
+        // keep default footer from bundled JSON
+      });
+  }, []);
 
   const handleInquiry = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -268,40 +282,47 @@ export default function Layout({ children, villas }: LayoutProps) {
       <footer id="contact" className="bg-[#1A1F22] pt-20 pb-10 border-t border-white/10">
         <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-3 gap-12 lg:gap-24 mb-16">
           <div>
-            <div className="font-serif text-2xl tracking-wider uppercase text-white mb-6">Grey House</div>
+            <div className="font-serif text-2xl tracking-wider uppercase text-white mb-6">{footer?.brandName ?? 'Grey House'}</div>
             <p className="text-gray-400 font-light text-sm mb-8 leading-relaxed">
-              A limited opportunity to acquire a turnkey, fully-managed luxury estate in Katouna, Lefkas. Blending timeless natural stone architecture with European luxury.
+              {footer?.brandTagline ?? 'A limited opportunity to acquire a turnkey, fully-managed luxury estate in Katouna, Lefkas. Blending timeless natural stone architecture with European luxury.'}
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white hover:bg-[#D4C3B3] transition-colors">
+              <a href={footer?.social?.facebookUrl ?? '#'} className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white hover:bg-[#D4C3B3] transition-colors">
                 <Facebook size={18} />
               </a>
-              <a href="#" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white hover:bg-[#D4C3B3] transition-colors">
+              <a href={footer?.social?.instagramUrl ?? '#'} className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white hover:bg-[#D4C3B3] transition-colors">
                 <Instagram size={18} />
+              </a>
+              <a href={footer?.social?.linkedinUrl ?? '#'} className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white hover:bg-[#D4C3B3] transition-colors">
+                <Linkedin size={18} />
               </a>
             </div>
           </div>
 
           <div>
-            <h4 className="text-white font-serif text-xl mb-6">Direct Inquiries</h4>
+            <h4 className="text-white font-serif text-xl mb-6">{footer?.directInquiriesTitle ?? 'Direct Inquiries'}</h4>
             <div className="space-y-4">
-              <a href="mailto:sales@greyhousevillas.com" className="flex items-center text-gray-400 hover:text-white transition-colors">
+              <a href={`mailto:${footer?.email ?? 'sales@greyhousevillas.com'}`} className="flex items-center text-gray-400 hover:text-white transition-colors">
                 <Mail size={18} className="mr-4 text-[#A89F91]" />
-                sales@greyhousevillas.com
+                {footer?.email ?? 'sales@greyhousevillas.com'}
               </a>
-              <a href="tel:+306900000000" className="flex items-center text-gray-400 hover:text-white transition-colors">
+              <a href={`tel:${(footer?.phone ?? '+30 690 000 0000').replace(/\s+/g, '')}`} className="flex items-center text-gray-400 hover:text-white transition-colors">
                 <Phone size={18} className="mr-4 text-[#A89F91]" />
-                +30 690 000 0000
+                {footer?.phone ?? '+30 690 000 0000'}
               </a>
               <div className="flex items-start text-gray-400">
                 <MapPin size={18} className="mr-4 mt-1 text-[#A89F91] shrink-0" />
-                <span>Katouna, Lefkas Island<br />Ionian Islands, Greece 311 00</span>
+                <span>
+                  {footer?.addressLine1 ?? 'Katouna, Lefkas Island'}
+                  <br />
+                  {footer?.addressLine2 ?? 'Ionian Islands, Greece 311 00'}
+                </span>
               </div>
             </div>
           </div>
 
           <div>
-            <h4 className="text-white font-serif text-xl mb-6">Register Interest</h4>
+            <h4 className="text-white font-serif text-xl mb-6">{footer?.registerInterestTitle ?? 'Register Interest'}</h4>
             <form className="space-y-4" onSubmit={handleInquiry}>
               <input
                 type="text"
@@ -344,10 +365,10 @@ export default function Layout({ children, villas }: LayoutProps) {
         </div>
 
         <div className="max-w-7xl mx-auto px-6 pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center text-xs text-gray-500 font-light">
-          <p>&copy; 2026 Grey House Villas. All rights reserved.</p>
+          <p>{footer?.copyright ?? '© 2026 Grey House Villas. All rights reserved.'}</p>
           <div className="flex space-x-6 mt-4 md:mt-0">
-            <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
-            <a href="#" className="hover:text-white transition-colors">Disclaimer</a>
+            <a href={footer?.privacyUrl ?? '#'} className="hover:text-white transition-colors">{footer?.privacyLabel ?? 'Privacy Policy'}</a>
+            <a href={footer?.disclaimerUrl ?? '#'} className="hover:text-white transition-colors">{footer?.disclaimerLabel ?? 'Disclaimer'}</a>
           </div>
         </div>
       </footer>

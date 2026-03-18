@@ -14,11 +14,26 @@ export default function App() {
   const [villas, setVillas] = useState<Villa[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    getVillas().then(data => {
+  const refreshVillas = async () => {
+    try {
+      const data = await getVillas();
       setVillas(data);
+    } catch {
+      // keep previous data
+    } finally {
       setLoading(false);
-    });
+    }
+  };
+
+  useEffect(() => {
+    refreshVillas();
+    const onUpdate = () => refreshVillas();
+    window.addEventListener('villas:updated', onUpdate as EventListener);
+    window.addEventListener('home:updated', onUpdate as EventListener);
+    return () => {
+      window.removeEventListener('villas:updated', onUpdate as EventListener);
+      window.removeEventListener('home:updated', onUpdate as EventListener);
+    };
   }, []);
 
   if (loading) {

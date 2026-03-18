@@ -45,7 +45,7 @@ const normalizeVillaGallery = (villa: Villa): Villa => {
 // Also provide async function to fetch from API (for dynamic updates)
 export async function getVillas(): Promise<Villa[]> {
     try {
-        const res = await fetch('/api/villas');
+        const res = await fetch('/api/villas', { cache: 'no-store' });
         if (!res.ok) throw new Error('Failed to fetch villas');
         const data = await res.json();
         return (data as Villa[]).map(normalizeVillaGallery);

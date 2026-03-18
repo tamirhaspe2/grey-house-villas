@@ -45,6 +45,26 @@ interface HomeData {
         sectionLabel: string;
         heading: string;
     };
+    footer?: {
+        brandName: string;
+        brandTagline: string;
+        social: {
+            instagramUrl: string;
+            facebookUrl: string;
+            linkedinUrl?: string;
+        };
+        directInquiriesTitle: string;
+        email: string;
+        phone: string;
+        addressLine1: string;
+        addressLine2: string;
+        registerInterestTitle: string;
+        copyright: string;
+        privacyLabel: string;
+        privacyUrl: string;
+        disclaimerLabel: string;
+        disclaimerUrl: string;
+    };
 }
 
 export default function Admin() {
@@ -350,6 +370,8 @@ export default function Admin() {
 
                 if (res.ok) {
                     setSaveStatus('success');
+                    // Notify the rest of the app to refresh villa data (so Live/local update is instant)
+                    window.dispatchEvent(new Event('villas:updated'));
                     setTimeout(() => setSaveStatus('idle'), 3000);
                 } else {
                     setSaveStatus('error');
@@ -365,6 +387,7 @@ export default function Admin() {
                 if (res.ok) {
                     setSaveStatus('success');
                     setTimeout(() => setSaveStatus('idle'), 3000);
+                    window.dispatchEvent(new Event('home:updated'));
                 } else {
                     setSaveStatus('error');
                 }
@@ -1179,6 +1202,542 @@ export default function Admin() {
                                             onChange={(e) => setHomeData({ ...homeData, residences: { ...homeData.residences, heading: e.target.value } })}
                                             className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                         />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Footer Section */}
+                            <div className="bg-white p-6 md:p-12 shadow-sm border border-gray-100 rounded-sm">
+                                <h2 className="text-4xl font-serif text-[#2C3539] mb-12">Footer</h2>
+
+                                <div className="space-y-10">
+                                    <div className="space-y-6">
+                                        <h3 className="text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2 border-b border-gray-100 pb-4">Brand</h3>
+                                        <div className="grid md:grid-cols-2 gap-6">
+                                            <div>
+                                                <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Brand Name</label>
+                                                <input
+                                                    type="text"
+                                                    value={homeData.footer?.brandName ?? ''}
+                                                    onChange={(e) => setHomeData({
+                                                        ...homeData,
+                                                        footer: {
+                                                            ...(homeData.footer ?? {
+                                                                brandName: '',
+                                                                brandTagline: '',
+                                                                social: { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' },
+                                                                directInquiriesTitle: 'Direct Inquiries',
+                                                                email: '',
+                                                                phone: '',
+                                                                addressLine1: '',
+                                                                addressLine2: '',
+                                                                registerInterestTitle: 'Register Interest',
+                                                                copyright: '',
+                                                                privacyLabel: 'Privacy Policy',
+                                                                privacyUrl: '#',
+                                                                disclaimerLabel: 'Disclaimer',
+                                                                disclaimerUrl: '#',
+                                                            }),
+                                                            brandName: e.target.value,
+                                                            social: (homeData.footer?.social ?? { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' }),
+                                                        },
+                                                    })}
+                                                    className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Brand Tagline</label>
+                                                <textarea
+                                                    value={homeData.footer?.brandTagline ?? ''}
+                                                    onChange={(e) => setHomeData({
+                                                        ...homeData,
+                                                        footer: {
+                                                            ...(homeData.footer ?? {
+                                                                brandName: '',
+                                                                brandTagline: '',
+                                                                social: { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' },
+                                                                directInquiriesTitle: 'Direct Inquiries',
+                                                                email: '',
+                                                                phone: '',
+                                                                addressLine1: '',
+                                                                addressLine2: '',
+                                                                registerInterestTitle: 'Register Interest',
+                                                                copyright: '',
+                                                                privacyLabel: 'Privacy Policy',
+                                                                privacyUrl: '#',
+                                                                disclaimerLabel: 'Disclaimer',
+                                                                disclaimerUrl: '#',
+                                                            }),
+                                                            brandTagline: e.target.value,
+                                                            social: (homeData.footer?.social ?? { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' }),
+                                                        },
+                                                    })}
+                                                    rows={3}
+                                                    className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-6">
+                                        <h3 className="text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2 border-b border-gray-100 pb-4">Direct Inquiries</h3>
+                                        <div className="grid md:grid-cols-2 gap-6">
+                                            <div>
+                                                <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Section Title</label>
+                                                <input
+                                                    type="text"
+                                                    value={homeData.footer?.directInquiriesTitle ?? ''}
+                                                    onChange={(e) => setHomeData({
+                                                        ...homeData,
+                                                        footer: {
+                                                            ...(homeData.footer ?? {
+                                                                brandName: '',
+                                                                brandTagline: '',
+                                                                social: { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' },
+                                                                directInquiriesTitle: '',
+                                                                email: '',
+                                                                phone: '',
+                                                                addressLine1: '',
+                                                                addressLine2: '',
+                                                                registerInterestTitle: 'Register Interest',
+                                                                copyright: '',
+                                                                privacyLabel: 'Privacy Policy',
+                                                                privacyUrl: '#',
+                                                                disclaimerLabel: 'Disclaimer',
+                                                                disclaimerUrl: '#',
+                                                            }),
+                                                            directInquiriesTitle: e.target.value,
+                                                            social: (homeData.footer?.social ?? { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' }),
+                                                        },
+                                                    })}
+                                                    className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Email</label>
+                                                <input
+                                                    type="email"
+                                                    value={homeData.footer?.email ?? ''}
+                                                    onChange={(e) => setHomeData({
+                                                        ...homeData,
+                                                        footer: {
+                                                            ...(homeData.footer ?? {
+                                                                brandName: '',
+                                                                brandTagline: '',
+                                                                social: { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' },
+                                                                directInquiriesTitle: 'Direct Inquiries',
+                                                                email: '',
+                                                                phone: '',
+                                                                addressLine1: '',
+                                                                addressLine2: '',
+                                                                registerInterestTitle: 'Register Interest',
+                                                                copyright: '',
+                                                                privacyLabel: 'Privacy Policy',
+                                                                privacyUrl: '#',
+                                                                disclaimerLabel: 'Disclaimer',
+                                                                disclaimerUrl: '#',
+                                                            }),
+                                                            email: e.target.value,
+                                                            social: (homeData.footer?.social ?? { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' }),
+                                                        },
+                                                    })}
+                                                    className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Phone</label>
+                                                <input
+                                                    type="text"
+                                                    value={homeData.footer?.phone ?? ''}
+                                                    onChange={(e) => setHomeData({
+                                                        ...homeData,
+                                                        footer: {
+                                                            ...(homeData.footer ?? {
+                                                                brandName: '',
+                                                                brandTagline: '',
+                                                                social: { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' },
+                                                                directInquiriesTitle: 'Direct Inquiries',
+                                                                email: '',
+                                                                phone: '',
+                                                                addressLine1: '',
+                                                                addressLine2: '',
+                                                                registerInterestTitle: 'Register Interest',
+                                                                copyright: '',
+                                                                privacyLabel: 'Privacy Policy',
+                                                                privacyUrl: '#',
+                                                                disclaimerLabel: 'Disclaimer',
+                                                                disclaimerUrl: '#',
+                                                            }),
+                                                            phone: e.target.value,
+                                                            social: (homeData.footer?.social ?? { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' }),
+                                                        },
+                                                    })}
+                                                    className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Address Line 1</label>
+                                                <input
+                                                    type="text"
+                                                    value={homeData.footer?.addressLine1 ?? ''}
+                                                    onChange={(e) => setHomeData({
+                                                        ...homeData,
+                                                        footer: {
+                                                            ...(homeData.footer ?? {
+                                                                brandName: '',
+                                                                brandTagline: '',
+                                                                social: { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' },
+                                                                directInquiriesTitle: 'Direct Inquiries',
+                                                                email: '',
+                                                                phone: '',
+                                                                addressLine1: '',
+                                                                addressLine2: '',
+                                                                registerInterestTitle: 'Register Interest',
+                                                                copyright: '',
+                                                                privacyLabel: 'Privacy Policy',
+                                                                privacyUrl: '#',
+                                                                disclaimerLabel: 'Disclaimer',
+                                                                disclaimerUrl: '#',
+                                                            }),
+                                                            addressLine1: e.target.value,
+                                                            social: (homeData.footer?.social ?? { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' }),
+                                                        },
+                                                    })}
+                                                    className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Address Line 2</label>
+                                                <input
+                                                    type="text"
+                                                    value={homeData.footer?.addressLine2 ?? ''}
+                                                    onChange={(e) => setHomeData({
+                                                        ...homeData,
+                                                        footer: {
+                                                            ...(homeData.footer ?? {
+                                                                brandName: '',
+                                                                brandTagline: '',
+                                                                social: { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' },
+                                                                directInquiriesTitle: 'Direct Inquiries',
+                                                                email: '',
+                                                                phone: '',
+                                                                addressLine1: '',
+                                                                addressLine2: '',
+                                                                registerInterestTitle: 'Register Interest',
+                                                                copyright: '',
+                                                                privacyLabel: 'Privacy Policy',
+                                                                privacyUrl: '#',
+                                                                disclaimerLabel: 'Disclaimer',
+                                                                disclaimerUrl: '#',
+                                                            }),
+                                                            addressLine2: e.target.value,
+                                                            social: (homeData.footer?.social ?? { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' }),
+                                                        },
+                                                    })}
+                                                    className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-6">
+                                        <h3 className="text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2 border-b border-gray-100 pb-4">Links & Social</h3>
+                                        <div className="grid md:grid-cols-3 gap-6">
+                                            <div>
+                                                <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Instagram URL</label>
+                                                <input
+                                                    type="text"
+                                                    value={homeData.footer?.social?.instagramUrl ?? ''}
+                                                    onChange={(e) => setHomeData({
+                                                        ...homeData,
+                                                        footer: {
+                                                            ...(homeData.footer ?? {
+                                                                brandName: '',
+                                                                brandTagline: '',
+                                                                social: { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' },
+                                                                directInquiriesTitle: 'Direct Inquiries',
+                                                                email: '',
+                                                                phone: '',
+                                                                addressLine1: '',
+                                                                addressLine2: '',
+                                                                registerInterestTitle: 'Register Interest',
+                                                                copyright: '',
+                                                                privacyLabel: 'Privacy Policy',
+                                                                privacyUrl: '#',
+                                                                disclaimerLabel: 'Disclaimer',
+                                                                disclaimerUrl: '#',
+                                                            }),
+                                                            social: {
+                                                                ...(homeData.footer?.social ?? { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' }),
+                                                                instagramUrl: e.target.value,
+                                                            },
+                                                        },
+                                                    })}
+                                                    className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Facebook URL</label>
+                                                <input
+                                                    type="text"
+                                                    value={homeData.footer?.social?.facebookUrl ?? ''}
+                                                    onChange={(e) => setHomeData({
+                                                        ...homeData,
+                                                        footer: {
+                                                            ...(homeData.footer ?? {
+                                                                brandName: '',
+                                                                brandTagline: '',
+                                                                social: { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' },
+                                                                directInquiriesTitle: 'Direct Inquiries',
+                                                                email: '',
+                                                                phone: '',
+                                                                addressLine1: '',
+                                                                addressLine2: '',
+                                                                registerInterestTitle: 'Register Interest',
+                                                                copyright: '',
+                                                                privacyLabel: 'Privacy Policy',
+                                                                privacyUrl: '#',
+                                                                disclaimerLabel: 'Disclaimer',
+                                                                disclaimerUrl: '#',
+                                                            }),
+                                                            social: {
+                                                                ...(homeData.footer?.social ?? { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' }),
+                                                                facebookUrl: e.target.value,
+                                                            },
+                                                        },
+                                                    })}
+                                                    className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">LinkedIn URL</label>
+                                                <input
+                                                    type="text"
+                                                    value={homeData.footer?.social?.linkedinUrl ?? ''}
+                                                    onChange={(e) => setHomeData({
+                                                        ...homeData,
+                                                        footer: {
+                                                            ...(homeData.footer ?? {
+                                                                brandName: '',
+                                                                brandTagline: '',
+                                                                social: { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' },
+                                                                directInquiriesTitle: 'Direct Inquiries',
+                                                                email: '',
+                                                                phone: '',
+                                                                addressLine1: '',
+                                                                addressLine2: '',
+                                                                registerInterestTitle: 'Register Interest',
+                                                                copyright: '',
+                                                                privacyLabel: 'Privacy Policy',
+                                                                privacyUrl: '#',
+                                                                disclaimerLabel: 'Disclaimer',
+                                                                disclaimerUrl: '#',
+                                                            }),
+                                                            social: {
+                                                                ...(homeData.footer?.social ?? { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' }),
+                                                                linkedinUrl: e.target.value,
+                                                            },
+                                                        },
+                                                    })}
+                                                    className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="grid md:grid-cols-2 gap-6">
+                                            <div>
+                                                <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Privacy Label</label>
+                                                <input
+                                                    type="text"
+                                                    value={homeData.footer?.privacyLabel ?? ''}
+                                                    onChange={(e) => setHomeData({
+                                                        ...homeData,
+                                                        footer: {
+                                                            ...(homeData.footer ?? {
+                                                                brandName: '',
+                                                                brandTagline: '',
+                                                                social: { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' },
+                                                                directInquiriesTitle: 'Direct Inquiries',
+                                                                email: '',
+                                                                phone: '',
+                                                                addressLine1: '',
+                                                                addressLine2: '',
+                                                                registerInterestTitle: 'Register Interest',
+                                                                copyright: '',
+                                                                privacyLabel: '',
+                                                                privacyUrl: '#',
+                                                                disclaimerLabel: 'Disclaimer',
+                                                                disclaimerUrl: '#',
+                                                            }),
+                                                            privacyLabel: e.target.value,
+                                                            social: (homeData.footer?.social ?? { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' }),
+                                                        },
+                                                    })}
+                                                    className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Privacy URL</label>
+                                                <input
+                                                    type="text"
+                                                    value={homeData.footer?.privacyUrl ?? ''}
+                                                    onChange={(e) => setHomeData({
+                                                        ...homeData,
+                                                        footer: {
+                                                            ...(homeData.footer ?? {
+                                                                brandName: '',
+                                                                brandTagline: '',
+                                                                social: { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' },
+                                                                directInquiriesTitle: 'Direct Inquiries',
+                                                                email: '',
+                                                                phone: '',
+                                                                addressLine1: '',
+                                                                addressLine2: '',
+                                                                registerInterestTitle: 'Register Interest',
+                                                                copyright: '',
+                                                                privacyLabel: 'Privacy Policy',
+                                                                privacyUrl: '#',
+                                                                disclaimerLabel: 'Disclaimer',
+                                                                disclaimerUrl: '#',
+                                                            }),
+                                                            privacyUrl: e.target.value,
+                                                            social: (homeData.footer?.social ?? { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' }),
+                                                        },
+                                                    })}
+                                                    className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Disclaimer Label</label>
+                                                <input
+                                                    type="text"
+                                                    value={homeData.footer?.disclaimerLabel ?? ''}
+                                                    onChange={(e) => setHomeData({
+                                                        ...homeData,
+                                                        footer: {
+                                                            ...(homeData.footer ?? {
+                                                                brandName: '',
+                                                                brandTagline: '',
+                                                                social: { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' },
+                                                                directInquiriesTitle: 'Direct Inquiries',
+                                                                email: '',
+                                                                phone: '',
+                                                                addressLine1: '',
+                                                                addressLine2: '',
+                                                                registerInterestTitle: 'Register Interest',
+                                                                copyright: '',
+                                                                privacyLabel: 'Privacy Policy',
+                                                                privacyUrl: '#',
+                                                                disclaimerLabel: '',
+                                                                disclaimerUrl: '#',
+                                                            }),
+                                                            disclaimerLabel: e.target.value,
+                                                            social: (homeData.footer?.social ?? { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' }),
+                                                        },
+                                                    })}
+                                                    className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Disclaimer URL</label>
+                                                <input
+                                                    type="text"
+                                                    value={homeData.footer?.disclaimerUrl ?? ''}
+                                                    onChange={(e) => setHomeData({
+                                                        ...homeData,
+                                                        footer: {
+                                                            ...(homeData.footer ?? {
+                                                                brandName: '',
+                                                                brandTagline: '',
+                                                                social: { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' },
+                                                                directInquiriesTitle: 'Direct Inquiries',
+                                                                email: '',
+                                                                phone: '',
+                                                                addressLine1: '',
+                                                                addressLine2: '',
+                                                                registerInterestTitle: 'Register Interest',
+                                                                copyright: '',
+                                                                privacyLabel: 'Privacy Policy',
+                                                                privacyUrl: '#',
+                                                                disclaimerLabel: 'Disclaimer',
+                                                                disclaimerUrl: '#',
+                                                            }),
+                                                            disclaimerUrl: e.target.value,
+                                                            social: (homeData.footer?.social ?? { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' }),
+                                                        },
+                                                    })}
+                                                    className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-6">
+                                        <h3 className="text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2 border-b border-gray-100 pb-4">Bottom Bar</h3>
+                                        <div className="grid md:grid-cols-2 gap-6">
+                                            <div>
+                                                <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Copyright Text</label>
+                                                <input
+                                                    type="text"
+                                                    value={homeData.footer?.copyright ?? ''}
+                                                    onChange={(e) => setHomeData({
+                                                        ...homeData,
+                                                        footer: {
+                                                            ...(homeData.footer ?? {
+                                                                brandName: '',
+                                                                brandTagline: '',
+                                                                social: { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' },
+                                                                directInquiriesTitle: 'Direct Inquiries',
+                                                                email: '',
+                                                                phone: '',
+                                                                addressLine1: '',
+                                                                addressLine2: '',
+                                                                registerInterestTitle: 'Register Interest',
+                                                                copyright: '',
+                                                                privacyLabel: 'Privacy Policy',
+                                                                privacyUrl: '#',
+                                                                disclaimerLabel: 'Disclaimer',
+                                                                disclaimerUrl: '#',
+                                                            }),
+                                                            copyright: e.target.value,
+                                                            social: (homeData.footer?.social ?? { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' }),
+                                                        },
+                                                    })}
+                                                    className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Register Interest Title</label>
+                                                <input
+                                                    type="text"
+                                                    value={homeData.footer?.registerInterestTitle ?? ''}
+                                                    onChange={(e) => setHomeData({
+                                                        ...homeData,
+                                                        footer: {
+                                                            ...(homeData.footer ?? {
+                                                                brandName: '',
+                                                                brandTagline: '',
+                                                                social: { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' },
+                                                                directInquiriesTitle: 'Direct Inquiries',
+                                                                email: '',
+                                                                phone: '',
+                                                                addressLine1: '',
+                                                                addressLine2: '',
+                                                                registerInterestTitle: '',
+                                                                copyright: '',
+                                                                privacyLabel: 'Privacy Policy',
+                                                                privacyUrl: '#',
+                                                                disclaimerLabel: 'Disclaimer',
+                                                                disclaimerUrl: '#',
+                                                            }),
+                                                            registerInterestTitle: e.target.value,
+                                                            social: (homeData.footer?.social ?? { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' }),
+                                                        },
+                                                    })}
+                                                    className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

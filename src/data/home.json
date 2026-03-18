@@ -53,5 +53,25 @@
   "residences": {
     "sectionLabel": "The Collection",
     "heading": "Three Distinct Rental Options."
+  },
+  "footer": {
+    "brandName": "Grey House",
+    "brandTagline": "A limited opportunity to acquire a turnkey, fully-managed luxury estate in Katouna, Lefkas. Blending timeless natural stone architecture with European luxury.",
+    "social": {
+      "instagramUrl": "#",
+      "facebookUrl": "#",
+      "linkedinUrl": "#"
+    },
+    "directInquiriesTitle": "Direct Inquiries",
+    "email": "sales@greyhousevillas.com",
+    "phone": "+30 690 000 0000",
+    "addressLine1": "Katouna, Lefkas Island",
+    "addressLine2": "Ionian Islands, Greece 311 00",
+    "registerInterestTitle": "Register Interest",
+    "copyright": "© 2026 Grey House Villas. All rights reserved.",
+    "privacyLabel": "Privacy Policy",
+    "privacyUrl": "#",
+    "disclaimerLabel": "Disclaimer",
+    "disclaimerUrl": "#"
   }
 }

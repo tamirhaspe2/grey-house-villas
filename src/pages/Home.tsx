@@ -50,6 +50,26 @@ interface HomeData {
     sectionLabel: string;
     heading: string;
   };
+  footer?: {
+    brandName: string;
+    brandTagline: string;
+    social: {
+      instagramUrl: string;
+      facebookUrl: string;
+      linkedinUrl?: string;
+    };
+    directInquiriesTitle: string;
+    email: string;
+    phone: string;
+    addressLine1: string;
+    addressLine2: string;
+    registerInterestTitle: string;
+    copyright: string;
+    privacyLabel: string;
+    privacyUrl: string;
+    disclaimerLabel: string;
+    disclaimerUrl: string;
+  };
 }
 
 const GALLERY_VISIBLE = 5; // how many images visible in accordion
@@ -318,7 +338,7 @@ export default function Home({ villas }: HomeProps) {
                           </p>
 
                           <div className="grid grid-cols-2 gap-y-6 gap-x-4 mb-12">
-                            {villa.specs.slice(0, 4).map((spec, i) => (
+                            {villa.specs.map((spec, i) => (
                               <div key={i} className="flex flex-col gap-1">
                                 <span className="text-[9px] uppercase tracking-widest text-[#A89F91] font-bold">{spec.label}</span>
                                 <span className="text-sm text-[#2C3539] font-medium">{spec.value}</span>
