@@ -1,0 +1,100 @@
+{
+  "longStayDiscountPercent": 7,
+  "longStayMinNights": 8,
+  "weekendDays": [5, 6, 0],
+  "fallbackRates": {
+    "A": { "weekday": 850, "weekend": 850 },
+    "B": { "weekday": 450, "weekend": 450 },
+    "C": { "weekday": 1200, "weekend": 1200 }
+  },
+  "seasons": [
+    {
+      "id": "2026-03-29_2026-05-14",
+      "start": "2026-03-29",
+      "end": "2026-05-14",
+      "minStay": 3,
+      "rates": {
+        "A": { "weekday": 420, "weekend": 462 },
+        "B": { "weekday": 200, "weekend": 220 },
+        "C": { "weekday": 720, "weekend": 792 }
+      }
+    },
+    {
+      "id": "2026-05-15_2026-06-11",
+      "start": "2026-05-15",
+      "end": "2026-06-11",
+      "minStay": 3,
+      "rates": {
+        "A": { "weekday": 546, "weekend": 600.6 },
+        "B": { "weekday": 260, "weekend": 286 },
+        "C": { "weekday": 900, "weekend": 990 }
+      }
+    },
+    {
+      "id": "2026-06-12_2026-07-02",
+      "start": "2026-06-12",
+      "end": "2026-07-02",
+      "minStay": 3,
+      "rates": {
+        "A": { "weekday": 756, "weekend": 831.6 },
+        "B": { "weekday": 360, "weekend": 396 },
+        "C": { "weekday": 1296, "weekend": 1425.6 }
+      }
+    },
+    {
+      "id": "2026-07-03_2026-07-30",
+      "start": "2026-07-03",
+      "end": "2026-07-30",
+      "minStay": 4,
+      "rates": {
+        "A": { "weekday": 1008, "weekend": 1108.8 },
+        "B": { "weekday": 480, "weekend": 480 },
+        "C": { "weekday": 1728, "weekend": 1900.8 }
+      }
+    },
+    {
+      "id": "2026-07-31_2026-08-29",
+      "start": "2026-07-31",
+      "end": "2026-08-29",
+      "minStay": 4,
+      "rates": {
+        "A": { "weekday": 1260, "weekend": 1260 },
+        "B": { "weekday": 580, "weekend": 580 },
+        "C": { "weekday": 2160, "weekend": 2052.2 }
+      }
+    },
+    {
+      "id": "2026-08-30_2026-09-12",
+      "start": "2026-08-30",
+      "end": "2026-09-12",
+      "minStay": 4,
+      "rates": {
+        "A": { "weekday": 1008, "weekend": 1108.8 },
+        "B": { "weekday": 480, "weekend": 528 },
+        "C": { "weekday": 1728, "weekend": 1900.8 }
+      }
+    },
+    {
+      "id": "2026-09-13_2026-09-26",
+      "start": "2026-09-13",
+      "end": "2026-09-26",
+      "minStay": 3,
+      "rates": {
+        "A": { "weekday": 756, "weekend": 831.6 },
+        "B": { "weekday": 360, "weekend": 396 },
+        "C": { "weekday": 1296, "weekend": 1425.6 }
+      }
+    },
+    {
+      "id": "2026-09-27_2027-03-28",
+      "start": "2026-09-27",
+      "end": "2027-03-28",
+      "minStay": 3,
+      "rates": {
+        "A": { "weekday": 420, "weekend": 462 },
+        "B": { "weekday": 200, "weekend": 220 },
+        "C": { "weekday": 720, "weekend": 792 }
+      }
+    }
+  ]
+}

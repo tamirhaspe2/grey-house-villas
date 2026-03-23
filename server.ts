@@ -599,6 +599,54 @@ async function startServer() {
     }
   });
 
+  // Booking / seasonal pricing (public read, admin write) — persisted like home.json
+  app.get("/api/booking-pricing", async (req, res) => {
+    try {
+      if (useFirestore && dbFirestore) {
+        const docRef = dbFirestore.collection("config").doc("bookingPricing");
+        const doc = await docRef.get();
+        if (!doc.exists) {
+          const dataPath = path.join(process.cwd(), "src", "data", "bookingPricing.json");
+          const localDataRaw = await fs.readFile(dataPath, "utf8");
+          const localData = JSON.parse(localDataRaw);
+          await docRef.set({ data: localData });
+          return res.json(cleanDataUrls(localData));
+        }
+        res.json(cleanDataUrls(doc.data().data));
+      } else {
+        const dataPath = path.join(process.cwd(), "src", "data", "bookingPricing.json");
+        const localDataRaw = await fs.readFile(dataPath, "utf8");
+        const localData = JSON.parse(localDataRaw);
+        res.json(cleanDataUrls(localData));
+      }
+    } catch (err) {
+      console.error("Failed to fetch booking pricing:", err);
+      res.status(500).json({ error: "Failed to fetch booking pricing" });
+    }
+  });
+
+  app.put("/api/admin/booking-pricing", checkAuth, async (req, res) => {
+    try {
+      const dataPath = path.join(process.cwd(), "src", "data", "bookingPricing.json");
+      await fs.writeFile(dataPath, JSON.stringify(req.body, null, 2));
+
+      if (useFirestore && dbFirestore) {
+        try {
+          const docRef = dbFirestore.collection("config").doc("bookingPricing");
+          await docRef.set({ data: req.body });
+          console.log("Updated Firestore bookingPricing");
+        } catch (firestoreError) {
+          console.error("Failed to update Firestore bookingPricing (local file was saved):", firestoreError);
+        }
+      }
+
+      res.json({ success: true });
+    } catch (err) {
+      console.error("Failed to update booking pricing:", err);
+      res.status(500).json({ error: "Failed to update booking pricing" });
+    }
+  });
+
   // Create /api/villas GET endpoint
   app.get("/api/villas", async (req, res) => {
     try {

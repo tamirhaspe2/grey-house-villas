@@ -1,15 +1,29 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { ArrowLeft, Calendar as CalendarIcon, Info, CreditCard } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { DayPicker, DateRange } from 'react-day-picker';
-import { format, differenceInDays } from 'date-fns';
+import { format, startOfMonth, differenceInCalendarDays } from 'date-fns';
 import { io } from 'socket.io-client';
 import 'react-day-picker/style.css';
+import bookingPricingDefault from '../data/bookingPricing.json';
+import type { BookingPricingConfig, PackageCode } from '../lib/bookingPricing';
+import {
+    computeStayPricing,
+    findSeasonForDate,
+    formatSeasonDateRange,
+    formatSeasonsTouchingStayLabel,
+    formatStayRateDisplay,
+    isMinStayGapBlockedCheckIn,
+    maxMinStayNightsInRange,
+    maxMinStayProspectFromCheckIn,
+} from '../lib/bookingPricing';
+
+/** Fixed capacity per experience (no guest picker). */
+const PACKAGE_GUESTS: Record<'A' | 'B' | 'C', number> = { A: 4, B: 2, C: 6 };
 
 export default function Booking() {
     const [selectedPackage, setSelectedPackage] = useState<'A' | 'B' | 'C' | 'none'>('none');
     const [date, setDate] = useState<DateRange | undefined>();
-    const [guests, setGuests] = useState('2');
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [message, setMessage] = useState('');
@@ -17,6 +31,53 @@ export default function Booking() {
     const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
     const [submitError, setSubmitError] = useState<string>('');
     const [disabledDates, setDisabledDates] = useState<DateRange[]>([]);
+    const [pricingConfig, setPricingConfig] = useState<BookingPricingConfig>(
+        bookingPricingDefault as BookingPricingConfig
+    );
+    const [calendarMonth, setCalendarMonth] = useState(() => startOfMonth(new Date()));
+    const [numMonths, setNumMonths] = useState(() => (typeof window !== 'undefined' && window.innerWidth > 768 ? 2 : 1));
+    const [minStayModal, setMinStayModal] = useState<{
+        required: number;
+        nights: number;
+        checkIn: Date;
+        checkOut: Date;
+        periodLabel: string | null;
+    } | null>(null);
+
+    const loadPricing = useCallback(() => {
+        fetch('/api/booking-pricing', { cache: 'no-store' })
+            .then((res) => res.json())
+            .then((data) => {
+                if (data && Array.isArray(data.seasons)) {
+                    setPricingConfig(data as BookingPricingConfig);
+                }
+            })
+            .catch(() => {
+                setPricingConfig(bookingPricingDefault as BookingPricingConfig);
+            });
+    }, []);
+
+    useEffect(() => {
+        loadPricing();
+        const onPricingUpdated = () => loadPricing();
+        window.addEventListener('booking-pricing:updated', onPricingUpdated);
+        return () => window.removeEventListener('booking-pricing:updated', onPricingUpdated);
+    }, [loadPricing]);
+
+    useEffect(() => {
+        const onResize = () => setNumMonths(window.innerWidth > 768 ? 2 : 1);
+        window.addEventListener('resize', onResize);
+        return () => window.removeEventListener('resize', onResize);
+    }, []);
+
+    useEffect(() => {
+        if (!minStayModal) return;
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') setMinStayModal(null);
+        };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+    }, [minStayModal]);
 
     const fetchDisabledDates = useCallback((packageType: 'A' | 'B' | 'C') => {
         fetch(`/api/bookings/dates?package=${packageType}`)
@@ -72,22 +133,68 @@ export default function Booking() {
         setDate(undefined);
     }, [selectedPackage]);
 
-    // Nightly rates for demo
-    const rates = {
-        'none': 0,
-        'A': 850, // Oneiro
-        'B': 450, // Petra
-        'C': 1200 // Grey Estate
-    };
+    /** Per-night copy on each card only after check-in & check-out (≥1 night), from actual weekday/weekend mix. */
+    const rateLinesByPackage = useMemo(() => {
+        const empty: Record<PackageCode, string[]> = { A: [], B: [], C: [] };
+        if (!date?.from || !date?.to) return empty;
+        const n = differenceInCalendarDays(date.to, date.from);
+        if (n < 1) return empty;
+        return {
+            A: formatStayRateDisplay(date.from, date.to, 'A', pricingConfig),
+            B: formatStayRateDisplay(date.from, date.to, 'B', pricingConfig),
+            C: formatStayRateDisplay(date.from, date.to, 'C', pricingConfig),
+        };
+    }, [date, pricingConfig]);
 
-    // @ts-ignore
-    const nightlyRate = rates[selectedPackage] || 0;
+    const stayQuote =
+        selectedPackage !== 'none' && date?.from && date?.to
+            ? computeStayPricing(date.from, date.to, selectedPackage, pricingConfig)
+            : null;
+    const total = stayQuote?.total ?? 0;
 
-    const nights = date?.from && date?.to ? differenceInDays(date.to, date.from) : 0;
-    const total = nights > 0 ? nights * nightlyRate : 0;
+    /** While check-in is set but range not finished (or same-day), show min-stay (handles season switches). */
+    const calendarMinStayHint = useMemo(() => {
+        if (selectedPackage === 'none' || !date?.from) return null;
+        const nights = date.to ? differenceInCalendarDays(date.to, date.from) : 0;
+        if (nights >= 1) return null;
+        const { minN, touchedSeasonLabels } = maxMinStayProspectFromCheckIn(
+            date.from,
+            pricingConfig.seasons,
+            21
+        );
+        return { minN, touchedSeasonLabels };
+    }, [selectedPackage, date, pricingConfig.seasons]);
 
     // Date-only (midnight) for overlap comparison
     const toDateOnly = (d: Date): Date => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const isBeforeTodayLocal = (d: Date): boolean =>
+        toDateOnly(d).getTime() < toDateOnly(new Date()).getTime();
+    /** A booked stay occupies nights [from, to) (checkout morning is free), matching the server overlap check. */
+    const isNightBooked = useCallback(
+        (d: Date): boolean => {
+            const t = toDateOnly(d).getTime();
+            return disabledDates.some((br) => {
+                if (!br.from || !br.to) return false;
+                const a = toDateOnly(br.from).getTime();
+                const b = toDateOnly(br.to).getTime();
+                return t >= a && t < b;
+            });
+        },
+        [disabledDates]
+    );
+    const canUseAsCheckIn = (d: Date): boolean => !isBeforeTodayLocal(d) && !isNightBooked(d);
+
+    /** Free night but not enough consecutive free nights ahead to satisfy min stay — show red; cannot be check-in. */
+    const isMinStayGapDay = useCallback(
+        (d: Date): boolean => {
+            if (selectedPackage === 'none') return false;
+            const day = toDateOnly(d);
+            if (isBeforeTodayLocal(day) || isNightBooked(day)) return false;
+            return isMinStayGapBlockedCheckIn(day, pricingConfig.seasons, isNightBooked);
+        },
+        [selectedPackage, pricingConfig.seasons, isNightBooked]
+    );
+
     const rangesOverlap = (a: Date, b: Date, from: Date, to: Date): boolean =>
         toDateOnly(a) < toDateOnly(to) && toDateOnly(from) < toDateOnly(b);
 
@@ -115,7 +222,7 @@ export default function Booking() {
                 body: JSON.stringify({
                     name,
                     email,
-                    guests,
+                    guests: String(PACKAGE_GUESTS[selectedPackage]),
                     message,
                     packageType: selectedPackage,
                     checkIn: date.from.toISOString(),
@@ -164,6 +271,12 @@ export default function Booking() {
                     <p className="text-[#4A5568] text-sm mb-10 leading-relaxed font-light">
                         Select an option to request a booking at Grey House. We will review your request and contact you directly to arrange payment and details.
                     </p>
+                    <p className="text-[10px] uppercase tracking-wider text-[#A89F91] mb-6 -mt-4">
+                        Nightly rates appear after check-in and check-out. Weekday vs weekend nights are priced
+                        separately (weekend = Fri–Sun nights). Minimum nights apply per season — the calendar will remind
+                        you if your stay is too short. Dates in <span className="text-rose-700 font-semibold">red</span> are
+                        free nights that still cannot start a stay (not enough consecutive nights before the next booking).
+                    </p>
 
                     <div className="mb-10 space-y-3">
                         <label className="block text-[10px] uppercase tracking-wider text-gray-500 mb-4">Choose Your Experience</label>
@@ -172,33 +285,60 @@ export default function Booking() {
                             onClick={() => setSelectedPackage('A')}
                             className={`w-full text-left p-4 border transition-all ${selectedPackage === 'A' ? 'border-[#2C3539] bg-[#F4F1ED]' : 'border-gray-200 hover:border-gray-300 bg-transparent'}`}
                         >
-                            <div className="flex justify-between">
+                            <div className="flex justify-between gap-3 items-start">
                                 <span className="font-serif text-[#1A202C]">Oneiro</span>
-                                <span className="text-xs text-gray-500">€850 / night</span>
+                                <div className="text-xs text-gray-500 text-right shrink-0 max-w-[58%]">
+                                    {rateLinesByPackage.A.length > 0 ? (
+                                        <div className="flex flex-col items-end gap-0.5 leading-snug">
+                                            {rateLinesByPackage.A.map((line, i) => (
+                                                <span key={i}>{line}</span>
+                                            ))}
+                                        </div>
+                                    ) : null}
+                                </div>
                             </div>
                             <div className="text-xs text-gray-500 mt-1 font-light">Main House + Suite (3 Beds, 3.5 Baths)</div>
+                            <div className="text-[10px] uppercase tracking-wider text-[#A89F91] mt-1.5">Up to 4 guests</div>
                         </button>
 
                         <button
                             onClick={() => setSelectedPackage('B')}
                             className={`w-full text-left p-4 border transition-all ${selectedPackage === 'B' ? 'border-[#2C3539] bg-[#F4F1ED]' : 'border-gray-200 hover:border-gray-300 bg-transparent'}`}
                         >
-                            <div className="flex justify-between">
+                            <div className="flex justify-between gap-3 items-start">
                                 <span className="font-serif text-[#1A202C]">Villa Pétra</span>
-                                <span className="text-xs text-gray-500">€450 / night</span>
+                                <div className="text-xs text-gray-500 text-right shrink-0 max-w-[58%]">
+                                    {rateLinesByPackage.B.length > 0 ? (
+                                        <div className="flex flex-col items-end gap-0.5 leading-snug">
+                                            {rateLinesByPackage.B.map((line, i) => (
+                                                <span key={i}>{line}</span>
+                                            ))}
+                                        </div>
+                                    ) : null}
+                                </div>
                             </div>
                             <div className="text-xs text-gray-500 mt-1 font-light">The Private Enclave (1 Bed, 1 Bath)</div>
+                            <div className="text-[10px] uppercase tracking-wider text-[#A89F91] mt-1.5">Up to 2 guests</div>
                         </button>
 
                         <button
                             onClick={() => setSelectedPackage('C')}
                             className={`w-full text-left p-4 border transition-all ${selectedPackage === 'C' ? 'border-[#2C3539] bg-[#F4F1ED]' : 'border-gray-200 hover:border-gray-300 bg-transparent'}`}
                         >
-                            <div className="flex justify-between">
+                            <div className="flex justify-between gap-3 items-start">
                                 <span className="font-serif text-[#1A202C]">Grey Estate</span>
-                                <span className="text-xs text-gray-500">€1200 / night</span>
+                                <div className="text-xs text-gray-500 text-right shrink-0 max-w-[58%]">
+                                    {rateLinesByPackage.C.length > 0 ? (
+                                        <div className="flex flex-col items-end gap-0.5 leading-snug">
+                                            {rateLinesByPackage.C.map((line, i) => (
+                                                <span key={i}>{line}</span>
+                                            ))}
+                                        </div>
+                                    ) : null}
+                                </div>
                             </div>
                             <div className="text-xs text-gray-500 mt-1 font-light">The Ultimate Sanctuary (All 4 Beds & Both Pools)</div>
+                            <div className="text-[10px] uppercase tracking-wider text-[#A89F91] mt-1.5">Up to 6 guests</div>
                         </button>
                     </div>
 
@@ -227,17 +367,14 @@ export default function Booking() {
                                     </div>
                                 </div>
 
-                                <div className="pt-2">
-                                    <label className="block text-[10px] uppercase tracking-wider text-gray-500 mb-2">Guests</label>
-                                    <select
-                                        value={guests}
-                                        onChange={(e) => setGuests(e.target.value)}
-                                        className="w-full border-b border-gray-200 pb-2 text-sm text-[#1A202C] bg-transparent focus:outline-none"
-                                    >
-                                        {[1, 2, 3, 4, 5, 6].map(num => (
-                                            <option key={num} value={num}>{num} {num === 1 ? 'Guest' : 'Guests'}</option>
-                                        ))}
-                                    </select>
+                                <div className="pt-2 border-b border-gray-200 pb-2">
+                                    <span className="block text-[10px] uppercase tracking-wider text-gray-500 mb-1">Guests</span>
+                                    <span className="text-sm text-[#1A202C] font-medium">
+                                        {selectedPackage === 'A' && '4 guests (Oneiro)'}
+                                        {selectedPackage === 'B' && '2 guests (Villa Pétra)'}
+                                        {selectedPackage === 'C' && '6 guests (Grey Estate)'}
+                                    </span>
+                                    <p className="text-[10px] text-gray-400 mt-1 font-light">Capacity is fixed for each experience.</p>
                                 </div>
 
                                 <div className="pt-2">
@@ -280,10 +417,16 @@ export default function Booking() {
                                         <div className="font-serif text-2xl text-[#1A202C]">
                                             {total > 0 ? `€${total.toLocaleString()}` : '—'}
                                         </div>
+                                        {stayQuote && stayQuote.discount > 0 && (
+                                            <div className="text-[10px] text-emerald-700 mt-1">
+                                                Includes {pricingConfig.longStayDiscountPercent}% long-stay discount (€
+                                                {stayQuote.discount.toLocaleString()})
+                                            </div>
+                                        )}
                                     </div>
-                                    {nights > 0 && (
+                                    {stayQuote && stayQuote.nights > 0 && (
                                         <div className="text-xs text-gray-500 font-light">
-                                            {nights} {nights === 1 ? 'night' : 'nights'}
+                                            {stayQuote.nights} {stayQuote.nights === 1 ? 'night' : 'nights'}
                                         </div>
                                     )}
                                 </div>
@@ -314,9 +457,15 @@ export default function Booking() {
                             <CalendarIcon size={16} className="text-[#A89F91]" />
                             <span>Select your check-in and check-out dates</span>
                         </div>
-                        <div className="flex items-center gap-2 text-xs">
-                            <span className="w-3 h-3 bg-[#1A202C] rounded-full inline-block"></span>
-                            <span>Selected</span>
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs justify-end">
+                            <span className="flex items-center gap-2">
+                                <span className="w-3 h-3 bg-[#1A202C] rounded-full inline-block shrink-0" />
+                                Selected
+                            </span>
+                            <span className="flex items-center gap-2">
+                                <span className="w-3 h-3 rounded-full inline-block shrink-0 border-2 border-rose-600 bg-rose-50" />
+                                <span className="text-rose-800">Can’t start here (min. stay)</span>
+                            </span>
                         </div>
                     </div>
 
@@ -328,22 +477,101 @@ export default function Booking() {
                                 selectedPackage === 'none'
                                     ? undefined
                                     : (range) => {
-                                          if (selectionIncludesDisabled(range)) {
-                                              setSubmitError('Your selection includes dates that are already taken. Please choose different dates.');
+                                          // Block check-in on “pocket” nights (e.g. single free night between bookings)
+                                          const anchorNights =
+                                              range?.from && range?.to
+                                                  ? differenceInCalendarDays(range.to, range.from)
+                                                  : 0;
+                                          if (
+                                              range?.from &&
+                                              (!range.to || anchorNights < 1) &&
+                                              isMinStayGapDay(range.from)
+                                          ) {
                                               setDate(undefined);
+                                              setSubmitError(
+                                                  'That night isn’t available as a check-in — there aren’t enough consecutive nights before the next booking for the minimum stay. You can still use it as a check-out if your stay ends the night before.'
+                                              );
                                               return;
+                                          }
+                                          if (selectionIncludesDisabled(range)) {
+                                              // If the guest clicked a later day as checkout, use it as a fresh check-in
+                                              // (releases a stuck anchor when the first range crossed booked nights).
+                                              if (
+                                                  range?.from &&
+                                                  range?.to &&
+                                                  canUseAsCheckIn(range.to)
+                                              ) {
+                                                  setDate({ from: range.to, to: undefined });
+                                                  setSubmitError('');
+                                                  return;
+                                              }
+                                              if (range?.from && canUseAsCheckIn(range.from)) {
+                                                  setDate({ from: range.from, to: undefined });
+                                                  setSubmitError(
+                                                      'That range includes booked dates. Choose a check-out that avoids booked nights, or tap another check-in date.'
+                                                  );
+                                                  return;
+                                              }
+                                              setDate(undefined);
+                                              setSubmitError(
+                                                  'Those dates include booked nights. Please pick a new check-in.'
+                                              );
+                                              return;
+                                          }
+                                          // RDP often sets from === to on the first click; nights === 0 then.
+                                          // Only enforce min-stay once the guest has a real range (≥1 night).
+                                          if (range?.from && range?.to && selectedPackage !== 'none') {
+                                              const nights = differenceInCalendarDays(range.to, range.from);
+                                              if (nights >= 1) {
+                                                  const required = maxMinStayNightsInRange(
+                                                      range.from,
+                                                      range.to,
+                                                      pricingConfig.seasons
+                                                  );
+                                                  if (nights < required) {
+                                                      const multiLabel = formatSeasonsTouchingStayLabel(
+                                                          range.from,
+                                                          range.to,
+                                                          pricingConfig.seasons
+                                                      );
+                                                      const season = findSeasonForDate(
+                                                          range.from,
+                                                          pricingConfig.seasons
+                                                      );
+                                                      setMinStayModal({
+                                                          required,
+                                                          nights,
+                                                          checkIn: range.from,
+                                                          checkOut: range.to,
+                                                          periodLabel:
+                                                              multiLabel ??
+                                                              (season ? formatSeasonDateRange(season) : null),
+                                                      });
+                                                      setDate({ from: range.from, to: undefined });
+                                                      setSubmitError('');
+                                                      return;
+                                                  }
+                                              }
                                           }
                                           setDate(range);
                                           setSubmitError('');
                                       }
                             }
-                            numberOfMonths={window.innerWidth > 768 ? 2 : 1}
+                            month={calendarMonth}
+                            onMonthChange={setCalendarMonth}
+                            numberOfMonths={numMonths}
                             pagedNavigation
                             disabled={
                                 selectedPackage === 'none'
                                     ? [{ from: new Date(1900, 0, 1), to: new Date(2100, 11, 31) }]
                                     : [{ before: new Date() }, ...disabledDates]
                             } // Disable all dates until a package is chosen, then past + booked dates
+                            modifiers={{
+                                minStayGap: isMinStayGapDay,
+                            }}
+                            modifiersClassNames={{
+                                minStayGap: 'booking-rdp-minstay-gap',
+                            }}
                             className={`bg-transparent ${selectedPackage === 'none' ? 'opacity-60' : ''}`}
                             style={{ margin: 0 }}
                         />
@@ -355,6 +583,36 @@ export default function Booking() {
                             </div>
                         )}
                     </div>
+
+                    {selectedPackage !== 'none' && calendarMinStayHint && (
+                        <div
+                            className="mt-4 w-full max-w-[700px] rounded-sm border border-[#D4C3B3] bg-[#F4F1ED]/80 px-4 py-3 text-xs text-[#2C3539] leading-relaxed"
+                            role="status"
+                        >
+                            <span className="font-semibold">
+                                Minimum stay: {calendarMinStayHint.minN}{' '}
+                                {calendarMinStayHint.minN === 1 ? 'night' : 'nights'}
+                            </span>
+                            {calendarMinStayHint.touchedSeasonLabels.length > 0 ? (
+                                <>
+                                    {' '}
+                                    (may apply across season changes). Periods near your dates:{' '}
+                                    <span className="font-medium">
+                                        {calendarMinStayHint.touchedSeasonLabels.join(' · ')}
+                                    </span>
+                                    . Choose check-out at least {calendarMinStayHint.minN}{' '}
+                                    {calendarMinStayHint.minN === 1 ? 'night' : 'nights'} after check-in.
+                                </>
+                            ) : (
+                                <>
+                                    {' '}
+                                    Choose check-out at least {calendarMinStayHint.minN}{' '}
+                                    {calendarMinStayHint.minN === 1 ? 'night' : 'nights'} after check-in (rules tighten
+                                    near season boundaries).
+                                </>
+                            )}
+                        </div>
+                    )}
 
                     <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-[600px]">
                         <div className="bg-[#F4F1ED]/50 p-6 flex flex-col gap-2 rounded-sm">
@@ -371,6 +629,62 @@ export default function Booking() {
                 </div>
 
             </div>
+
+            {minStayModal && (
+                <div
+                    className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/45"
+                    role="presentation"
+                    onClick={() => setMinStayModal(null)}
+                >
+                    <div
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="min-stay-dialog-title"
+                        className="bg-white max-w-md w-full shadow-2xl rounded-sm border border-gray-200 p-8"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <h2
+                            id="min-stay-dialog-title"
+                            className="font-serif text-xl text-[#1A202C] mb-4"
+                        >
+                            Minimum stay required
+                        </h2>
+                        <p className="text-sm text-[#4A5568] leading-relaxed mb-2">
+                            Your selection is only <strong>{minStayModal.nights}</strong>{' '}
+                            {minStayModal.nights === 1 ? 'night' : 'nights'} (
+                            {format(minStayModal.checkIn, 'MMM d, yyyy')} →{' '}
+                            {format(minStayModal.checkOut, 'MMM d, yyyy')}).
+                        </p>
+                        <p className="text-sm text-[#4A5568] leading-relaxed mb-6">
+                            The minimum stay for nights you selected is{' '}
+                            <strong>
+                                {minStayModal.required}{' '}
+                                {minStayModal.required === 1 ? 'night' : 'nights'}
+                            </strong>
+                            {minStayModal.periodLabel ? (
+                                <>
+                                    {' '}
+                                    (pricing periods included:{' '}
+                                    <span className="font-medium text-[#1A202C]">{minStayModal.periodLabel}</span>
+                                    {minStayModal.periodLabel.includes('·') ? (
+                                        <span> — rules use the strictest minimum when seasons differ</span>
+                                    ) : null}
+                                    )
+                                </>
+                            ) : null}
+                            . Please choose a later check-out. Your check-in is kept — pick a new check-out on the
+                            calendar.
+                        </p>
+                        <button
+                            type="button"
+                            onClick={() => setMinStayModal(null)}
+                            className="w-full py-3 text-[11px] uppercase tracking-[0.2em] font-bold bg-[#1A202C] text-white hover:bg-[#2C3539] transition-colors rounded-sm"
+                        >
+                            OK
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

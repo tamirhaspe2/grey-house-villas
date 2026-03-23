@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Camera, Save, LogOut, Check, X, Image as ImageIcon, Home as HomeIcon } from 'lucide-react';
+import { Camera, Save, LogOut, Check, X, Image as ImageIcon, Home as HomeIcon, CreditCard } from 'lucide-react';
 import villasData from '../data/villas.json';
 import homeDataDefault from '../data/home.json';
+import bookingPricingDefault from '../data/bookingPricing.json';
 import { Villa } from '../types';
+import type { BookingPricingConfig, BookingSeason, PackageCode } from '../lib/bookingPricing';
 
 interface HomeData {
     hero: {
@@ -75,8 +77,11 @@ export default function Admin() {
     // IMPORTANT: don't trust bundled JSON in production; always sync from /api/villas after login
     const [villas, setVillas] = useState<Villa[]>([]);
     const [activeVilla, setActiveVilla] = useState<string>('');
-    const [activeSection, setActiveSection] = useState<'villas' | 'home'>('villas');
+    const [activeSection, setActiveSection] = useState<'villas' | 'home' | 'booking'>('villas');
     const [homeData, setHomeData] = useState<HomeData>(homeDataDefault as HomeData);
+    const [bookingPricing, setBookingPricing] = useState<BookingPricingConfig>(
+        bookingPricingDefault as BookingPricingConfig
+    );
 
     const [isSaving, setIsSaving] = useState(false);
     const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
@@ -154,6 +159,18 @@ export default function Admin() {
                 .then(data => setHomeData(data))
                 .catch(() => setHomeData(homeDataDefault as HomeData));
         }
+    }, [isAuthenticated]);
+
+    useEffect(() => {
+        if (!isAuthenticated) return;
+        fetch('/api/booking-pricing', { cache: 'no-store' })
+            .then((res) => res.json())
+            .then((data) => {
+                if (data && Array.isArray(data.seasons)) {
+                    setBookingPricing(data as BookingPricingConfig);
+                }
+            })
+            .catch(() => setBookingPricing(bookingPricingDefault as BookingPricingConfig));
     }, [isAuthenticated]);
 
     // Load villas data on mount (after auth)
@@ -376,7 +393,7 @@ export default function Admin() {
                 } else {
                     setSaveStatus('error');
                 }
-            } else {
+            } else if (activeSection === 'home') {
                 const res = await fetch('/api/admin/home', {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
@@ -388,6 +405,21 @@ export default function Admin() {
                     setSaveStatus('success');
                     setTimeout(() => setSaveStatus('idle'), 3000);
                     window.dispatchEvent(new Event('home:updated'));
+                } else {
+                    setSaveStatus('error');
+                }
+            } else if (activeSection === 'booking') {
+                const res = await fetch('/api/admin/booking-pricing', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify(bookingPricing)
+                });
+
+                if (res.ok) {
+                    setSaveStatus('success');
+                    window.dispatchEvent(new Event('booking-pricing:updated'));
+                    setTimeout(() => setSaveStatus('idle'), 3000);
                 } else {
                     setSaveStatus('error');
                 }
@@ -564,6 +596,13 @@ export default function Admin() {
                             className={`text-left px-4 py-3 rounded-sm text-sm transition-all whitespace-nowrap lg:whitespace-normal ${activeSection === 'villas' ? 'bg-[#2C3539] text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}
                         >
                             Villas
+                        </button>
+                        <button
+                            onClick={() => setActiveSection('booking')}
+                            className={`text-left px-4 py-3 rounded-sm text-sm transition-all whitespace-nowrap lg:whitespace-normal flex items-center gap-2 ${activeSection === 'booking' ? 'bg-[#2C3539] text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}
+                        >
+                            <CreditCard size={16} />
+                            Booking
                         </button>
                     </div>
 
@@ -1739,6 +1778,318 @@ export default function Admin() {
                                             </div>
                                         </div>
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+                    ) : activeSection === 'booking' ? (
+                        <div className="bg-white p-6 md:p-12 shadow-sm border border-gray-100 rounded-sm space-y-10">
+                            <div>
+                                <h2 className="text-4xl font-serif text-[#2C3539] mb-4">Booking — seasonal pricing</h2>
+                                <p className="text-sm text-gray-600 max-w-3xl leading-relaxed">
+                                    Persists to <code className="text-xs bg-gray-100 px-1">src/data/bookingPricing.json</code> locally and to Firestore{' '}
+                                    <code className="text-xs bg-gray-100 px-1">config/bookingPricing</code> when enabled. The public booking page reads{' '}
+                                    <code className="text-xs bg-gray-100 px-1">GET /api/booking-pricing</code>. Packages:{' '}
+                                    <strong>A</strong> Oneiro, <strong>B</strong> Villa Pétra, <strong>C</strong> Grey Estate.
+                                </p>
+                                <div className="mt-4 max-w-3xl rounded-sm border border-[#D4C3B3] bg-[#F4F1ED]/60 px-4 py-3 text-xs text-[#2C3539] leading-relaxed space-y-2">
+                                    <p>
+                                        <strong>Guest calendar:</strong> After they pick check-in, they see the{' '}
+                                        <strong>minimum nights</strong> under the calendar (including across{' '}
+                                        <strong>season boundaries</strong> and a 14-day “shoulder” before/after each season,
+                                        so gaps don’t show as 1 night by mistake).{' '}
+                                        <strong>Nightly rates</strong> use the same shoulder: dates that fall in a gap between
+                                        seasons get the <em>nearest</em> season’s weekday/weekend table (not the flat fallback). If check-out is too soon, a{' '}
+                                        <strong>pop-up</strong> lists the pricing periods involved and keeps check-in. If a
+                                        range crosses <strong>booked</strong> nights, tapping a later valid date starts a
+                                        new check-in there (releases a stuck anchor).
+                                    </p>
+                                    <p>
+                                        <strong>Weekend column</strong> in your rates applies to the days listed under
+                                        “Weekend day numbers” (default <code className="text-[10px] bg-white/80 px-1">5, 6, 0</code> = Fri–Sun). That matches typical sheets where
+                                        weekend ≠ only Saturday–Sunday.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="grid md:grid-cols-3 gap-6 border-b border-gray-100 pb-8">
+                                <div>
+                                    <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Long-stay discount %</label>
+                                    <input
+                                        type="number"
+                                        min={0}
+                                        max={100}
+                                        step={0.1}
+                                        value={bookingPricing.longStayDiscountPercent}
+                                        onChange={(e) =>
+                                            setBookingPricing({
+                                                ...bookingPricing,
+                                                longStayDiscountPercent: Number(e.target.value) || 0,
+                                            })
+                                        }
+                                        className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Min nights for discount</label>
+                                    <input
+                                        type="number"
+                                        min={1}
+                                        value={bookingPricing.longStayMinNights}
+                                        onChange={(e) =>
+                                            setBookingPricing({
+                                                ...bookingPricing,
+                                                longStayMinNights: Math.max(1, Number(e.target.value) || 1),
+                                            })
+                                        }
+                                        className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Weekend day numbers</label>
+                                    <input
+                                        type="text"
+                                        value={(bookingPricing.weekendDays || []).join(', ')}
+                                        onChange={(e) =>
+                                            setBookingPricing({
+                                                ...bookingPricing,
+                                                weekendDays: e.target.value
+                                                    .split(',')
+                                                    .map((s) => parseInt(s.trim(), 10))
+                                                    .filter((n) => !Number.isNaN(n) && n >= 0 && n <= 6),
+                                            })
+                                        }
+                                        placeholder="5, 6, 0"
+                                        className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
+                                    />
+                                    <p className="text-[10px] text-gray-500 mt-1">
+                                        JS <code>getDay</code>: 0 = Sun, 5 = Fri, 6 = Sat. Default <strong>5, 6, 0</strong>{' '}
+                                        = Fri–Sun use the <em>weekend</em> rate; Mon–Thu use <em>weekday</em>.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div>
+                                <h3 className="text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-4">Fallback rates (outside all seasons)</h3>
+                                <div className="grid md:grid-cols-3 gap-6">
+                                    {(['A', 'B', 'C'] as PackageCode[]).map((pkg) => (
+                                        <div key={pkg} className="border border-gray-100 p-4 rounded-sm">
+                                            <div className="text-sm font-serif mb-3">
+                                                {pkg === 'A' ? 'Oneiro (A)' : pkg === 'B' ? 'Villa Pétra (B)' : 'Grey Estate (C)'}
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div>
+                                                    <label className="text-[10px] uppercase text-gray-500">Weekday</label>
+                                                    <input
+                                                        type="number"
+                                                        value={bookingPricing.fallbackRates[pkg].weekday}
+                                                        onChange={(e) =>
+                                                            setBookingPricing({
+                                                                ...bookingPricing,
+                                                                fallbackRates: {
+                                                                    ...bookingPricing.fallbackRates,
+                                                                    [pkg]: {
+                                                                        ...bookingPricing.fallbackRates[pkg],
+                                                                        weekday: Number(e.target.value) || 0,
+                                                                    },
+                                                                },
+                                                            })
+                                                        }
+                                                        className="w-full border border-gray-200 px-2 py-1.5 text-sm"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="text-[10px] uppercase text-gray-500">Weekend</label>
+                                                    <input
+                                                        type="number"
+                                                        value={bookingPricing.fallbackRates[pkg].weekend}
+                                                        onChange={(e) =>
+                                                            setBookingPricing({
+                                                                ...bookingPricing,
+                                                                fallbackRates: {
+                                                                    ...bookingPricing.fallbackRates,
+                                                                    [pkg]: {
+                                                                        ...bookingPricing.fallbackRates[pkg],
+                                                                        weekend: Number(e.target.value) || 0,
+                                                                    },
+                                                                },
+                                                            })
+                                                        }
+                                                        className="w-full border border-gray-200 px-2 py-1.5 text-sm"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div>
+                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                                    <h3 className="text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold">
+                                        Seasons (inclusive dates)
+                                    </h3>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const blank: BookingSeason = {
+                                                id: `season-${Date.now()}`,
+                                                start: '2026-01-01',
+                                                end: '2026-01-31',
+                                                minStay: 3,
+                                                rates: {
+                                                    A: { weekday: 0, weekend: 0 },
+                                                    B: { weekday: 0, weekend: 0 },
+                                                    C: { weekday: 0, weekend: 0 },
+                                                },
+                                            };
+                                            setBookingPricing({
+                                                ...bookingPricing,
+                                                seasons: [...bookingPricing.seasons, blank],
+                                            });
+                                        }}
+                                        className="text-xs font-bold uppercase tracking-widest text-[#8B6F5A] hover:text-[#2C3539]"
+                                    >
+                                        + Add season
+                                    </button>
+                                </div>
+
+                                <div className="space-y-6">
+                                    {bookingPricing.seasons.map((season, sIdx) => (
+                                        <div key={season.id} className="border border-gray-200 p-4 md:p-6 rounded-sm space-y-4">
+                                            <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                                                <div className="lg:col-span-1">
+                                                    <label className="block text-[10px] uppercase text-gray-500 mb-1">Id</label>
+                                                    <input
+                                                        value={season.id}
+                                                        onChange={(e) => {
+                                                            const next = [...bookingPricing.seasons];
+                                                            next[sIdx] = { ...season, id: e.target.value };
+                                                            setBookingPricing({ ...bookingPricing, seasons: next });
+                                                        }}
+                                                        className="w-full border border-gray-200 px-2 py-1.5 text-sm"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[10px] uppercase text-gray-500 mb-1">Start</label>
+                                                    <input
+                                                        type="date"
+                                                        value={season.start}
+                                                        onChange={(e) => {
+                                                            const next = [...bookingPricing.seasons];
+                                                            next[sIdx] = { ...season, start: e.target.value };
+                                                            setBookingPricing({ ...bookingPricing, seasons: next });
+                                                        }}
+                                                        className="w-full border border-gray-200 px-2 py-1.5 text-sm"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[10px] uppercase text-gray-500 mb-1">End</label>
+                                                    <input
+                                                        type="date"
+                                                        value={season.end}
+                                                        onChange={(e) => {
+                                                            const next = [...bookingPricing.seasons];
+                                                            next[sIdx] = { ...season, end: e.target.value };
+                                                            setBookingPricing({ ...bookingPricing, seasons: next });
+                                                        }}
+                                                        className="w-full border border-gray-200 px-2 py-1.5 text-sm"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[10px] uppercase text-gray-500 mb-1">Min stay (nights)</label>
+                                                    <input
+                                                        type="number"
+                                                        min={1}
+                                                        value={season.minStay}
+                                                        onChange={(e) => {
+                                                            const next = [...bookingPricing.seasons];
+                                                            next[sIdx] = {
+                                                                ...season,
+                                                                minStay: Math.max(1, Number(e.target.value) || 1),
+                                                            };
+                                                            setBookingPricing({ ...bookingPricing, seasons: next });
+                                                        }}
+                                                        className="w-full border border-gray-200 px-2 py-1.5 text-sm"
+                                                    />
+                                                    <p className="text-[9px] text-gray-400 mt-1 leading-snug">
+                                                        Shown on the booking calendar + in a pop-up if the guest picks too
+                                                        short a stay for this season.
+                                                    </p>
+                                                </div>
+                                                <div className="flex items-end">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            setBookingPricing({
+                                                                ...bookingPricing,
+                                                                seasons: bookingPricing.seasons.filter((_, i) => i !== sIdx),
+                                                            })
+                                                        }
+                                                        className="text-xs text-rose-600 hover:underline uppercase tracking-widest"
+                                                    >
+                                                        Remove season
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div className="grid md:grid-cols-3 gap-6">
+                                                {(['A', 'B', 'C'] as PackageCode[]).map((pkg) => (
+                                                    <div key={pkg} className="bg-[#F9F8F6] p-4 rounded-sm">
+                                                        <div className="text-[10px] uppercase font-bold text-[#A89F91] mb-3">
+                                                            {pkg === 'A' ? 'Oneiro' : pkg === 'B' ? 'Villa Pétra' : 'Grey Estate'}
+                                                        </div>
+                                                        <div className="grid grid-cols-2 gap-3">
+                                                            <div>
+                                                                <label className="text-[10px] text-gray-500">Weekday €</label>
+                                                                <input
+                                                                    type="number"
+                                                                    step={0.1}
+                                                                    value={season.rates[pkg].weekday}
+                                                                    onChange={(e) => {
+                                                                        const next = [...bookingPricing.seasons];
+                                                                        next[sIdx] = {
+                                                                            ...season,
+                                                                            rates: {
+                                                                                ...season.rates,
+                                                                                [pkg]: {
+                                                                                    ...season.rates[pkg],
+                                                                                    weekday: Number(e.target.value) || 0,
+                                                                                },
+                                                                            },
+                                                                        };
+                                                                        setBookingPricing({ ...bookingPricing, seasons: next });
+                                                                    }}
+                                                                    className="w-full border border-gray-200 px-2 py-1.5 text-sm bg-white"
+                                                                />
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-[10px] text-gray-500">Weekend €</label>
+                                                                <input
+                                                                    type="number"
+                                                                    step={0.1}
+                                                                    value={season.rates[pkg].weekend}
+                                                                    onChange={(e) => {
+                                                                        const next = [...bookingPricing.seasons];
+                                                                        next[sIdx] = {
+                                                                            ...season,
+                                                                            rates: {
+                                                                                ...season.rates,
+                                                                                [pkg]: {
+                                                                                    ...season.rates[pkg],
+                                                                                    weekend: Number(e.target.value) || 0,
+                                                                                },
+                                                                            },
+                                                                        };
+                                                                        setBookingPricing({ ...bookingPricing, seasons: next });
+                                                                    }}
+                                                                    className="w-full border border-gray-200 px-2 py-1.5 text-sm bg-white"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
                         </div>

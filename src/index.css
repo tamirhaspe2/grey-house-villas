@@ -29,3 +29,14 @@
 .rdp-month_caption {
   font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
 }
+
+/* Booking: nights that are free but too short a run to satisfy minimum stay (e.g. gap between bookings) */
+.booking-rdp-minstay-gap .rdp-day_button {
+  color: #be123c !important;
+  font-weight: 600;
+  text-decoration: line-through;
+  text-decoration-color: rgba(190, 18, 60, 0.5);
+}
+.booking-rdp-minstay-gap:not(.rdp-selected) {
+  opacity: 1;
+}
