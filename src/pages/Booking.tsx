@@ -21,7 +21,7 @@ import {
 } from '../lib/bookingPricing';
 
 /** Fixed capacity per experience (no guest picker). */
-const PACKAGE_GUESTS: Record<'A' | 'B' | 'C', number> = { A: 4, B: 2, C: 6 };
+const PACKAGE_GUESTS: Record<'A' | 'B' | 'C', number> = { A: 6, B: 2, C: 8 };
 
 const DATE_FNS_LOCALES: Record<string, Locale> = { en: enUS, fr, el, he };
 
