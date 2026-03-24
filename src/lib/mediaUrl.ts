@@ -1,6 +1,6 @@
 /**
- * Encode each path segment so filenames with spaces (e.g. WhatsApp exports) work on iOS Safari
- * and other strict clients. Leaves http(s)/blob/data URLs unchanged.
+ * Encode path segments only when the path still has raw spaces (e.g. WhatsApp filenames).
+ * If the URL is already percent-encoded (%20), return as-is — double-encoding breaks iOS Safari.
  */
 export function encodePublicMediaUrl(url: string): string {
   if (!url) return url;
@@ -14,6 +14,9 @@ export function encodePublicMediaUrl(url: string): string {
   const qIdx = base.indexOf('?');
   const pathname = qIdx >= 0 ? base.slice(0, qIdx) : base;
   const query = qIdx >= 0 ? base.slice(qIdx) : '';
+
+  const hasRawSpace = pathname.split('/').some((seg) => /[ \t\n\r]/.test(seg));
+  if (!hasRawSpace) return trimmed;
 
   const encoded =
     pathname

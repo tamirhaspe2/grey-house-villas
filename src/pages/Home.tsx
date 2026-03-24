@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Maximize, Home as HomeIcon, Droplets, Wind, Check } from 'lucide-react';
@@ -77,10 +77,24 @@ interface HomeData {
 const GALLERY_VISIBLE = 5; // how many images visible in accordion
 const GALLERY_AUTOPLAY_MS = 4000;
 
-/** iOS Safari: inline + muted + programmatic play(); optional controls if autoplay is blocked (Low Power Mode, etc.). No poster — avoids stuck frame + wrong hero image flash. */
+function isAppleTouchDevice(): boolean {
+  if (typeof window === 'undefined' || typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent;
+  return (
+    /iPad|iPhone|iPod/i.test(ua) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+  );
+}
+
+/**
+ * iOS Safari often blocks muted autoplay (especially Low Power Mode) and shows a “broken” slashed
+ * play overlay if there are no controls. Apple touch devices always get native controls + `<source type>`
+ * so guests can tap play; desktop keeps clean autoplay with controls only on failure.
+ */
 function EstateFilmVideo({ src }: { src: string }) {
   const ref = useRef<HTMLVideoElement>(null);
-  const [showControls, setShowControls] = useState(false);
+  const touchApple = useMemo(() => isAppleTouchDevice(), []);
+  const [showControls, setShowControls] = useState(touchApple);
   const encodedSrc = encodePublicMediaUrl(src);
 
   useEffect(() => {
@@ -96,23 +110,26 @@ function EstateFilmVideo({ src }: { src: string }) {
       void el.play().catch(() => setShowControls(true));
     };
 
-    el.addEventListener('loadedmetadata', tryPlay);
-    el.addEventListener('canplay', tryPlay);
-    const retry = window.setTimeout(tryPlay, 400);
-    tryPlay();
+    if (!touchApple) {
+      el.addEventListener('loadedmetadata', tryPlay);
+      el.addEventListener('canplay', tryPlay);
+      const retry = window.setTimeout(tryPlay, 400);
+      tryPlay();
+      return () => {
+        window.clearTimeout(retry);
+        el.removeEventListener('loadedmetadata', tryPlay);
+        el.removeEventListener('canplay', tryPlay);
+      };
+    }
 
-    return () => {
-      window.clearTimeout(retry);
-      el.removeEventListener('loadedmetadata', tryPlay);
-      el.removeEventListener('canplay', tryPlay);
-    };
-  }, [encodedSrc]);
+    tryPlay();
+    return undefined;
+  }, [encodedSrc, touchApple]);
 
   return (
     <video
       ref={ref}
-      src={encodedSrc}
-      autoPlay
+      autoPlay={!touchApple}
       muted
       defaultMuted
       loop
@@ -121,7 +138,11 @@ function EstateFilmVideo({ src }: { src: string }) {
       controls={showControls}
       className="absolute inset-0 w-full h-full object-cover"
       aria-label="Grey House estate film"
-    />
+      // Helps Safari surface decode/network errors in devtools
+      onError={() => setShowControls(true)}
+    >
+      <source src={encodedSrc} type="video/mp4" />
+    </video>
   );
 }
 
