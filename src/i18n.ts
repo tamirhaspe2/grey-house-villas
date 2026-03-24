@@ -9,7 +9,8 @@ export const LOCALE_STORAGE_KEY = 'greyhouse-locale';
 export const SUPPORTED_LOCALES = ['en', 'he', 'fr', 'el'] as const;
 export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
 
-function applyDocumentLang(lng: string) {
+/** Sync `<html lang dir>` with public locale (Admin forces LTR and restores this on unmount). */
+export function applyDocumentLang(lng: string) {
   const html = document.documentElement;
   html.lang = lng === 'he' ? 'he' : lng === 'fr' ? 'fr' : lng === 'el' ? 'el' : 'en';
   html.dir = lng === 'he' ? 'rtl' : 'ltr';

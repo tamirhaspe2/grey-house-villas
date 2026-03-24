@@ -1,10 +1,29 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Camera, Save, LogOut, Check, X, Image as ImageIcon, Home as HomeIcon, CreditCard } from 'lucide-react';
 import villasData from '../data/villas.json';
 import homeDataDefault from '../data/home.json';
 import bookingPricingDefault from '../data/bookingPricing.json';
 import { Villa } from '../types';
 import type { BookingPricingConfig, BookingSeason, PackageCode } from '../lib/bookingPricing';
+import type { AdminContentLocale } from '../lib/cmsLocaleTypes';
+import { ADMIN_CONTENT_LOCALE_OPTIONS } from '../lib/cmsLocaleTypes';
+import { editHomeAtPath, readHomeAtPath } from '../lib/cmsHomeLocale';
+import {
+    readVillaSubtitle,
+    readVillaDescription,
+    readVillaName,
+    writeVillaSubtitle,
+    writeVillaDescription,
+    writeVillaName,
+    readVillaSpec,
+    writeVillaSpecField,
+    removeVillaSpec,
+    addVillaSpec,
+    readVillaGalleryTitle,
+    writeVillaGalleryTitle,
+    removeVillaGallerySection,
+} from '../lib/adminVillaLocale';
+import i18n, { applyDocumentLang } from '../i18n';
 
 interface HomeData {
     hero: {
@@ -13,6 +32,7 @@ interface HomeData {
         title: string;
         subtitle: string;
         description: string;
+        button1?: string;
         button2: string;
         videoUrl?: string;
     };
@@ -67,6 +87,7 @@ interface HomeData {
         disclaimerLabel: string;
         disclaimerUrl: string;
     };
+    localeStrings?: Partial<Record<'fr' | 'he' | 'el', Record<string, unknown>>>;
 }
 
 export default function Admin() {
@@ -82,11 +103,21 @@ export default function Admin() {
     const [bookingPricing, setBookingPricing] = useState<BookingPricingConfig>(
         bookingPricingDefault as BookingPricingConfig
     );
+    /** Which language’s CMS copy is being edited (Admin UI stays English / LTR). */
+    const [adminContentLocale, setAdminContentLocale] = useState<AdminContentLocale>('en');
 
     const [isSaving, setIsSaving] = useState(false);
     const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
     const [uploadingImage, setUploadingImage] = useState<string | null>(null); // Track which image is uploading
     const [dragOverIndex, setDragOverIndex] = useState<number | null>(null); // For drag-and-drop reorder feedback
+
+    useEffect(() => {
+        document.documentElement.lang = 'en';
+        document.documentElement.dir = 'ltr';
+        return () => {
+            applyDocumentLang(i18n.language);
+        };
+    }, []);
 
     // Reorder array: move item from fromIndex to toIndex (used for gallery drag-and-drop)
     const reorderArray = <T,>(arr: T[], fromIndex: number, toIndex: number): T[] => {
@@ -247,7 +278,53 @@ export default function Admin() {
 
     const currentVilla = villas.find(v => v.id === activeVilla);
 
+    const isEditingEnglish = adminContentLocale === 'en';
+
+    const updateHomePath = useCallback(
+        (path: string[], value: unknown) => {
+            setHomeData((prev) =>
+                editHomeAtPath(prev as unknown as Record<string, unknown>, adminContentLocale, path, value) as unknown as HomeData
+            );
+        },
+        [adminContentLocale]
+    );
+
+    const homeText = useCallback(
+        (path: string[]): string => {
+            const raw = readHomeAtPath(homeData as unknown as Record<string, unknown>, adminContentLocale, path);
+            if (adminContentLocale === 'en') return raw == null ? '' : String(raw);
+            if (raw != null) return String(raw);
+            return '';
+        },
+        [homeData, adminContentLocale]
+    );
+
+    const homeTextPh = useCallback(
+        (path: string[]): string | undefined => {
+            if (adminContentLocale === 'en') return undefined;
+            const v = readHomeAtPath(homeData as unknown as Record<string, unknown>, 'en', path);
+            if (v == null || String(v) === '') return 'Uses English when empty';
+            const s = String(v);
+            return s.length > 120 ? `EN: ${s.slice(0, 120)}…` : `EN: ${s}`;
+        },
+        [homeData, adminContentLocale]
+    );
+
+    const homeFeaturesLines = useCallback((): string => {
+        const raw = readHomeAtPath(homeData as unknown as Record<string, unknown>, adminContentLocale, [
+            'interior',
+            'features',
+        ]);
+        if (Array.isArray(raw)) return (raw as string[]).join('\n');
+        if (adminContentLocale === 'en') return homeData.interior.features.join('\n');
+        return '';
+    }, [homeData, adminContentLocale]);
+
     const handleImageUpload = async (file: File, folder: string, index: number | 'hero' | 'new', sectionIndex?: number) => {
+        if (adminContentLocale !== 'en') {
+            alert('Set “Content language” to English to upload or reorder images.');
+            return;
+        }
         // Create unique key for this upload
         const uploadKey =
             index === 'hero'
@@ -432,6 +509,10 @@ export default function Admin() {
     };
 
     const handleHomeImageUpload = async (file: File, imageKey: string, folder: string = '') => {
+        if (adminContentLocale !== 'en') {
+            alert('Set “Content language” to English to change home images or video.');
+            return;
+        }
         // Validate file
         if (!file || (!file.type.startsWith('image/') && !file.type.startsWith('video/'))) {
             alert('Please select a valid image or video file.');
@@ -557,7 +638,21 @@ export default function Admin() {
                         <span className="text-[10px] tracking-[0.4em] text-[#A89F91] uppercase border-l border-gray-200 pl-4 hidden md:block">Admin</span>
                     </div>
 
-                    <div className="flex items-center gap-4 md:gap-6">
+                    <div className="flex items-center gap-3 md:gap-5 flex-wrap justify-end">
+                        <label className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-[#2C3539] font-bold">
+                            <span className="hidden sm:inline">Content language</span>
+                            <select
+                                value={adminContentLocale}
+                                onChange={(e) => setAdminContentLocale(e.target.value as AdminContentLocale)}
+                                className="border border-gray-200 px-2 py-2 rounded-sm bg-white text-xs font-normal normal-case tracking-normal min-w-[9rem]"
+                            >
+                                {ADMIN_CONTENT_LOCALE_OPTIONS.map((o) => (
+                                    <option key={o.value} value={o.value}>
+                                        {o.label}
+                                    </option>
+                                ))}
+                            </select>
+                        </label>
                         <div className="flex items-center gap-3">
                             {saveStatus === 'success' && <span className="text-emerald-500 text-xs flex items-center gap-1"><Check size={14} /> Saved!</span>}
                             {saveStatus === 'error' && <span className="text-rose-500 text-xs flex items-center gap-1"><X size={14} /> Error</span>}
@@ -576,6 +671,14 @@ export default function Admin() {
                     </div>
                 </div>
             </header>
+
+            {!isEditingEnglish && (
+                <div className="bg-amber-50 border-b border-amber-200 text-amber-950 text-center text-xs py-2.5 px-4 leading-relaxed">
+                    Editing{' '}
+                    <strong>{ADMIN_CONTENT_LOCALE_OPTIONS.find((o) => o.value === adminContentLocale)?.label}</strong>{' '}
+                    copy only. Switch to English to change images, gallery layout, or specs list length. Empty fields use English on the public site.
+                </div>
+            )}
 
             <div className="max-w-[1800px] mx-auto px-6 mt-12 grid lg:grid-cols-4 gap-12">
                 {/* Sidebar Navigation */}
@@ -718,7 +821,7 @@ export default function Admin() {
                                                     }}
                                                 />
                                             </label>
-                                            {homeData.hero.videoUrl && (
+                                            {homeData.hero.videoUrl && isEditingEnglish && (
                                                 <button
                                                     onClick={() => setHomeData(prev => ({ ...prev, hero: { ...prev.hero, videoUrl: '' } }))}
                                                     className="text-white text-[10px] uppercase tracking-widest hover:text-rose-400 transition-colors"
@@ -736,8 +839,9 @@ export default function Admin() {
                                         <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Location</label>
                                         <input
                                             type="text"
-                                            value={homeData.hero.location}
-                                            onChange={(e) => setHomeData({ ...homeData, hero: { ...homeData.hero, location: e.target.value } })}
+                                            value={homeText(['hero', 'location'])}
+                                            placeholder={homeTextPh(['hero', 'location'])}
+                                            onChange={(e) => updateHomePath(['hero', 'location'], e.target.value)}
                                             className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                         />
                                     </div>
@@ -745,8 +849,9 @@ export default function Admin() {
                                         <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Title</label>
                                         <input
                                             type="text"
-                                            value={homeData.hero.title}
-                                            onChange={(e) => setHomeData({ ...homeData, hero: { ...homeData.hero, title: e.target.value } })}
+                                            value={homeText(['hero', 'title'])}
+                                            placeholder={homeTextPh(['hero', 'title'])}
+                                            onChange={(e) => updateHomePath(['hero', 'title'], e.target.value)}
                                             className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                         />
                                     </div>
@@ -754,16 +859,18 @@ export default function Admin() {
                                         <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Subtitle</label>
                                         <input
                                             type="text"
-                                            value={homeData.hero.subtitle}
-                                            onChange={(e) => setHomeData({ ...homeData, hero: { ...homeData.hero, subtitle: e.target.value } })}
+                                            value={homeText(['hero', 'subtitle'])}
+                                            placeholder={homeTextPh(['hero', 'subtitle'])}
+                                            onChange={(e) => updateHomePath(['hero', 'subtitle'], e.target.value)}
                                             className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                         />
                                     </div>
                                     <div>
                                         <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Description</label>
                                         <textarea
-                                            value={homeData.hero.description}
-                                            onChange={(e) => setHomeData({ ...homeData, hero: { ...homeData.hero, description: e.target.value } })}
+                                            value={homeText(['hero', 'description'])}
+                                            placeholder={homeTextPh(['hero', 'description'])}
+                                            onChange={(e) => updateHomePath(['hero', 'description'], e.target.value)}
                                             rows={3}
                                             className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                         />
@@ -773,8 +880,9 @@ export default function Admin() {
                                             <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Button 1 Text</label>
                                             <input
                                                 type="text"
-                                                value={homeData.hero.button1}
-                                                onChange={(e) => setHomeData({ ...homeData, hero: { ...homeData.hero, button1: e.target.value } })}
+                                                value={homeText(['hero', 'button1'])}
+                                                placeholder={homeTextPh(['hero', 'button1'])}
+                                                onChange={(e) => updateHomePath(['hero', 'button1'], e.target.value)}
                                                 className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                             />
                                         </div>
@@ -782,8 +890,9 @@ export default function Admin() {
                                             <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Button 2 Text</label>
                                             <input
                                                 type="text"
-                                                value={homeData.hero.button2}
-                                                onChange={(e) => setHomeData({ ...homeData, hero: { ...homeData.hero, button2: e.target.value } })}
+                                                value={homeText(['hero', 'button2'])}
+                                                placeholder={homeTextPh(['hero', 'button2'])}
+                                                onChange={(e) => updateHomePath(['hero', 'button2'], e.target.value)}
                                                 className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                             />
                                         </div>
@@ -871,8 +980,9 @@ export default function Admin() {
                                         <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Section Label</label>
                                         <input
                                             type="text"
-                                            value={homeData.philosophy.sectionLabel}
-                                            onChange={(e) => setHomeData({ ...homeData, philosophy: { ...homeData.philosophy, sectionLabel: e.target.value } })}
+                                            value={homeText(['philosophy', 'sectionLabel'])}
+                                            placeholder={homeTextPh(['philosophy', 'sectionLabel'])}
+                                            onChange={(e) => updateHomePath(['philosophy', 'sectionLabel'], e.target.value)}
                                             className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                         />
                                     </div>
@@ -881,8 +991,9 @@ export default function Admin() {
                                             <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Heading</label>
                                             <input
                                                 type="text"
-                                                value={homeData.philosophy.heading}
-                                                onChange={(e) => setHomeData({ ...homeData, philosophy: { ...homeData.philosophy, heading: e.target.value } })}
+                                                value={homeText(['philosophy', 'heading'])}
+                                                placeholder={homeTextPh(['philosophy', 'heading'])}
+                                                onChange={(e) => updateHomePath(['philosophy', 'heading'], e.target.value)}
                                                 className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                             />
                                         </div>
@@ -890,8 +1001,9 @@ export default function Admin() {
                                             <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Heading Highlight</label>
                                             <input
                                                 type="text"
-                                                value={homeData.philosophy.headingHighlight}
-                                                onChange={(e) => setHomeData({ ...homeData, philosophy: { ...homeData.philosophy, headingHighlight: e.target.value } })}
+                                                value={homeText(['philosophy', 'headingHighlight'])}
+                                                placeholder={homeTextPh(['philosophy', 'headingHighlight'])}
+                                                onChange={(e) => updateHomePath(['philosophy', 'headingHighlight'], e.target.value)}
                                                 className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                             />
                                         </div>
@@ -899,8 +1011,9 @@ export default function Admin() {
                                     <div>
                                         <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Paragraph 1</label>
                                         <textarea
-                                            value={homeData.philosophy.paragraph1}
-                                            onChange={(e) => setHomeData({ ...homeData, philosophy: { ...homeData.philosophy, paragraph1: e.target.value } })}
+                                            value={homeText(['philosophy', 'paragraph1'])}
+                                            placeholder={homeTextPh(['philosophy', 'paragraph1'])}
+                                            onChange={(e) => updateHomePath(['philosophy', 'paragraph1'], e.target.value)}
                                             rows={3}
                                             className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                         />
@@ -908,8 +1021,9 @@ export default function Admin() {
                                     <div>
                                         <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Paragraph 2</label>
                                         <textarea
-                                            value={homeData.philosophy.paragraph2}
-                                            onChange={(e) => setHomeData({ ...homeData, philosophy: { ...homeData.philosophy, paragraph2: e.target.value } })}
+                                            value={homeText(['philosophy', 'paragraph2'])}
+                                            placeholder={homeTextPh(['philosophy', 'paragraph2'])}
+                                            onChange={(e) => updateHomePath(['philosophy', 'paragraph2'], e.target.value)}
                                             rows={3}
                                             className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                         />
@@ -918,8 +1032,9 @@ export default function Admin() {
                                         <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Quote</label>
                                         <input
                                             type="text"
-                                            value={homeData.philosophy.quote}
-                                            onChange={(e) => setHomeData({ ...homeData, philosophy: { ...homeData.philosophy, quote: e.target.value } })}
+                                            value={homeText(['philosophy', 'quote'])}
+                                            placeholder={homeTextPh(['philosophy', 'quote'])}
+                                            onChange={(e) => updateHomePath(['philosophy', 'quote'], e.target.value)}
                                             className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                         />
                                     </div>
@@ -1006,8 +1121,9 @@ export default function Admin() {
                                         <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Section Label</label>
                                         <input
                                             type="text"
-                                            value={homeData.interior.sectionLabel}
-                                            onChange={(e) => setHomeData({ ...homeData, interior: { ...homeData.interior, sectionLabel: e.target.value } })}
+                                            value={homeText(['interior', 'sectionLabel'])}
+                                            placeholder={homeTextPh(['interior', 'sectionLabel'])}
+                                            onChange={(e) => updateHomePath(['interior', 'sectionLabel'], e.target.value)}
                                             className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                         />
                                     </div>
@@ -1016,8 +1132,9 @@ export default function Admin() {
                                             <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Heading</label>
                                             <input
                                                 type="text"
-                                                value={homeData.interior.heading}
-                                                onChange={(e) => setHomeData({ ...homeData, interior: { ...homeData.interior, heading: e.target.value } })}
+                                                value={homeText(['interior', 'heading'])}
+                                                placeholder={homeTextPh(['interior', 'heading'])}
+                                                onChange={(e) => updateHomePath(['interior', 'heading'], e.target.value)}
                                                 className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                             />
                                         </div>
@@ -1025,8 +1142,9 @@ export default function Admin() {
                                             <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Heading Highlight</label>
                                             <input
                                                 type="text"
-                                                value={homeData.interior.headingHighlight}
-                                                onChange={(e) => setHomeData({ ...homeData, interior: { ...homeData.interior, headingHighlight: e.target.value } })}
+                                                value={homeText(['interior', 'headingHighlight'])}
+                                                placeholder={homeTextPh(['interior', 'headingHighlight'])}
+                                                onChange={(e) => updateHomePath(['interior', 'headingHighlight'], e.target.value)}
                                                 className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                             />
                                         </div>
@@ -1034,8 +1152,9 @@ export default function Admin() {
                                     <div>
                                         <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Description</label>
                                         <textarea
-                                            value={homeData.interior.description}
-                                            onChange={(e) => setHomeData({ ...homeData, interior: { ...homeData.interior, description: e.target.value } })}
+                                            value={homeText(['interior', 'description'])}
+                                            placeholder={homeTextPh(['interior', 'description'])}
+                                            onChange={(e) => updateHomePath(['interior', 'description'], e.target.value)}
                                             rows={4}
                                             className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                         />
@@ -1043,8 +1162,20 @@ export default function Admin() {
                                     <div>
                                         <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Features (one per line)</label>
                                         <textarea
-                                            value={homeData.interior.features.join('\n')}
-                                            onChange={(e) => setHomeData({ ...homeData, interior: { ...homeData.interior, features: e.target.value.split('\n').filter(f => f.trim()) } })}
+                                            value={homeFeaturesLines()}
+                                            placeholder={
+                                                adminContentLocale === 'en'
+                                                    ? undefined
+                                                    : homeData.interior.features.length
+                                                      ? `EN sample: ${homeData.interior.features[0]?.slice(0, 60) ?? ''}…`
+                                                      : 'Uses English when empty'
+                                            }
+                                            onChange={(e) =>
+                                                updateHomePath(
+                                                    ['interior', 'features'],
+                                                    e.target.value.split('\n').filter((f) => f.trim())
+                                                )
+                                            }
                                             rows={6}
                                             className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                         />
@@ -1053,8 +1184,9 @@ export default function Admin() {
                                         <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Button Text</label>
                                         <input
                                             type="text"
-                                            value={homeData.interior.buttonText}
-                                            onChange={(e) => setHomeData({ ...homeData, interior: { ...homeData.interior, buttonText: e.target.value } })}
+                                            value={homeText(['interior', 'buttonText'])}
+                                            placeholder={homeTextPh(['interior', 'buttonText'])}
+                                            onChange={(e) => updateHomePath(['interior', 'buttonText'], e.target.value)}
                                             className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                         />
                                     </div>
@@ -1071,8 +1203,9 @@ export default function Admin() {
                                         <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Section Label</label>
                                         <input
                                             type="text"
-                                            value={homeData.gallery.sectionLabel}
-                                            onChange={(e) => setHomeData({ ...homeData, gallery: { ...homeData.gallery, sectionLabel: e.target.value } })}
+                                            value={homeText(['gallery', 'sectionLabel'])}
+                                            placeholder={homeTextPh(['gallery', 'sectionLabel'])}
+                                            onChange={(e) => updateHomePath(['gallery', 'sectionLabel'], e.target.value)}
                                             className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                         />
                                     </div>
@@ -1081,8 +1214,9 @@ export default function Admin() {
                                             <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Heading</label>
                                             <input
                                                 type="text"
-                                                value={homeData.gallery.heading}
-                                                onChange={(e) => setHomeData({ ...homeData, gallery: { ...homeData.gallery, heading: e.target.value } })}
+                                                value={homeText(['gallery', 'heading'])}
+                                                placeholder={homeTextPh(['gallery', 'heading'])}
+                                                onChange={(e) => updateHomePath(['gallery', 'heading'], e.target.value)}
                                                 className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                             />
                                         </div>
@@ -1090,8 +1224,9 @@ export default function Admin() {
                                             <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Heading Highlight</label>
                                             <input
                                                 type="text"
-                                                value={homeData.gallery.headingHighlight}
-                                                onChange={(e) => setHomeData({ ...homeData, gallery: { ...homeData.gallery, headingHighlight: e.target.value } })}
+                                                value={homeText(['gallery', 'headingHighlight'])}
+                                                placeholder={homeTextPh(['gallery', 'headingHighlight'])}
+                                                onChange={(e) => updateHomePath(['gallery', 'headingHighlight'], e.target.value)}
                                                 className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                             />
                                         </div>
@@ -1099,8 +1234,9 @@ export default function Admin() {
                                     <div>
                                         <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Description</label>
                                         <textarea
-                                            value={homeData.gallery.description}
-                                            onChange={(e) => setHomeData({ ...homeData, gallery: { ...homeData.gallery, description: e.target.value } })}
+                                            value={homeText(['gallery', 'description'])}
+                                            placeholder={homeTextPh(['gallery', 'description'])}
+                                            onChange={(e) => updateHomePath(['gallery', 'description'], e.target.value)}
                                             rows={3}
                                             className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                         />
@@ -1116,12 +1252,14 @@ export default function Admin() {
                                             return (
                                                 <div
                                                     key={img}
-                                                    draggable
+                                                    draggable={isEditingEnglish}
                                                     onDragStart={(e) => {
+                                                        if (!isEditingEnglish) return;
                                                         e.dataTransfer.setData('text/plain', String(idx));
                                                         e.dataTransfer.effectAllowed = 'move';
                                                     }}
                                                     onDragOver={(e) => {
+                                                        if (!isEditingEnglish) return;
                                                         e.preventDefault();
                                                         e.dataTransfer.dropEffect = 'move';
                                                         setDragOverIndex(idx);
@@ -1129,6 +1267,10 @@ export default function Admin() {
                                                     onDragLeave={() => setDragOverIndex(null)}
                                                     onDrop={(e) => {
                                                         e.preventDefault();
+                                                        if (!isEditingEnglish) {
+                                                            setDragOverIndex(null);
+                                                            return;
+                                                        }
                                                         const from = parseInt(e.dataTransfer.getData('text/plain'), 10);
                                                         if (Number.isNaN(from) || from === idx) {
                                                             setDragOverIndex(null);
@@ -1138,7 +1280,7 @@ export default function Admin() {
                                                         setHomeData({ ...homeData, gallery: { ...homeData.gallery, images: reordered } });
                                                         setDragOverIndex(null);
                                                     }}
-                                                    className={`relative group rounded-sm overflow-hidden border aspect-[4/5] cursor-grab active:cursor-grabbing select-none ${dragOverIndex === idx ? 'border-[#8B6F5A] ring-2 ring-[#8B6F5A]/40' : 'border-gray-200'}`}
+                                                    className={`relative group rounded-sm overflow-hidden border aspect-[4/5] select-none ${isEditingEnglish ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'} ${dragOverIndex === idx ? 'border-[#8B6F5A] ring-2 ring-[#8B6F5A]/40' : 'border-gray-200'}`}
                                                 >
                                                     {isUploading && (
                                                         <div className="absolute inset-0 bg-black/70 z-30 flex items-center justify-center">
@@ -1228,8 +1370,9 @@ export default function Admin() {
                                         <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Section Label</label>
                                         <input
                                             type="text"
-                                            value={homeData.residences.sectionLabel}
-                                            onChange={(e) => setHomeData({ ...homeData, residences: { ...homeData.residences, sectionLabel: e.target.value } })}
+                                            value={homeText(['residences', 'sectionLabel'])}
+                                            placeholder={homeTextPh(['residences', 'sectionLabel'])}
+                                            onChange={(e) => updateHomePath(['residences', 'sectionLabel'], e.target.value)}
                                             className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                         />
                                     </div>
@@ -1237,8 +1380,9 @@ export default function Admin() {
                                         <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Heading</label>
                                         <input
                                             type="text"
-                                            value={homeData.residences.heading}
-                                            onChange={(e) => setHomeData({ ...homeData, residences: { ...homeData.residences, heading: e.target.value } })}
+                                            value={homeText(['residences', 'heading'])}
+                                            placeholder={homeTextPh(['residences', 'heading'])}
+                                            onChange={(e) => updateHomePath(['residences', 'heading'], e.target.value)}
                                             className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                         />
                                     </div>
@@ -1257,60 +1401,18 @@ export default function Admin() {
                                                 <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Brand Name</label>
                                                 <input
                                                     type="text"
-                                                    value={homeData.footer?.brandName ?? ''}
-                                                    onChange={(e) => setHomeData({
-                                                        ...homeData,
-                                                        footer: {
-                                                            ...(homeData.footer ?? {
-                                                                brandName: '',
-                                                                brandTagline: '',
-                                                                social: { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' },
-                                                                directInquiriesTitle: 'Direct Inquiries',
-                                                                email: '',
-                                                                phone: '',
-                                                                addressLine1: '',
-                                                                addressLine2: '',
-                                                                registerInterestTitle: 'Register Interest',
-                                                                copyright: '',
-                                                                privacyLabel: 'Privacy Policy',
-                                                                privacyUrl: '#',
-                                                                disclaimerLabel: 'Disclaimer',
-                                                                disclaimerUrl: '#',
-                                                            }),
-                                                            brandName: e.target.value,
-                                                            social: (homeData.footer?.social ?? { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' }),
-                                                        },
-                                                    })}
+                                                    value={homeText(['footer', 'brandName'])}
+                                                    placeholder={homeTextPh(['footer', 'brandName'])}
+                                                    onChange={(e) => updateHomePath(['footer', 'brandName'], e.target.value)}
                                                     className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                                 />
                                             </div>
                                             <div>
                                                 <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Brand Tagline</label>
                                                 <textarea
-                                                    value={homeData.footer?.brandTagline ?? ''}
-                                                    onChange={(e) => setHomeData({
-                                                        ...homeData,
-                                                        footer: {
-                                                            ...(homeData.footer ?? {
-                                                                brandName: '',
-                                                                brandTagline: '',
-                                                                social: { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' },
-                                                                directInquiriesTitle: 'Direct Inquiries',
-                                                                email: '',
-                                                                phone: '',
-                                                                addressLine1: '',
-                                                                addressLine2: '',
-                                                                registerInterestTitle: 'Register Interest',
-                                                                copyright: '',
-                                                                privacyLabel: 'Privacy Policy',
-                                                                privacyUrl: '#',
-                                                                disclaimerLabel: 'Disclaimer',
-                                                                disclaimerUrl: '#',
-                                                            }),
-                                                            brandTagline: e.target.value,
-                                                            social: (homeData.footer?.social ?? { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' }),
-                                                        },
-                                                    })}
+                                                    value={homeText(['footer', 'brandTagline'])}
+                                                    placeholder={homeTextPh(['footer', 'brandTagline'])}
+                                                    onChange={(e) => updateHomePath(['footer', 'brandTagline'], e.target.value)}
                                                     rows={3}
                                                     className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                                 />
@@ -1325,30 +1427,9 @@ export default function Admin() {
                                                 <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Section Title</label>
                                                 <input
                                                     type="text"
-                                                    value={homeData.footer?.directInquiriesTitle ?? ''}
-                                                    onChange={(e) => setHomeData({
-                                                        ...homeData,
-                                                        footer: {
-                                                            ...(homeData.footer ?? {
-                                                                brandName: '',
-                                                                brandTagline: '',
-                                                                social: { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' },
-                                                                directInquiriesTitle: '',
-                                                                email: '',
-                                                                phone: '',
-                                                                addressLine1: '',
-                                                                addressLine2: '',
-                                                                registerInterestTitle: 'Register Interest',
-                                                                copyright: '',
-                                                                privacyLabel: 'Privacy Policy',
-                                                                privacyUrl: '#',
-                                                                disclaimerLabel: 'Disclaimer',
-                                                                disclaimerUrl: '#',
-                                                            }),
-                                                            directInquiriesTitle: e.target.value,
-                                                            social: (homeData.footer?.social ?? { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' }),
-                                                        },
-                                                    })}
+                                                    value={homeText(['footer', 'directInquiriesTitle'])}
+                                                    placeholder={homeTextPh(['footer', 'directInquiriesTitle'])}
+                                                    onChange={(e) => updateHomePath(['footer', 'directInquiriesTitle'], e.target.value)}
                                                     className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                                 />
                                             </div>
@@ -1356,30 +1437,9 @@ export default function Admin() {
                                                 <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Email</label>
                                                 <input
                                                     type="email"
-                                                    value={homeData.footer?.email ?? ''}
-                                                    onChange={(e) => setHomeData({
-                                                        ...homeData,
-                                                        footer: {
-                                                            ...(homeData.footer ?? {
-                                                                brandName: '',
-                                                                brandTagline: '',
-                                                                social: { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' },
-                                                                directInquiriesTitle: 'Direct Inquiries',
-                                                                email: '',
-                                                                phone: '',
-                                                                addressLine1: '',
-                                                                addressLine2: '',
-                                                                registerInterestTitle: 'Register Interest',
-                                                                copyright: '',
-                                                                privacyLabel: 'Privacy Policy',
-                                                                privacyUrl: '#',
-                                                                disclaimerLabel: 'Disclaimer',
-                                                                disclaimerUrl: '#',
-                                                            }),
-                                                            email: e.target.value,
-                                                            social: (homeData.footer?.social ?? { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' }),
-                                                        },
-                                                    })}
+                                                    value={homeText(['footer', 'email'])}
+                                                    placeholder={homeTextPh(['footer', 'email'])}
+                                                    onChange={(e) => updateHomePath(['footer', 'email'], e.target.value)}
                                                     className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                                 />
                                             </div>
@@ -1387,30 +1447,9 @@ export default function Admin() {
                                                 <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Phone</label>
                                                 <input
                                                     type="text"
-                                                    value={homeData.footer?.phone ?? ''}
-                                                    onChange={(e) => setHomeData({
-                                                        ...homeData,
-                                                        footer: {
-                                                            ...(homeData.footer ?? {
-                                                                brandName: '',
-                                                                brandTagline: '',
-                                                                social: { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' },
-                                                                directInquiriesTitle: 'Direct Inquiries',
-                                                                email: '',
-                                                                phone: '',
-                                                                addressLine1: '',
-                                                                addressLine2: '',
-                                                                registerInterestTitle: 'Register Interest',
-                                                                copyright: '',
-                                                                privacyLabel: 'Privacy Policy',
-                                                                privacyUrl: '#',
-                                                                disclaimerLabel: 'Disclaimer',
-                                                                disclaimerUrl: '#',
-                                                            }),
-                                                            phone: e.target.value,
-                                                            social: (homeData.footer?.social ?? { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' }),
-                                                        },
-                                                    })}
+                                                    value={homeText(['footer', 'phone'])}
+                                                    placeholder={homeTextPh(['footer', 'phone'])}
+                                                    onChange={(e) => updateHomePath(['footer', 'phone'], e.target.value)}
                                                     className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                                 />
                                             </div>
@@ -1418,30 +1457,9 @@ export default function Admin() {
                                                 <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Address Line 1</label>
                                                 <input
                                                     type="text"
-                                                    value={homeData.footer?.addressLine1 ?? ''}
-                                                    onChange={(e) => setHomeData({
-                                                        ...homeData,
-                                                        footer: {
-                                                            ...(homeData.footer ?? {
-                                                                brandName: '',
-                                                                brandTagline: '',
-                                                                social: { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' },
-                                                                directInquiriesTitle: 'Direct Inquiries',
-                                                                email: '',
-                                                                phone: '',
-                                                                addressLine1: '',
-                                                                addressLine2: '',
-                                                                registerInterestTitle: 'Register Interest',
-                                                                copyright: '',
-                                                                privacyLabel: 'Privacy Policy',
-                                                                privacyUrl: '#',
-                                                                disclaimerLabel: 'Disclaimer',
-                                                                disclaimerUrl: '#',
-                                                            }),
-                                                            addressLine1: e.target.value,
-                                                            social: (homeData.footer?.social ?? { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' }),
-                                                        },
-                                                    })}
+                                                    value={homeText(['footer', 'addressLine1'])}
+                                                    placeholder={homeTextPh(['footer', 'addressLine1'])}
+                                                    onChange={(e) => updateHomePath(['footer', 'addressLine1'], e.target.value)}
                                                     className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                                 />
                                             </div>
@@ -1449,30 +1467,9 @@ export default function Admin() {
                                                 <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Address Line 2</label>
                                                 <input
                                                     type="text"
-                                                    value={homeData.footer?.addressLine2 ?? ''}
-                                                    onChange={(e) => setHomeData({
-                                                        ...homeData,
-                                                        footer: {
-                                                            ...(homeData.footer ?? {
-                                                                brandName: '',
-                                                                brandTagline: '',
-                                                                social: { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' },
-                                                                directInquiriesTitle: 'Direct Inquiries',
-                                                                email: '',
-                                                                phone: '',
-                                                                addressLine1: '',
-                                                                addressLine2: '',
-                                                                registerInterestTitle: 'Register Interest',
-                                                                copyright: '',
-                                                                privacyLabel: 'Privacy Policy',
-                                                                privacyUrl: '#',
-                                                                disclaimerLabel: 'Disclaimer',
-                                                                disclaimerUrl: '#',
-                                                            }),
-                                                            addressLine2: e.target.value,
-                                                            social: (homeData.footer?.social ?? { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' }),
-                                                        },
-                                                    })}
+                                                    value={homeText(['footer', 'addressLine2'])}
+                                                    placeholder={homeTextPh(['footer', 'addressLine2'])}
+                                                    onChange={(e) => updateHomePath(['footer', 'addressLine2'], e.target.value)}
                                                     className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                                 />
                                             </div>
@@ -1486,32 +1483,9 @@ export default function Admin() {
                                                 <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Instagram URL</label>
                                                 <input
                                                     type="text"
-                                                    value={homeData.footer?.social?.instagramUrl ?? ''}
-                                                    onChange={(e) => setHomeData({
-                                                        ...homeData,
-                                                        footer: {
-                                                            ...(homeData.footer ?? {
-                                                                brandName: '',
-                                                                brandTagline: '',
-                                                                social: { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' },
-                                                                directInquiriesTitle: 'Direct Inquiries',
-                                                                email: '',
-                                                                phone: '',
-                                                                addressLine1: '',
-                                                                addressLine2: '',
-                                                                registerInterestTitle: 'Register Interest',
-                                                                copyright: '',
-                                                                privacyLabel: 'Privacy Policy',
-                                                                privacyUrl: '#',
-                                                                disclaimerLabel: 'Disclaimer',
-                                                                disclaimerUrl: '#',
-                                                            }),
-                                                            social: {
-                                                                ...(homeData.footer?.social ?? { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' }),
-                                                                instagramUrl: e.target.value,
-                                                            },
-                                                        },
-                                                    })}
+                                                    value={homeText(['footer', 'social', 'instagramUrl'])}
+                                                    placeholder={homeTextPh(['footer', 'social', 'instagramUrl'])}
+                                                    onChange={(e) => updateHomePath(['footer', 'social', 'instagramUrl'], e.target.value)}
                                                     className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                                 />
                                             </div>
@@ -1519,32 +1493,9 @@ export default function Admin() {
                                                 <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Facebook URL</label>
                                                 <input
                                                     type="text"
-                                                    value={homeData.footer?.social?.facebookUrl ?? ''}
-                                                    onChange={(e) => setHomeData({
-                                                        ...homeData,
-                                                        footer: {
-                                                            ...(homeData.footer ?? {
-                                                                brandName: '',
-                                                                brandTagline: '',
-                                                                social: { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' },
-                                                                directInquiriesTitle: 'Direct Inquiries',
-                                                                email: '',
-                                                                phone: '',
-                                                                addressLine1: '',
-                                                                addressLine2: '',
-                                                                registerInterestTitle: 'Register Interest',
-                                                                copyright: '',
-                                                                privacyLabel: 'Privacy Policy',
-                                                                privacyUrl: '#',
-                                                                disclaimerLabel: 'Disclaimer',
-                                                                disclaimerUrl: '#',
-                                                            }),
-                                                            social: {
-                                                                ...(homeData.footer?.social ?? { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' }),
-                                                                facebookUrl: e.target.value,
-                                                            },
-                                                        },
-                                                    })}
+                                                    value={homeText(['footer', 'social', 'facebookUrl'])}
+                                                    placeholder={homeTextPh(['footer', 'social', 'facebookUrl'])}
+                                                    onChange={(e) => updateHomePath(['footer', 'social', 'facebookUrl'], e.target.value)}
                                                     className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                                 />
                                             </div>
@@ -1552,32 +1503,9 @@ export default function Admin() {
                                                 <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">LinkedIn URL</label>
                                                 <input
                                                     type="text"
-                                                    value={homeData.footer?.social?.linkedinUrl ?? ''}
-                                                    onChange={(e) => setHomeData({
-                                                        ...homeData,
-                                                        footer: {
-                                                            ...(homeData.footer ?? {
-                                                                brandName: '',
-                                                                brandTagline: '',
-                                                                social: { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' },
-                                                                directInquiriesTitle: 'Direct Inquiries',
-                                                                email: '',
-                                                                phone: '',
-                                                                addressLine1: '',
-                                                                addressLine2: '',
-                                                                registerInterestTitle: 'Register Interest',
-                                                                copyright: '',
-                                                                privacyLabel: 'Privacy Policy',
-                                                                privacyUrl: '#',
-                                                                disclaimerLabel: 'Disclaimer',
-                                                                disclaimerUrl: '#',
-                                                            }),
-                                                            social: {
-                                                                ...(homeData.footer?.social ?? { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' }),
-                                                                linkedinUrl: e.target.value,
-                                                            },
-                                                        },
-                                                    })}
+                                                    value={homeText(['footer', 'social', 'linkedinUrl'])}
+                                                    placeholder={homeTextPh(['footer', 'social', 'linkedinUrl'])}
+                                                    onChange={(e) => updateHomePath(['footer', 'social', 'linkedinUrl'], e.target.value)}
                                                     className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                                 />
                                             </div>
@@ -1588,30 +1516,9 @@ export default function Admin() {
                                                 <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Privacy Label</label>
                                                 <input
                                                     type="text"
-                                                    value={homeData.footer?.privacyLabel ?? ''}
-                                                    onChange={(e) => setHomeData({
-                                                        ...homeData,
-                                                        footer: {
-                                                            ...(homeData.footer ?? {
-                                                                brandName: '',
-                                                                brandTagline: '',
-                                                                social: { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' },
-                                                                directInquiriesTitle: 'Direct Inquiries',
-                                                                email: '',
-                                                                phone: '',
-                                                                addressLine1: '',
-                                                                addressLine2: '',
-                                                                registerInterestTitle: 'Register Interest',
-                                                                copyright: '',
-                                                                privacyLabel: '',
-                                                                privacyUrl: '#',
-                                                                disclaimerLabel: 'Disclaimer',
-                                                                disclaimerUrl: '#',
-                                                            }),
-                                                            privacyLabel: e.target.value,
-                                                            social: (homeData.footer?.social ?? { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' }),
-                                                        },
-                                                    })}
+                                                    value={homeText(['footer', 'privacyLabel'])}
+                                                    placeholder={homeTextPh(['footer', 'privacyLabel'])}
+                                                    onChange={(e) => updateHomePath(['footer', 'privacyLabel'], e.target.value)}
                                                     className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                                 />
                                             </div>
@@ -1619,30 +1526,9 @@ export default function Admin() {
                                                 <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Privacy URL</label>
                                                 <input
                                                     type="text"
-                                                    value={homeData.footer?.privacyUrl ?? ''}
-                                                    onChange={(e) => setHomeData({
-                                                        ...homeData,
-                                                        footer: {
-                                                            ...(homeData.footer ?? {
-                                                                brandName: '',
-                                                                brandTagline: '',
-                                                                social: { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' },
-                                                                directInquiriesTitle: 'Direct Inquiries',
-                                                                email: '',
-                                                                phone: '',
-                                                                addressLine1: '',
-                                                                addressLine2: '',
-                                                                registerInterestTitle: 'Register Interest',
-                                                                copyright: '',
-                                                                privacyLabel: 'Privacy Policy',
-                                                                privacyUrl: '#',
-                                                                disclaimerLabel: 'Disclaimer',
-                                                                disclaimerUrl: '#',
-                                                            }),
-                                                            privacyUrl: e.target.value,
-                                                            social: (homeData.footer?.social ?? { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' }),
-                                                        },
-                                                    })}
+                                                    value={homeText(['footer', 'privacyUrl'])}
+                                                    placeholder={homeTextPh(['footer', 'privacyUrl'])}
+                                                    onChange={(e) => updateHomePath(['footer', 'privacyUrl'], e.target.value)}
                                                     className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                                 />
                                             </div>
@@ -1650,30 +1536,9 @@ export default function Admin() {
                                                 <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Disclaimer Label</label>
                                                 <input
                                                     type="text"
-                                                    value={homeData.footer?.disclaimerLabel ?? ''}
-                                                    onChange={(e) => setHomeData({
-                                                        ...homeData,
-                                                        footer: {
-                                                            ...(homeData.footer ?? {
-                                                                brandName: '',
-                                                                brandTagline: '',
-                                                                social: { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' },
-                                                                directInquiriesTitle: 'Direct Inquiries',
-                                                                email: '',
-                                                                phone: '',
-                                                                addressLine1: '',
-                                                                addressLine2: '',
-                                                                registerInterestTitle: 'Register Interest',
-                                                                copyright: '',
-                                                                privacyLabel: 'Privacy Policy',
-                                                                privacyUrl: '#',
-                                                                disclaimerLabel: '',
-                                                                disclaimerUrl: '#',
-                                                            }),
-                                                            disclaimerLabel: e.target.value,
-                                                            social: (homeData.footer?.social ?? { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' }),
-                                                        },
-                                                    })}
+                                                    value={homeText(['footer', 'disclaimerLabel'])}
+                                                    placeholder={homeTextPh(['footer', 'disclaimerLabel'])}
+                                                    onChange={(e) => updateHomePath(['footer', 'disclaimerLabel'], e.target.value)}
                                                     className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                                 />
                                             </div>
@@ -1681,30 +1546,9 @@ export default function Admin() {
                                                 <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Disclaimer URL</label>
                                                 <input
                                                     type="text"
-                                                    value={homeData.footer?.disclaimerUrl ?? ''}
-                                                    onChange={(e) => setHomeData({
-                                                        ...homeData,
-                                                        footer: {
-                                                            ...(homeData.footer ?? {
-                                                                brandName: '',
-                                                                brandTagline: '',
-                                                                social: { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' },
-                                                                directInquiriesTitle: 'Direct Inquiries',
-                                                                email: '',
-                                                                phone: '',
-                                                                addressLine1: '',
-                                                                addressLine2: '',
-                                                                registerInterestTitle: 'Register Interest',
-                                                                copyright: '',
-                                                                privacyLabel: 'Privacy Policy',
-                                                                privacyUrl: '#',
-                                                                disclaimerLabel: 'Disclaimer',
-                                                                disclaimerUrl: '#',
-                                                            }),
-                                                            disclaimerUrl: e.target.value,
-                                                            social: (homeData.footer?.social ?? { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' }),
-                                                        },
-                                                    })}
+                                                    value={homeText(['footer', 'disclaimerUrl'])}
+                                                    placeholder={homeTextPh(['footer', 'disclaimerUrl'])}
+                                                    onChange={(e) => updateHomePath(['footer', 'disclaimerUrl'], e.target.value)}
                                                     className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                                 />
                                             </div>
@@ -1718,30 +1562,9 @@ export default function Admin() {
                                                 <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Copyright Text</label>
                                                 <input
                                                     type="text"
-                                                    value={homeData.footer?.copyright ?? ''}
-                                                    onChange={(e) => setHomeData({
-                                                        ...homeData,
-                                                        footer: {
-                                                            ...(homeData.footer ?? {
-                                                                brandName: '',
-                                                                brandTagline: '',
-                                                                social: { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' },
-                                                                directInquiriesTitle: 'Direct Inquiries',
-                                                                email: '',
-                                                                phone: '',
-                                                                addressLine1: '',
-                                                                addressLine2: '',
-                                                                registerInterestTitle: 'Register Interest',
-                                                                copyright: '',
-                                                                privacyLabel: 'Privacy Policy',
-                                                                privacyUrl: '#',
-                                                                disclaimerLabel: 'Disclaimer',
-                                                                disclaimerUrl: '#',
-                                                            }),
-                                                            copyright: e.target.value,
-                                                            social: (homeData.footer?.social ?? { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' }),
-                                                        },
-                                                    })}
+                                                    value={homeText(['footer', 'copyright'])}
+                                                    placeholder={homeTextPh(['footer', 'copyright'])}
+                                                    onChange={(e) => updateHomePath(['footer', 'copyright'], e.target.value)}
                                                     className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                                 />
                                             </div>
@@ -1749,30 +1572,9 @@ export default function Admin() {
                                                 <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Register Interest Title</label>
                                                 <input
                                                     type="text"
-                                                    value={homeData.footer?.registerInterestTitle ?? ''}
-                                                    onChange={(e) => setHomeData({
-                                                        ...homeData,
-                                                        footer: {
-                                                            ...(homeData.footer ?? {
-                                                                brandName: '',
-                                                                brandTagline: '',
-                                                                social: { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' },
-                                                                directInquiriesTitle: 'Direct Inquiries',
-                                                                email: '',
-                                                                phone: '',
-                                                                addressLine1: '',
-                                                                addressLine2: '',
-                                                                registerInterestTitle: '',
-                                                                copyright: '',
-                                                                privacyLabel: 'Privacy Policy',
-                                                                privacyUrl: '#',
-                                                                disclaimerLabel: 'Disclaimer',
-                                                                disclaimerUrl: '#',
-                                                            }),
-                                                            registerInterestTitle: e.target.value,
-                                                            social: (homeData.footer?.social ?? { instagramUrl: '#', facebookUrl: '#', linkedinUrl: '#' }),
-                                                        },
-                                                    })}
+                                                    value={homeText(['footer', 'registerInterestTitle'])}
+                                                    placeholder={homeTextPh(['footer', 'registerInterestTitle'])}
+                                                    onChange={(e) => updateHomePath(['footer', 'registerInterestTitle'], e.target.value)}
                                                     className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                                 />
                                             </div>
@@ -2095,7 +1897,14 @@ export default function Admin() {
                         </div>
                     ) : currentVilla && (
                         <div className="bg-white p-6 md:p-12 shadow-sm border border-gray-100 rounded-sm">
-                            <h2 className="text-4xl font-serif text-[#2C3539] mb-8">{currentVilla.name} Settings</h2>
+                            <h2 className="text-4xl font-serif text-[#2C3539] mb-8">
+                                {readVillaName(currentVilla, 'en')} Settings
+                                {!isEditingEnglish && (
+                                    <span className="block text-xs font-sans normal-case tracking-normal text-[#8B6F5A] mt-2">
+                                        Editing: {ADMIN_CONTENT_LOCALE_OPTIONS.find((o) => o.value === adminContentLocale)?.label}
+                                    </span>
+                                )}
+                            </h2>
                             {currentVilla.id === 'grey-estate' && (
                                 <div className="mb-8 bg-[#F4F1ED] border border-[#D4C3B3] px-6 py-4 text-sm text-[#2C3539]">
                                     Grey Estate galleries are derived from Villa Oneiro (accordion 1 &amp; 2) and Villa Pétra (accordion 1). Edit those villas to update Grey Estate.
@@ -2108,8 +1917,17 @@ export default function Admin() {
                                     <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Name</label>
                                     <input
                                         type="text"
-                                        value={currentVilla.name}
-                                        onChange={(e) => setVillas(villas.map(v => v.id === activeVilla ? { ...v, name: e.target.value } : v))}
+                                        value={readVillaName(currentVilla, adminContentLocale)}
+                                        placeholder={
+                                            adminContentLocale === 'en'
+                                                ? undefined
+                                                : currentVilla.name
+                                                  ? `EN: ${currentVilla.name}`
+                                                  : undefined
+                                        }
+                                        onChange={(e) =>
+                                            setVillas(writeVillaName(villas, activeVilla, adminContentLocale, e.target.value))
+                                        }
                                         className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none font-serif text-xl"
                                     />
                                 </div>
@@ -2117,16 +1935,36 @@ export default function Admin() {
                                     <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Subtitle</label>
                                     <input
                                         type="text"
-                                        value={currentVilla.subtitle}
-                                        onChange={(e) => setVillas(villas.map(v => v.id === activeVilla ? { ...v, subtitle: e.target.value } : v))}
+                                        value={readVillaSubtitle(currentVilla, adminContentLocale)}
+                                        placeholder={
+                                            adminContentLocale === 'en'
+                                                ? undefined
+                                                : currentVilla.subtitle
+                                                  ? `EN: ${currentVilla.subtitle}`
+                                                  : undefined
+                                        }
+                                        onChange={(e) =>
+                                            setVillas(writeVillaSubtitle(villas, activeVilla, adminContentLocale, e.target.value))
+                                        }
                                         className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                     />
                                 </div>
                                 <div>
                                     <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Description</label>
                                     <textarea
-                                        value={currentVilla.description}
-                                        onChange={(e) => setVillas(villas.map(v => v.id === activeVilla ? { ...v, description: e.target.value } : v))}
+                                        value={readVillaDescription(currentVilla, adminContentLocale)}
+                                        placeholder={
+                                            adminContentLocale === 'en'
+                                                ? undefined
+                                                : currentVilla.description
+                                                  ? `EN: ${currentVilla.description.slice(0, 120)}${currentVilla.description.length > 120 ? '…' : ''}`
+                                                  : undefined
+                                        }
+                                        onChange={(e) =>
+                                            setVillas(
+                                                writeVillaDescription(villas, activeVilla, adminContentLocale, e.target.value)
+                                            )
+                                        }
                                         rows={5}
                                         className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                     />
@@ -2135,53 +1973,77 @@ export default function Admin() {
                                 <div>
                                     <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-4">Specs</label>
                                     <div className="space-y-3">
-                                        {currentVilla.specs.map((spec, specIdx) => (
+                                        {currentVilla.specs.map((spec, specIdx) => {
+                                            const locSpec = readVillaSpec(currentVilla, adminContentLocale, specIdx);
+                                            return (
                                             <div key={specIdx} className="flex gap-4 items-center">
                                                 <div className="w-1/3">
                                                     <input
                                                         type="text"
-                                                        value={spec.label}
-                                                        onChange={(e) => {
-                                                            const newSpecs = [...currentVilla.specs];
-                                                            newSpecs[specIdx] = { ...spec, label: e.target.value };
-                                                            setVillas(villas.map(v => v.id === activeVilla ? { ...v, specs: newSpecs } : v));
-                                                        }}
-                                                        placeholder="Label"
+                                                        value={locSpec.label}
+                                                        onChange={(e) =>
+                                                            setVillas(
+                                                                writeVillaSpecField(
+                                                                    villas,
+                                                                    activeVilla,
+                                                                    adminContentLocale,
+                                                                    specIdx,
+                                                                    'label',
+                                                                    e.target.value
+                                                                )
+                                                            )
+                                                        }
+                                                        placeholder={
+                                                            adminContentLocale === 'en' ? 'Label' : `EN label: ${spec.label}`
+                                                        }
                                                         className="w-full border border-gray-200 px-3 py-2 text-sm focus:border-[#2C3539] outline-none"
                                                     />
                                                 </div>
                                                 <div className="flex-1">
                                                     <input
                                                         type="text"
-                                                        value={spec.value}
-                                                        onChange={(e) => {
-                                                            const newSpecs = [...currentVilla.specs];
-                                                            newSpecs[specIdx] = { ...spec, value: e.target.value };
-                                                            setVillas(villas.map(v => v.id === activeVilla ? { ...v, specs: newSpecs } : v));
-                                                        }}
-                                                        placeholder="Value"
+                                                        value={locSpec.value}
+                                                        onChange={(e) =>
+                                                            setVillas(
+                                                                writeVillaSpecField(
+                                                                    villas,
+                                                                    activeVilla,
+                                                                    adminContentLocale,
+                                                                    specIdx,
+                                                                    'value',
+                                                                    e.target.value
+                                                                )
+                                                            )
+                                                        }
+                                                        placeholder={
+                                                            adminContentLocale === 'en' ? 'Value' : `EN value: ${spec.value}`
+                                                        }
                                                         className="w-full border border-gray-200 px-3 py-2 text-sm focus:border-[#2C3539] outline-none"
                                                     />
                                                 </div>
                                                 <button
+                                                    type="button"
+                                                    disabled={!isEditingEnglish}
                                                     onClick={() => {
-                                                        const newSpecs = [...currentVilla.specs];
-                                                        newSpecs.splice(specIdx, 1);
-                                                        setVillas(villas.map(v => v.id === activeVilla ? { ...v, specs: newSpecs } : v));
+                                                        if (!isEditingEnglish) return;
+                                                        setVillas(removeVillaSpec(villas, activeVilla, specIdx));
                                                     }}
-                                                    className="w-8 h-8 flex items-center justify-center text-gray-400 hover:bg-rose-50 hover:text-rose-500 rounded transition-colors flex-shrink-0"
+                                                    className="w-8 h-8 flex items-center justify-center text-gray-400 hover:bg-rose-50 hover:text-rose-500 rounded transition-colors flex-shrink-0 disabled:opacity-30 disabled:pointer-events-none"
                                                     title="Remove Spec"
                                                 >
                                                     <X size={16} />
                                                 </button>
                                             </div>
-                                        ))}
+                                            );
+                                        })}
                                         <button
+                                            type="button"
+                                            disabled={!isEditingEnglish}
                                             onClick={() => {
-                                                const newSpecs = [...currentVilla.specs, { label: '', value: '' }];
-                                                setVillas(villas.map(v => v.id === activeVilla ? { ...v, specs: newSpecs } : v));
+                                                if (!isEditingEnglish) return;
+                                                setVillas(addVillaSpec(villas, activeVilla));
                                             }}
-                                            className="mt-4 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#2C3539] hover:text-[#8B6F5A] transition-colors"
+                                            className="mt-4 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#2C3539] hover:text-[#8B6F5A] transition-colors disabled:opacity-40 disabled:pointer-events-none"
                                         >
                                             <span className="w-5 h-5 flex items-center justify-center border border-current rounded-full text-base leading-none pb-[1px]">+</span>
                                             Add Spec
@@ -2195,6 +2057,11 @@ export default function Admin() {
                             <div className="mb-20">
                                 <h3 className="text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-6 border-b border-gray-100 pb-4">Cover Image</h3>
                                 <div className="relative group rounded-sm overflow-hidden border border-gray-200 aspect-[21/9]">
+                                    {!isEditingEnglish && (
+                                        <div className="absolute inset-0 z-20 bg-white/80 flex items-center justify-center text-xs text-[#2C3539] text-center px-6 pointer-events-none">
+                                            Switch content language to English to change the cover image.
+                                        </div>
+                                    )}
                                     {uploadingImage === `hero-${activeVilla}` && (
                                         <div className="absolute inset-0 bg-black/70 z-30 flex items-center justify-center">
                                             <div className="text-white text-sm">Uploading...</div>
@@ -2283,8 +2150,13 @@ export default function Admin() {
                                     </h3>
                                     <button
                                         type="button"
-                                        disabled={currentVilla.id === 'villa-petra' || currentVilla.id === 'grey-estate'}
+                                        disabled={
+                                            !isEditingEnglish ||
+                                            currentVilla.id === 'villa-petra' ||
+                                            currentVilla.id === 'grey-estate'
+                                        }
                                         onClick={() => {
+                                            if (!isEditingEnglish) return;
                                             const sections = Array.isArray((currentVilla as any).gallerySections) ? [...(currentVilla as any).gallerySections] : [];
                                             sections.push({ title: '', images: [] });
                                             setVillas(villas.map(v => v.id === activeVilla ? { ...(v as any), gallerySections: sections } as any : v));
@@ -2304,13 +2176,25 @@ export default function Admin() {
                                                     <label className="block text-[10px] uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Accordion Title</label>
                                                     <input
                                                         type="text"
-                                                        value={section.title || ''}
-                                                        onChange={(e) => {
-                                                            const nextSections = Array.isArray((currentVilla as any).gallerySections) ? [...(currentVilla as any).gallerySections] : [];
-                                                            nextSections[sectionIdx] = { ...nextSections[sectionIdx], title: e.target.value };
-                                                            setVillas(villas.map(v => v.id === activeVilla ? { ...(v as any), gallerySections: nextSections } as any : v));
-                                                        }}
-                                                        placeholder="e.g. Visual Details."
+                                                        value={readVillaGalleryTitle(currentVilla, adminContentLocale, sectionIdx)}
+                                                        onChange={(e) =>
+                                                            setVillas(
+                                                                writeVillaGalleryTitle(
+                                                                    villas,
+                                                                    activeVilla,
+                                                                    adminContentLocale,
+                                                                    sectionIdx,
+                                                                    e.target.value
+                                                                )
+                                                            )
+                                                        }
+                                                        placeholder={
+                                                            adminContentLocale === 'en'
+                                                                ? 'e.g. Visual Details.'
+                                                                : section.title
+                                                                  ? `EN: ${section.title}`
+                                                                  : 'Uses English title when empty'
+                                                        }
                                                         className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none bg-white"
                                                     />
                                                 </div>
@@ -2318,13 +2202,13 @@ export default function Admin() {
                                                     <button
                                                         type="button"
                                                         disabled={
+                                                            !isEditingEnglish ||
                                                             currentVilla.id === 'grey-estate' ||
                                                             (currentVilla.id === 'villa-petra' && (Array.isArray((currentVilla as any).gallerySections) ? (currentVilla as any).gallerySections.length : 1) <= 1)
                                                         }
                                                         onClick={() => {
-                                                            const nextSections = Array.isArray((currentVilla as any).gallerySections) ? [...(currentVilla as any).gallerySections] : [];
-                                                            nextSections.splice(sectionIdx, 1);
-                                                            setVillas(villas.map(v => v.id === activeVilla ? { ...(v as any), gallerySections: nextSections.length ? nextSections : [{ title: 'Visual Details.', images: [] }] } as any : v));
+                                                            if (!isEditingEnglish) return;
+                                                            setVillas(removeVillaGallerySection(villas, activeVilla, sectionIdx));
                                                         }}
                                                         className="text-[10px] uppercase tracking-widest font-bold text-red-600 hover:text-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-red-600"
                                                     >
@@ -2340,12 +2224,14 @@ export default function Admin() {
                                                     return (
                                                         <div
                                                             key={img}
-                                                            draggable
+                                                            draggable={isEditingEnglish}
                                                             onDragStart={(e) => {
+                                                                if (!isEditingEnglish) return;
                                                                 e.dataTransfer.setData('text/plain', JSON.stringify({ sectionIdx, idx }));
                                                                 e.dataTransfer.effectAllowed = 'move';
                                                             }}
                                                             onDragOver={(e) => {
+                                                                if (!isEditingEnglish) return;
                                                                 e.preventDefault();
                                                                 e.dataTransfer.dropEffect = 'move';
                                                                 setDragOverIndex(dragKey);
@@ -2353,6 +2239,10 @@ export default function Admin() {
                                                             onDragLeave={() => setDragOverIndex(null)}
                                                             onDrop={(e) => {
                                                                 e.preventDefault();
+                                                                if (!isEditingEnglish) {
+                                                                    setDragOverIndex(null);
+                                                                    return;
+                                                                }
                                                                 const raw = e.dataTransfer.getData('text/plain');
                                                                 let parsed: any = null;
                                                                 try { parsed = JSON.parse(raw); } catch { parsed = null; }
@@ -2382,7 +2272,7 @@ export default function Admin() {
                                                                 setVillas(villas.map(v => v.id === activeVilla ? { ...(v as any), gallerySections: nextSections } as any : v));
                                                                 setDragOverIndex(null);
                                                             }}
-                                                            className={`relative group rounded-sm overflow-hidden border aspect-[2/3] cursor-grab active:cursor-grabbing select-none ${dragOverIndex === dragKey ? 'border-[#8B6F5A] ring-2 ring-[#8B6F5A]/40' : 'border-gray-200'}`}
+                                                            className={`relative group rounded-sm overflow-hidden border aspect-[2/3] select-none ${isEditingEnglish ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'} ${dragOverIndex === dragKey ? 'border-[#8B6F5A] ring-2 ring-[#8B6F5A]/40' : 'border-gray-200'}`}
                                                         >
                                                             {isUploading && (
                                                                 <div className="absolute inset-0 bg-black/70 z-30 flex items-center justify-center">
@@ -2408,13 +2298,13 @@ export default function Admin() {
 
                                                             <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col items-center justify-center gap-4 z-20">
                                                                 <Camera className="text-white drop-shadow-md transform -translate-y-4 group-hover:translate-y-0 transition-transform duration-300" size={28} strokeWidth={1.5} />
-                                                                <label className={`cursor-pointer bg-white/90 text-[#2C3539] px-4 py-2 text-[10px] font-bold uppercase tracking-wider hover:bg-[#8B6F5A] hover:text-white transition-colors text-center w-3/4 transform translate-y-4 group-hover:translate-y-0 shadow-lg ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                                                                <label className={`cursor-pointer bg-white/90 text-[#2C3539] px-4 py-2 text-[10px] font-bold uppercase tracking-wider hover:bg-[#8B6F5A] hover:text-white transition-colors text-center w-3/4 transform translate-y-4 group-hover:translate-y-0 shadow-lg ${isUploading || !isEditingEnglish ? 'opacity-50 cursor-not-allowed' : ''}`}>
                                                                     {isUploading ? 'Uploading...' : 'Replace'}
                                                                     <input
                                                                         type="file"
                                                                         accept="image/*"
                                                                         className="hidden"
-                                                                        disabled={isUploading}
+                                                                        disabled={isUploading || !isEditingEnglish}
                                                                         onChange={(e) => {
                                                                             if (e.target.files?.[0]) {
                                                                                 let imagePath = img;
@@ -2446,14 +2336,16 @@ export default function Admin() {
                                                                 </label>
                                                                 <button
                                                                     type="button"
+                                                                    disabled={!isEditingEnglish}
                                                                     onClick={() => {
+                                                                        if (!isEditingEnglish) return;
                                                                         const nextSections = Array.isArray((currentVilla as any).gallerySections) ? [...(currentVilla as any).gallerySections] : [];
                                                                         const nextImages = [...images];
                                                                         nextImages.splice(idx, 1);
                                                                         nextSections[sectionIdx] = { ...nextSections[sectionIdx], images: nextImages };
                                                                         setVillas(villas.map(v => v.id === activeVilla ? { ...(v as any), gallerySections: nextSections } as any : v));
                                                                     }}
-                                                                    className="text-white text-[10px] uppercase tracking-widest hover:text-red-400 transition-colors transform translate-y-4 group-hover:translate-y-0"
+                                                                    className="text-white text-[10px] uppercase tracking-widest hover:text-red-400 transition-colors transform translate-y-4 group-hover:translate-y-0 disabled:opacity-40"
                                                                 >
                                                                     Remove
                                                                 </button>
@@ -2465,6 +2357,7 @@ export default function Admin() {
                                                 <div
                                                     className="relative group rounded-sm overflow-hidden border-2 border-dashed border-gray-300 aspect-[2/3] flex items-center justify-center hover:border-[#8B6F5A] transition-colors cursor-pointer bg-gray-50"
                                                     onDragOver={(e) => {
+                                                        if (!isEditingEnglish) return;
                                                         e.preventDefault();
                                                         e.dataTransfer.dropEffect = 'move';
                                                         setDragOverIndex(sectionIdx * 1000 + 999);
@@ -2472,6 +2365,10 @@ export default function Admin() {
                                                     onDragLeave={() => setDragOverIndex(null)}
                                                     onDrop={(e) => {
                                                         e.preventDefault();
+                                                        if (!isEditingEnglish) {
+                                                            setDragOverIndex(null);
+                                                            return;
+                                                        }
                                                         const raw = e.dataTransfer.getData('text/plain');
                                                         let parsed: any = null;
                                                         try { parsed = JSON.parse(raw); } catch { parsed = null; }
@@ -2501,7 +2398,7 @@ export default function Admin() {
                                                         type="file"
                                                         accept="image/*"
                                                         className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                                                        disabled={uploadingImage === `gallery-${activeVilla}-s${sectionIdx}-new`}
+                                                        disabled={uploadingImage === `gallery-${activeVilla}-s${sectionIdx}-new` || !isEditingEnglish}
                                                         onChange={(e) => {
                                                             if (e.target.files?.[0]) {
                                                                 const folderName = currentVilla.id === 'villa-oneiro' ? 'VILLA_ONEIRO'

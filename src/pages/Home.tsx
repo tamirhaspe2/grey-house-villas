@@ -7,6 +7,7 @@ import { Villa } from '../types';
 import homeDataDefault from '../data/home.json';
 import { encodePublicMediaUrl } from '../lib/mediaUrl';
 import { mergeHomeWithLocale } from '../lib/mergeHomeWithLocale';
+import { mergeHomeDataWithCmsLocale } from '../lib/cmsHomeLocale';
 
 interface HomeProps {
   villas: Villa[];
@@ -54,6 +55,8 @@ interface HomeData {
     sectionLabel: string;
     heading: string;
   };
+  /** Admin-edited translations (fr/he/el); merged on top of JSON locale files. */
+  localeStrings?: Partial<Record<'fr' | 'he' | 'el', Record<string, unknown>>>;
   footer?: {
     brandName: string;
     brandTagline: string;
@@ -155,15 +158,15 @@ export default function Home({ villas }: HomeProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [galleryIndex, setGalleryIndex] = useState(0);
 
-  const homeDisplay = useMemo(
-    () =>
-      mergeHomeWithLocale(
-        homeData,
-        i18n.language,
-        i18n.getResourceBundle(i18n.language, 'translation') as { home?: Partial<HomeData> }
-      ),
-    [homeData, i18n]
-  );
+  const homeDisplay = useMemo(() => {
+    const lng = i18n.language;
+    const afterJson = mergeHomeWithLocale(
+      homeData,
+      lng,
+      i18n.getResourceBundle(lng, 'translation') as { home?: Partial<HomeData> }
+    );
+    return mergeHomeDataWithCmsLocale(afterJson as Record<string, unknown>, lng) as unknown as HomeData;
+  }, [homeData, i18n]);
 
   useEffect(() => {
     // Fetch home data from API
