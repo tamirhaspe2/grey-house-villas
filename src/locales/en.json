@@ -114,7 +114,7 @@
     "messagePh": "Message",
     "requestBrochure": "Request Brochure",
     "galleryLabel": "Gallery",
-    "galleryHelp": "Click on any image to expand and explore the intricate craftsmanship of {{name}}.",
+    "galleryHelp": "Click a panel to bring it forward. Double-click the enlarged center image for full screen.",
     "visualDetails": "Visual Details.",
     "suiteFallback": "Omorfi Suite",
     "expandedAlt": "Expanded view",

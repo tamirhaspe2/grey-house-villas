@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, Link, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Maximize, Home as HomeIcon, Droplets, Wind, ChevronLeft, X } from 'lucide-react';
+import { RollingGalleryStrip } from '../components/RollingGalleryStrip';
 import { Villa } from '../types';
 
 interface VillaDetailProps {
@@ -14,7 +15,8 @@ export default function VillaDetail({ villas }: VillaDetailProps) {
   const { id } = useParams<{ id: string }>();
   const villa = villas.find(v => v.id === id);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [activeIdx, setActiveIdx] = useState<number | null>(null);
+  /** Rolling carousel index per gallery section (Home-style strip) */
+  const [rollingBySection, setRollingBySection] = useState<Record<number, number>>({});
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
@@ -67,6 +69,32 @@ export default function VillaDetail({ villas }: VillaDetailProps) {
     }
     return normalizeSections(villa).filter(s => Array.isArray(s.images));
   }, [villa, villas, t, i18n.language]);
+
+  const galleryFingerprint = useMemo(
+    () => gallerySections.map((s) => s.images.length).join('-'),
+    [gallerySections],
+  );
+
+  useEffect(() => {
+    setRollingBySection({});
+  }, [villa?.id, galleryFingerprint]);
+
+  useEffect(() => {
+    const timers: ReturnType<typeof setInterval>[] = [];
+    gallerySections.forEach((sec, sectionIdx) => {
+      const len = sec.images?.length ?? 0;
+      if (len <= 1) return;
+      timers.push(
+        setInterval(() => {
+          setRollingBySection((prev) => ({
+            ...prev,
+            [sectionIdx]: ((prev[sectionIdx] ?? 0) + 1) % len,
+          }));
+        }, 4000),
+      );
+    });
+    return () => timers.forEach(clearInterval);
+  }, [villa?.id, galleryFingerprint]);
 
   if (!villa) {
     return <Navigate to="/" replace />;
@@ -189,7 +217,8 @@ export default function VillaDetail({ villas }: VillaDetailProps) {
         </div>
       </section>
 
-      {/* Gallery Accordions */}
+      {/*
+      OLD GALLERY — hover-to-expand strip (kept for reference; replaced by rolling carousel below)
       <section className="py-32 bg-white px-6">
         <div className="max-w-7xl mx-auto space-y-24">
           {gallerySections.map((section, sectionIdx) => {
@@ -265,6 +294,50 @@ export default function VillaDetail({ villas }: VillaDetailProps) {
           })}
         </div>
       </section>
+      */}
+
+      {/* Gallery — rolling accordion (same interaction pattern as commented block on Home) */}
+      <div className="space-y-0">
+        {gallerySections.map((section, sectionIdx) => {
+          const images = section.images || [];
+          const galleryIndex = rollingBySection[sectionIdx] ?? 0;
+          return (
+            <section
+              key={`rolling-${section.title}-${sectionIdx}`}
+              className="py-32 bg-[#1A1A1A] text-white overflow-hidden px-6"
+            >
+              <div className="max-w-7xl mx-auto mb-12 lg:mb-16">
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
+                  <div>
+                    <span className="text-[10px] uppercase tracking-[0.4em] text-white/40 mb-4 block">
+                      {t('villa.galleryLabel')}
+                    </span>
+                    <h2 className="text-4xl md:text-5xl md:text-6xl font-serif">
+                      {section.title || t('villa.visualDetails')}
+                    </h2>
+                  </div>
+                  <p className="text-white/50 font-light max-w-md text-lg">
+                    {t('villa.galleryHelp', { name: villa.name })}
+                  </p>
+                </div>
+              </div>
+
+              <RollingGalleryStrip
+                images={images}
+                galleryIndex={galleryIndex}
+                onSelectIndex={(idx) =>
+                  setRollingBySection((prev) => ({ ...prev, [sectionIdx]: idx }))
+                }
+                onCenterDoubleClick={(src) => setSelectedImage(src)}
+                missingImageFallback={t('homeA11y.missingImage')}
+                altForIndex={(idx) =>
+                  `${villa.name} — ${section.title || t('villa.visualDetails')} — ${idx + 1}`
+                }
+              />
+            </section>
+          );
+        })}
+      </div>
 
       {/* Lightbox */}
       <AnimatePresence>

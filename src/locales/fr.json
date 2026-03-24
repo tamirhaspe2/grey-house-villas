@@ -1,6 +1,10 @@
 {
-  "meta": { "title": "Grey House Villas" },
-  "app": { "loading": "Chargement..." },
+  "meta": {
+    "title": "Grey House Villas"
+  },
+  "app": {
+    "loading": "Chargement..."
+  },
   "layout": {
     "languageLabel": "Langue",
     "viewing_one": "personne consulte actuellement ce domaine",
@@ -160,7 +164,7 @@
     "messagePh": "Message",
     "requestBrochure": "Demander la brochure",
     "galleryLabel": "Galerie",
-    "galleryHelp": "Cliquez sur une image pour l’agrandir et découvrir le savoir-faire de {{name}}.",
+    "galleryHelp": "Cliquez sur un panneau pour le mettre au centre. Double-cliquez sur l’image centrale agrandie pour le plein écran.",
     "visualDetails": "Détails visuels.",
     "suiteFallback": "Suite Omorfi",
     "expandedAlt": "Vue agrandie",
@@ -207,34 +211,83 @@
       "subtitle": "La maison principale & la suite",
       "description": "Une résidence remarquable de 175 m² sur deux niveaux alliant design italien haut de gamme et matières naturelles, avec une discrète suite de 25 m² sous la piscine extérieure principale. Éclairage extérieur multizone, chauffage au sol et vastes terrasses en pierre naturelle.",
       "specs": [
-        { "label": "Surface", "value": "200 m² au total (maison principale + suite)" },
-        { "label": "Chambres", "value": "3 chambres (climatisation 12 000 BTU chacune)" },
-        { "label": "Salles de bain", "value": "3,5 salles de bain (douches luxe, miroirs chauffants)" },
-        { "label": "Cuisine", "value": "Cuisine italienne & poêle en stéatite 15 kW" }
+        {
+          "label": "Surface",
+          "value": "200 m² au total (maison principale + suite)"
+        },
+        {
+          "label": "Chambres",
+          "value": "3 chambres (climatisation 12 000 BTU chacune)"
+        },
+        {
+          "label": "Salles de bain",
+          "value": "3,5 salles de bain (douches luxe, miroirs chauffants)"
+        },
+        {
+          "label": "Cuisine",
+          "value": "Cuisine italienne & poêle en stéatite 15 kW"
+        }
       ],
-      "gallerySections": [{}, { "title": "Suite Omorfi" }]
+      "gallerySections": [
+        {},
+        {
+          "title": "Suite Omorfi"
+        }
+      ]
     },
     "villa-petra": {
       "subtitle": "L’enclave privée",
       "description": "Située 50 mètres sous la maison principale, pour une intimité absolue. Accès par une voie privée avec parking dédié et terrasses en restanques.",
       "specs": [
-        { "label": "Surface", "value": "50 m² d’habitation + 100 m² de parking" },
-        { "label": "Chambres", "value": "1 chambre (climatisation 12 000 BTU)" },
-        { "label": "Piscine", "value": "Bassin privé 4 × 1,5 m" },
-        { "label": "Cuisine", "value": "Cuisine & poêle en stéatite 10 kW" }
+        {
+          "label": "Surface",
+          "value": "50 m² d’habitation + 100 m² de parking"
+        },
+        {
+          "label": "Chambres",
+          "value": "1 chambre (climatisation 12 000 BTU)"
+        },
+        {
+          "label": "Piscine",
+          "value": "Bassin privé 4 × 1,5 m"
+        },
+        {
+          "label": "Cuisine",
+          "value": "Cuisine & poêle en stéatite 10 kW"
+        }
       ],
-      "gallerySections": [{ "title": "Détails visuels." }]
+      "gallerySections": [
+        {
+          "title": "Détails visuels."
+        }
+      ]
     },
     "grey-estate": {
       "subtitle": "Le sanctuaire ultime",
       "description": "L’expérience complète du domaine privé de 3000 m² : Villa Oneiro, suite Omorfi et Villa Pétra. Accès exclusif à la grande piscine d’eau salée, four à pizza extérieur, multiples terrasses et bassin privé à Pétra.",
       "specs": [
-        { "label": "Surface", "value": "250 m² d’habitation au total" },
-        { "label": "Chambres", "value": "4 chambres" },
-        { "label": "Salles de bain", "value": "4,5 salles de bain" },
-        { "label": "Équipements", "value": "Grande piscine, bassin, four à pizza" }
+        {
+          "label": "Surface",
+          "value": "250 m² d’habitation au total"
+        },
+        {
+          "label": "Chambres",
+          "value": "4 chambres"
+        },
+        {
+          "label": "Salles de bain",
+          "value": "4,5 salles de bain"
+        },
+        {
+          "label": "Équipements",
+          "value": "Grande piscine, bassin, four à pizza"
+        }
       ],
-      "gallerySections": [{ "title": "Détails visuels." }]
+      "gallerySections": [
+        {
+          "title": "Détails visuels."
+        }
+      ]
     }
   }
 }
