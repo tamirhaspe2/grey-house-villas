@@ -1,0 +1,240 @@
+{
+  "meta": { "title": "Grey House Villas" },
+  "app": { "loading": "Chargement..." },
+  "layout": {
+    "languageLabel": "Langue",
+    "viewing_one": "personne consulte actuellement ce domaine",
+    "viewing_other": "personnes consultent actuellement ce domaine",
+    "getInTouch": "Nous contacter",
+    "bookNow": "Réserver",
+    "openMenu": "Ouvrir le menu",
+    "closeMenu": "Fermer le menu",
+    "home": "Accueil",
+    "villas": "Villas",
+    "testimonials": "Témoignages",
+    "gallery": "Galerie",
+    "back": "Retour",
+    "footer": {
+      "defaultTagline": "Une opportunité rare d’acquérir un domaine de luxe clé en main et entièrement géré à Katouna, Leucade. Une architecture intemporelle en pierre naturelle au service du raffinement européen.",
+      "directInquiries": "Demandes directes",
+      "registerInterest": "Manifester votre intérêt",
+      "fullName": "Nom complet",
+      "email": "Adresse e-mail",
+      "message": "Votre message",
+      "sending": "Envoi...",
+      "requestBrochure": "Demander la brochure",
+      "inquirySuccess": "Merci. Nous avons bien reçu votre demande.",
+      "inquiryError": "Une erreur s’est produite. Veuillez réessayer.",
+      "copyright": "© 2026 Grey House Villas. Tous droits réservés.",
+      "privacy": "Politique de confidentialité",
+      "disclaimer": "Avertissement"
+    }
+  },
+  "homeA11y": {
+    "heroAlt": "Vue imprenable depuis Leucade",
+    "philosophyMainAlt": "Architecture en pierre naturelle",
+    "philosophyDetailAlt": "Détail",
+    "filmSoon": "Film à venir.",
+    "videoAria": "Film du domaine Grey House",
+    "exploreOption": "Découvrir l’option",
+    "galleryLink": "Galerie",
+    "missingImage": "Image manquante"
+  },
+  "home": {
+    "hero": {
+      "location": "Leucade, Grèce • Montagne de Katouna",
+      "title": "Grey House",
+      "subtitle": "Villas.",
+      "description": "Un sanctuaire privé de 3 000 m² perché à 400 mètres au-dessus de la mer Ionienne. Édifié à la main en pierre naturelle, pensé pour l’horizon infini.",
+      "button1": "Découvrir les résidences",
+      "button2": "La philosophie"
+    },
+    "philosophy": {
+      "sectionLabel": "La vision",
+      "heading": "Née de",
+      "headingHighlight": "la terre de Katouna.",
+      "paragraph1": "L’architecture de Grey House Villas dialogue avec le paysage. Chaque mur extérieur est monté à la main avec des pierres locales, pour une présence qui semble moins un bâtiment qu’une prolongation de la montagne.",
+      "paragraph2": "À l’intérieur, les limites s’effacent. Le sol en pierre se prolonge du foyer à la terrasse, faisant de la mer Ionienne le véritable cœur du lieu. Entouré d’oliveraies et de vergers, c’est un refuge de silence et de lumière.",
+      "quote": "Pensé pour les quatre saisons."
+    },
+    "interior": {
+      "sectionLabel": "Design d’intérieur",
+      "heading": "Meublé avec",
+      "headingHighlight": "intention.",
+      "description": "Livrées clé en main, les villas Grey House sont composées d’un mobilier de créateurs néerlandais, italiens et grecs. Le luxe utile se mêle à l’ensemble du domaine, des cuisines italiennes haut de gamme aux systèmes de climatisation avancés.",
+      "features": [
+        "Chauffage au sol alimenté par des pompes à chaleur performantes",
+        "Climatisation haute capacité (jusqu’à 24 000 BTU)",
+        "Accès électronique intégré et capteurs centraux",
+        "Répéteurs WiFi sur tout le domaine pour une connexion fluide"
+      ],
+      "buttonText": "Voir les spécifications"
+    },
+    "gallery": {
+      "sectionLabel": "Journal visuel",
+      "heading": "Instants",
+      "headingHighlight": "saisis.",
+      "description": "Un aperçu de la vie à Grey House. De l’heure dorée sur la mer Ionienne aux textures de la pierre de Katouna."
+    },
+    "residences": {
+      "sectionLabel": "La collection",
+      "heading": "Trois expériences de location distinctes."
+    },
+    "footer": {
+      "brandName": "Grey House",
+      "brandTagline": "Une opportunité rare d’acquérir un domaine de luxe clé en main et entièrement géré à Katouna, Leucade.",
+      "directInquiriesTitle": "Demandes directes",
+      "registerInterestTitle": "Manifester votre intérêt",
+      "copyright": "© 2026 Grey House Villas. Tous droits réservés.",
+      "privacyLabel": "Politique de confidentialité",
+      "disclaimerLabel": "Avertissement"
+    }
+  },
+  "booking": {
+    "title": "Réservez votre séjour",
+    "intro": "Choisissez une formule pour demander une réservation à Grey House. Nous examinerons votre demande et vous contacterons pour le paiement et les détails.",
+    "ratesHintBefore": "Les tarifs par nuit s’affichent après la sélection des dates d’arrivée et de départ. Les nuits en semaine et le week-end sont tarifées séparément (week-end = nuits ven–dim). Des séjours minimum s’appliquent par saison — le calendrier vous avertira si la durée est trop courte. Les dates en ",
+    "ratesHintRed": "rouge",
+    "ratesHintAfter": " sont des nuits libres qui ne peuvent toujours pas servir de premier jour de séjour (pas assez de nuits consécutives avant la prochaine réservation).",
+    "chooseExperience": "Choisissez votre expérience",
+    "pkgA_desc": "Maison principale + suite (3 chambres, 3,5 salles de bain)",
+    "pkgA_guests": "Jusqu’à 4 personnes",
+    "pkgB_desc": "L’enclave privée (1 chambre, 1 salle de bain)",
+    "pkgB_guests": "Jusqu’à 2 personnes",
+    "pkgC_desc": "Le sanctuaire ultime (4 chambres et les deux piscines)",
+    "pkgC_guests": "Jusqu’à 6 personnes",
+    "successTitle": "Demande reçue",
+    "successBody": "Merci pour votre intérêt pour Grey House. Nous avons bien reçu votre demande de réservation pour {{range}}. Notre équipe conciergerie vous contactera sous peu.",
+    "successDatesFallback": "les dates choisies",
+    "checkIn": "Arrivée",
+    "checkOut": "Départ",
+    "selectDate": "Choisir une date",
+    "guests": "Invités",
+    "guestsFixed": "La capacité est fixe pour chaque expérience.",
+    "guestLineA": "4 personnes (Oneiro)",
+    "guestLineB": "2 personnes (Villa Pétra)",
+    "guestLineC": "6 personnes (Grey Estate)",
+    "fullName": "Nom complet",
+    "emailPh": "Adresse e-mail",
+    "specialRequests": "Demandes particulières (facultatif)",
+    "estimatedTotal": "Total estimé",
+    "discountLine": "Inclut {{pct}} % de réduction long séjour ({{amount}} €)",
+    "night_one": "nuit",
+    "night_other": "nuits",
+    "processing": "Traitement...",
+    "requestBooking": "Demander une réservation",
+    "notCharged": "Vous n’êtes pas encore débité. Il s’agit d’une demande de réservation.",
+    "calendarPrompt": "Sélectionnez vos dates d’arrivée et de départ",
+    "legendSelected": "Sélection",
+    "legendMinStay": "Impossible de commencer ici (séj. min.)",
+    "selectExperienceCalendar": "Sélectionnez une expérience à gauche pour activer les dates",
+    "minHint_prefix": "Séjour minimum :",
+    "minHint_mid": "(peut s’appliquer aux changements de saison). Périodes proches de vos dates :",
+    "minHint_suffix": ". Choisissez un départ au moins {{n}} {{nights}} après l’arrivée.",
+    "minHint_simple": "Choisissez un départ au moins {{n}} {{nights}} après l’arrivée (les règles se resserrent près des limites de saison).",
+    "policyTitle": "Politique de réservation",
+    "policyText": "Un acompte de 50 % est requis pour confirmer votre réservation. Le solde est dû 30 jours avant l’arrivée.",
+    "secureTitle": "Paiements sécurisés",
+    "secureText": "Tous les paiements sont traités en toute sécurité par virement bancaire ou lien carte chiffré après confirmation.",
+    "minStayModalTitle": "Séjour minimum requis",
+    "minStayModalP1": "Votre sélection ne couvre que {{count}} {{nightWord}} ({{from}} → {{to}}).",
+    "minStayModalP2a": "Le séjour minimum pour les nuits choisies est de {{required}} {{reqNightWord}}",
+    "minStayModalP2period": "(périodes tarifaires incluses : {{label}}",
+    "minStayModalP2strict": " — en cas de saisons différentes, la règle la plus stricte s’applique",
+    "minStayModalP2end": ". Veuillez choisir une date de départ plus tardive. Votre arrivée est conservée — choisissez un nouveau départ sur le calendrier.",
+    "minStayOk": "OK",
+    "error_datesUnavailable": "Certaines dates ne sont plus disponibles. Veuillez en choisir d’autres.",
+    "error_generic": "Une erreur s’est produite. Veuillez réessayer.",
+    "error_invalidPackage": "Type de formule invalide",
+    "error_gapCheckIn": "Cette nuit ne peut pas servir d’arrivée — il n’y a pas assez de nuits consécutives libres avant la prochaine réservation pour respecter le minimum. Vous pouvez encore l’utiliser comme départ si votre séjour se termine la veille.",
+    "error_rangeBooked": "Cette plage inclut des nuits réservées. Choisissez un départ qui évite les nuits prises, ou une autre date d’arrivée.",
+    "error_bookedNights": "Ces dates incluent des nuits déjà réservées. Veuillez choisir une nouvelle arrivée."
+  },
+  "villa": {
+    "backToEstate": "Retour au domaine",
+    "detailsLabel": "Les détails",
+    "inquireTitle": "Renseignements pour acquisition",
+    "inquireIntro": "Grey House Villas est proposé en domaine complet ou en résidences individuelles. Chaque villa est livrée clé en main avec mobilier de designer.",
+    "fullName": "Nom complet",
+    "emailPh": "Adresse e-mail",
+    "messagePh": "Message",
+    "requestBrochure": "Demander la brochure",
+    "galleryLabel": "Galerie",
+    "galleryHelp": "Cliquez sur une image pour l’agrandir et découvrir le savoir-faire de {{name}}.",
+    "visualDetails": "Détails visuels.",
+    "suiteFallback": "Suite Omorfi",
+    "expandedAlt": "Vue agrandie",
+    "continueExploring": "Poursuivre la visite",
+    "viewVilla": "Voir la villa"
+  },
+  "testimonials": {
+    "label": "Expériences clients",
+    "heading": "Des mots",
+    "headingItalic": "qui comptent.",
+    "sub": "Investisseurs, architectes et résidents témoignent du luxe et de l’artisanat Grey House Villas.",
+    "items": [
+      {
+        "name": "Eleanor Vance",
+        "role": "Investisseur immobilier, Londres",
+        "text": "Le souci du détail chez Grey House Villas est sans équivalent. L’harmonie entre la pierre de Katouna et les finitions italiennes contemporaines crée une atmosphère à la fois ancrée et d’un luxe rare. Un ajout d’exception à notre portefeuille."
+      },
+      {
+        "name": "Marcus Thorne",
+        "role": "Contributeur Architectural Digest",
+        "text": "Katouna signe ici un cours magistral d’architecture contextuelle. La manière dont les volumes s’échelonnent sur la montagne, préservant l’intimité tout en maximisant la vue ionienne, est tout simplement brillante."
+      },
+      {
+        "name": "Sophia & Julian Wright",
+        "role": "Propriétaires privés",
+        "text": "Dès que nous avons posé le pied sur la terrasse de la Villa Oneiro, nous avons su que c’était notre refuge. Le chauffage au sol rend l’hiver idéal, et la brise d’été venue de la mer est pure magie."
+      },
+      {
+        "name": "Isabella Rossi",
+        "role": "Hôtelière boutique",
+        "text": "La livraison clé en main a dépassé toutes les attentes. Le mobilier européen choisi magnifie la nature brute du domaine. Il est rare qu’un bien ne demande aucun compromis."
+      }
+    ]
+  },
+  "schedule": {
+    "title": "Réservez un entretien de 30 minutes avec l’équipe commerciale Grey Villa",
+    "duration": "30 min",
+    "videoNote": "Les informations de visioconférence sont communiquées après confirmation.",
+    "cookies": "Paramètres des cookies",
+    "privacy": "Politique de confidentialité"
+  },
+  "villas": {
+    "villa-oneiro": {
+      "subtitle": "La maison principale & la suite",
+      "description": "Une résidence remarquable de 175 m² sur deux niveaux alliant design italien haut de gamme et matières naturelles, avec une discrète suite de 25 m² sous la piscine extérieure principale. Éclairage extérieur multizone, chauffage au sol et vastes terrasses en pierre naturelle.",
+      "specs": [
+        { "label": "Surface", "value": "200 m² au total (maison principale + suite)" },
+        { "label": "Chambres", "value": "3 chambres (climatisation 12 000 BTU chacune)" },
+        { "label": "Salles de bain", "value": "3,5 salles de bain (douches luxe, miroirs chauffants)" },
+        { "label": "Cuisine", "value": "Cuisine italienne & poêle en stéatite 15 kW" }
+      ],
+      "gallerySections": [{}, { "title": "Suite Omorfi" }]
+    },
+    "villa-petra": {
+      "subtitle": "L’enclave privée",
+      "description": "Située 50 mètres sous la maison principale, pour une intimité absolue. Accès par une voie privée avec parking dédié et terrasses en restanques.",
+      "specs": [
+        { "label": "Surface", "value": "50 m² d’habitation + 100 m² de parking" },
+        { "label": "Chambres", "value": "1 chambre (climatisation 12 000 BTU)" },
+        { "label": "Piscine", "value": "Bassin privé 4 × 1,5 m" },
+        { "label": "Cuisine", "value": "Cuisine & poêle en stéatite 10 kW" }
+      ],
+      "gallerySections": [{ "title": "Détails visuels." }]
+    },
+    "grey-estate": {
+      "subtitle": "Le sanctuaire ultime",
+      "description": "L’expérience complète du domaine privé de 3000 m² : Villa Oneiro, suite Omorfi et Villa Pétra. Accès exclusif à la grande piscine d’eau salée, four à pizza extérieur, multiples terrasses et bassin privé à Pétra.",
+      "specs": [
+        { "label": "Surface", "value": "250 m² d’habitation au total" },
+        { "label": "Chambres", "value": "4 chambres" },
+        { "label": "Salles de bain", "value": "4,5 salles de bain" },
+        { "label": "Équipements", "value": "Grande piscine, bassin, four à pizza" }
+      ],
+      "gallerySections": [{ "title": "Détails visuels." }]
+    }
+  }
+}

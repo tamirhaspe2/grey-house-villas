@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams, Link, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Maximize, Home as HomeIcon, Droplets, Wind, ArrowRight, ChevronLeft, X } from 'lucide-react';
+import { Maximize, Home as HomeIcon, Droplets, Wind, ChevronLeft, X } from 'lucide-react';
 import { Villa } from '../types';
 
 interface VillaDetailProps {
@@ -9,6 +10,7 @@ interface VillaDetailProps {
 }
 
 export default function VillaDetail({ villas }: VillaDetailProps) {
+  const { t, i18n } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const villa = villas.find(v => v.id === id);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -42,44 +44,33 @@ export default function VillaDetail({ villas }: VillaDetailProps) {
     }
   };
 
-  if (!villa) {
-    return <Navigate to="/" replace />;
-  }
-
-  const normalizeSections = (v: Villa): { title: string; images: string[] }[] => {
-    if (Array.isArray(v.gallerySections) && v.gallerySections.length > 0) return v.gallerySections;
-    const legacy = Array.isArray(v.gallery) ? v.gallery : [];
-    return [{ title: 'Visual Details.', images: legacy }];
-  };
-
-  const resolveSectionsForPage = (): { title: string; images: string[] }[] => {
-    // Grey Estate should mirror the other villas. Any edits to those galleries reflect here automatically.
+  const gallerySections = useMemo(() => {
+    if (!villa) return [];
+    const normalizeSections = (v: Villa): { title: string; images: string[] }[] => {
+      if (Array.isArray(v.gallerySections) && v.gallerySections.length > 0) return v.gallerySections;
+      const legacy = Array.isArray(v.gallery) ? v.gallery : [];
+      return [{ title: t('villa.visualDetails'), images: legacy }];
+    };
     if (villa.id === 'grey-estate') {
       const oneiro = villas.find(v => v.id === 'villa-oneiro');
       const petra = villas.find(v => v.id === 'villa-petra');
-
-      const oneiroSections = oneiro ? normalizeSections(oneiro) : [{ title: 'Visual Details.', images: [] }];
-      const petraSections = petra ? normalizeSections(petra) : [{ title: 'Visual Details.', images: [] }];
-
-      // Grey Estate must ALWAYS be exactly 3 accordions:
-      // 1) Oneiro accordion #1
-      // 2) Oneiro accordion #2 (you can title it "Omorfi Suite" in Oneiro admin if you want)
-      // 3) Petra accordion #1
+      const oneiroSections = oneiro ? normalizeSections(oneiro) : [{ title: t('villa.visualDetails'), images: [] }];
+      const petraSections = petra ? normalizeSections(petra) : [{ title: t('villa.visualDetails'), images: [] }];
       const oneiroA = oneiroSections[0] ?? { title: oneiro?.name || 'Oneiro', images: [] };
       const oneiroB = oneiroSections[1] ?? { title: '', images: [] };
       const petraA = petraSections[0] ?? { title: petra?.name || 'Villa Pétra', images: [] };
-
       return [
         { title: oneiroA.title || oneiro?.name || 'Oneiro', images: Array.isArray(oneiroA.images) ? oneiroA.images : [] },
-        { title: oneiroB.title || 'Omorfi Suite', images: Array.isArray(oneiroB.images) ? oneiroB.images : [] },
+        { title: oneiroB.title || t('villa.suiteFallback'), images: Array.isArray(oneiroB.images) ? oneiroB.images : [] },
         { title: petraA.title || petra?.name || 'Villa Pétra', images: Array.isArray(petraA.images) ? petraA.images : [] },
-      ];
+      ].filter(s => Array.isArray(s.images));
     }
+    return normalizeSections(villa).filter(s => Array.isArray(s.images));
+  }, [villa, villas, t, i18n.language]);
 
-    return normalizeSections(villa);
-  };
-
-  const gallerySections = resolveSectionsForPage().filter(s => Array.isArray(s.images));
+  if (!villa) {
+    return <Navigate to="/" replace />;
+  }
 
   return (
     <div className="bg-[#FDFCFB] min-h-screen">
@@ -113,7 +104,7 @@ export default function VillaDetail({ villas }: VillaDetailProps) {
               transition={{ delay: 0.5 }}
             >
               <Link to="/" className="inline-flex items-center text-white/70 text-[10px] uppercase tracking-[0.4em] mb-8 hover:text-white transition-colors">
-                <ChevronLeft size={14} className="mr-2" /> Back to Estate
+                <ChevronLeft size={14} className="mr-2" /> {t('villa.backToEstate')}
               </Link>
               <h1 className="text-6xl md:text-9xl font-serif text-white mb-6 leading-none tracking-tight">{villa.name}</h1>
               <p className="text-xl text-white/80 font-light uppercase tracking-[0.4em]">{villa.subtitle}</p>
@@ -126,7 +117,7 @@ export default function VillaDetail({ villas }: VillaDetailProps) {
       <section className="py-32 px-6">
         <div className="max-w-7xl mx-auto grid lg:grid-cols-12 gap-20">
           <div className="lg:col-span-7">
-            <span className="text-[10px] uppercase tracking-[0.4em] text-[#A89F91] mb-8 block">The Details</span>
+            <span className="text-[10px] uppercase tracking-[0.4em] text-[#A89F91] mb-8 block">{t('villa.detailsLabel')}</span>
             <h2 className="text-3xl md:text-5xl font-serif text-[#2C3539] leading-tight mb-12">
               {villa.description}
             </h2>
@@ -151,16 +142,46 @@ export default function VillaDetail({ villas }: VillaDetailProps) {
 
           <div className="lg:col-span-5">
             <div className="bg-[#F9F8F6] p-12 lg:p-16 sticky top-32">
-              <h3 className="text-2xl font-serif mb-8 text-[#2C3539]">Inquire for Ownership</h3>
+              <h3 className="text-2xl font-serif mb-8 text-[#2C3539]">{t('villa.inquireTitle')}</h3>
               <p className="text-gray-500 font-light mb-10 leading-relaxed">
-                Grey House Villas are offered as a complete estate or individual residences. Each villa is delivered turnkey with full designer furnishings.
+                {t('villa.inquireIntro')}
               </p>
-              <form className="space-y-6">
-                <input type="text" placeholder="Full Name" className="w-full bg-transparent border-b border-black/10 py-4 text-sm focus:border-black outline-none transition-colors" />
-                <input type="email" placeholder="Email Address" className="w-full bg-transparent border-b border-black/10 py-4 text-sm focus:border-black outline-none transition-colors" />
-                <textarea placeholder="Message" rows={4} className="w-full bg-transparent border-b border-black/10 py-4 text-sm focus:border-black outline-none transition-colors resize-none"></textarea>
-                <button className="w-full py-5 bg-[#2C3539] text-white text-[10px] uppercase tracking-[0.3em] font-bold hover:bg-[#8B6F5A] transition-all">
-                  Request Brochure
+              <form className="space-y-6" onSubmit={handleInquiry}>
+                <input
+                  type="text"
+                  required
+                  value={formData.name}
+                  onChange={(e) => setFormData((f) => ({ ...f, name: e.target.value }))}
+                  placeholder={t('villa.fullName')}
+                  className="w-full bg-transparent border-b border-black/10 py-4 text-sm focus:border-black outline-none transition-colors"
+                />
+                <input
+                  type="email"
+                  required
+                  value={formData.email}
+                  onChange={(e) => setFormData((f) => ({ ...f, email: e.target.value }))}
+                  placeholder={t('villa.emailPh')}
+                  className="w-full bg-transparent border-b border-black/10 py-4 text-sm focus:border-black outline-none transition-colors"
+                />
+                <textarea
+                  value={formData.message}
+                  onChange={(e) => setFormData((f) => ({ ...f, message: e.target.value }))}
+                  placeholder={t('villa.messagePh')}
+                  rows={4}
+                  className="w-full bg-transparent border-b border-black/10 py-4 text-sm focus:border-black outline-none transition-colors resize-none"
+                />
+                {submitStatus === 'success' && (
+                  <p className="text-sm text-emerald-800">{t('layout.footer.inquirySuccess')}</p>
+                )}
+                {submitStatus === 'error' && (
+                  <p className="text-sm text-rose-700">{t('layout.footer.inquiryError')}</p>
+                )}
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full py-5 bg-[#2C3539] text-white text-[10px] uppercase tracking-[0.3em] font-bold hover:bg-[#8B6F5A] transition-all disabled:opacity-60"
+                >
+                  {isSubmitting ? t('layout.footer.sending') : t('villa.requestBrochure')}
                 </button>
               </form>
             </div>
@@ -178,11 +199,11 @@ export default function VillaDetail({ villas }: VillaDetailProps) {
               <div key={`${section.title}-${sectionIdx}`}>
                 <div className="flex flex-col md:flex-row md:items-end justify-between mb-20 gap-8">
                   <div>
-                    <span className="text-[10px] uppercase tracking-[0.4em] text-[#A89F91] mb-4 block">Gallery</span>
-                    <h2 className="text-4xl md:text-5xl font-serif text-[#2C3539]">{section.title || 'Visual Details.'}</h2>
+                    <span className="text-[10px] uppercase tracking-[0.4em] text-[#A89F91] mb-4 block">{t('villa.galleryLabel')}</span>
+                    <h2 className="text-4xl md:text-5xl font-serif text-[#2C3539]">{section.title || t('villa.visualDetails')}</h2>
                   </div>
                   <p className="text-gray-500 font-light max-w-sm">
-                    Click on any image to expand and explore the intricate craftsmanship of {villa.name}.
+                    {t('villa.galleryHelp', { name: villa.name })}
                   </p>
                 </div>
 
@@ -263,7 +284,7 @@ export default function VillaDetail({ villas }: VillaDetailProps) {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               src={selectedImage}
-              alt="Expanded view"
+              alt={t('villa.expandedAlt')}
               className="max-w-full max-h-full object-contain shadow-2xl"
             />
           </motion.div>
@@ -273,7 +294,7 @@ export default function VillaDetail({ villas }: VillaDetailProps) {
       {/* Navigation Between Villas */}
       <section className="py-32 bg-[#F9F8F6] px-6">
         <div className="max-w-7xl mx-auto">
-          <span className="text-[10px] uppercase tracking-[0.4em] text-[#A89F91] mb-12 block text-center">Continue Exploring</span>
+          <span className="text-[10px] uppercase tracking-[0.4em] text-[#A89F91] mb-12 block text-center">{t('villa.continueExploring')}</span>
           <div className="grid md:grid-cols-2 gap-8">
             {villas.filter(v => v.id !== id).map(otherVilla => (
               <Link
@@ -289,7 +310,7 @@ export default function VillaDetail({ villas }: VillaDetailProps) {
                 <div className="absolute inset-0 bg-black/40 group-hover:bg-black/60 transition-colors"></div>
                 <div className="relative z-10 text-center">
                   <h4 className="text-3xl font-serif text-white mb-2">{otherVilla.name}</h4>
-                  <span className="text-[10px] uppercase tracking-[0.3em] text-white/70 group-hover:text-white transition-colors">View Villa</span>
+                  <span className="text-[10px] uppercase tracking-[0.3em] text-white/70 group-hover:text-white transition-colors">{t('villa.viewVilla')}</span>
                 </div>
               </Link>
             ))}

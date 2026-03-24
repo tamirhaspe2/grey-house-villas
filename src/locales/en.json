@@ -1,0 +1,159 @@
+{
+  "meta": {
+    "title": "Grey House Villas"
+  },
+  "app": {
+    "loading": "Loading..."
+  },
+  "layout": {
+    "languageLabel": "Language",
+    "viewing_one": "person currently viewing this estate",
+    "viewing_other": "people currently viewing this estate",
+    "getInTouch": "Get in Touch",
+    "bookNow": "Book Now",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "home": "Home",
+    "villas": "Villas",
+    "testimonials": "Testimonials",
+    "gallery": "Gallery",
+    "back": "Back",
+    "footer": {
+      "defaultTagline": "A limited opportunity to acquire a turnkey, fully-managed luxury estate in Katouna, Lefkas. Blending timeless natural stone architecture with European luxury.",
+      "directInquiries": "Direct Inquiries",
+      "registerInterest": "Register Interest",
+      "fullName": "Full Name",
+      "email": "Email Address",
+      "message": "Your Message",
+      "sending": "Sending...",
+      "requestBrochure": "Request Brochure",
+      "inquirySuccess": "Thank you. Your inquiry has been received.",
+      "inquiryError": "Something went wrong. Please try again.",
+      "copyright": "© 2026 Grey House Villas. All rights reserved.",
+      "privacy": "Privacy Policy",
+      "disclaimer": "Disclaimer"
+    }
+  },
+  "homeA11y": {
+    "heroAlt": "Breathtaking view from Lefkas",
+    "philosophyMainAlt": "Natural stone architecture",
+    "philosophyDetailAlt": "Detail",
+    "filmSoon": "Film coming soon.",
+    "videoAria": "Grey House estate film",
+    "exploreOption": "Explore Option",
+    "galleryLink": "Gallery",
+    "missingImage": "Missing image"
+  },
+  "booking": {
+    "title": "Reserve Your Stay",
+    "intro": "Select an option to request a booking at Grey House. We will review your request and contact you directly to arrange payment and details.",
+    "ratesHintBefore": "Nightly rates appear after check-in and check-out. Weekday vs weekend nights are priced separately (weekend = Fri–Sun nights). Minimum nights apply per season — the calendar will remind you if your stay is too short. Dates in ",
+    "ratesHintRed": "red",
+    "ratesHintAfter": " are free nights that still cannot start a stay (not enough consecutive nights before the next booking).",
+    "chooseExperience": "Choose Your Experience",
+    "pkgA_desc": "Main House + Suite (3 Beds, 3.5 Baths)",
+    "pkgA_guests": "Up to 4 guests",
+    "pkgB_desc": "The Private Enclave (1 Bed, 1 Bath)",
+    "pkgB_guests": "Up to 2 guests",
+    "pkgC_desc": "The Ultimate Sanctuary (All 4 Beds & Both Pools)",
+    "pkgC_guests": "Up to 6 guests",
+    "successTitle": "Request Received",
+    "successBody": "Thank you for your interest in Grey House. We have received your booking request for {{range}}. Our concierge team will be in touch shortly.",
+    "successDatesFallback": "your selected dates",
+    "checkIn": "Check-in",
+    "checkOut": "Check-out",
+    "selectDate": "Select date",
+    "guests": "Guests",
+    "guestsFixed": "Capacity is fixed for each experience.",
+    "guestLineA": "4 guests (Oneiro)",
+    "guestLineB": "2 guests (Villa Pétra)",
+    "guestLineC": "6 guests (Grey Estate)",
+    "fullName": "Full Name",
+    "emailPh": "Email Address",
+    "specialRequests": "Special Requests (Optional)",
+    "estimatedTotal": "Estimated Total",
+    "discountLine": "Includes {{pct}}% long-stay discount (€{{amount}})",
+    "night_one": "night",
+    "night_other": "nights",
+    "processing": "Processing...",
+    "requestBooking": "Request Booking",
+    "notCharged": "You won't be charged yet. This is a booking request.",
+    "calendarPrompt": "Select your check-in and check-out dates",
+    "legendSelected": "Selected",
+    "legendMinStay": "Can’t start here (min. stay)",
+    "selectExperienceCalendar": "Select an experience on the left to enable dates",
+    "minHint_prefix": "Minimum stay:",
+    "minHint_mid": "(may apply across season changes). Periods near your dates:",
+    "minHint_suffix": ". Choose check-out at least {{n}} {{nights}} after check-in.",
+    "minHint_simple": "Choose check-out at least {{n}} {{nights}} after check-in (rules tighten near season boundaries).",
+    "policyTitle": "Booking Policy",
+    "policyText": "A 50% deposit is required to secure your reservation. The remaining balance is due 30 days prior to arrival.",
+    "secureTitle": "Secure Payments",
+    "secureText": "All payments are processed securely via wire transfer or encrypted credit card link upon booking confirmation.",
+    "minStayModalTitle": "Minimum stay required",
+    "minStayModalP1": "Your selection is only {{count}} {{nightWord}} ({{from}} → {{to}}).",
+    "minStayModalP2a": "The minimum stay for nights you selected is {{required}} {{reqNightWord}}",
+    "minStayModalP2period": "(pricing periods included: {{label}}",
+    "minStayModalP2strict": " — rules use the strictest minimum when seasons differ",
+    "minStayModalP2end": ". Please choose a later check-out. Your check-in is kept — pick a new check-out on the calendar.",
+    "minStayOk": "OK",
+    "error_datesUnavailable": "Some of these dates are no longer available. Please choose different dates.",
+    "error_generic": "Something went wrong. Please try again.",
+    "error_invalidPackage": "Invalid package type",
+    "error_gapCheckIn": "That night isn’t available as a check-in — there aren’t enough consecutive nights before the next booking for the minimum stay. You can still use it as a check-out if your stay ends the night before.",
+    "error_rangeBooked": "That range includes booked dates. Choose a check-out that avoids booked nights, or tap another check-in date.",
+    "error_bookedNights": "Those dates include booked nights. Please pick a new check-in."
+  },
+  "villa": {
+    "backToEstate": "Back to Estate",
+    "detailsLabel": "The Details",
+    "inquireTitle": "Inquire for Ownership",
+    "inquireIntro": "Grey House Villas are offered as a complete estate or individual residences. Each villa is delivered turnkey with full designer furnishings.",
+    "fullName": "Full Name",
+    "emailPh": "Email Address",
+    "messagePh": "Message",
+    "requestBrochure": "Request Brochure",
+    "galleryLabel": "Gallery",
+    "galleryHelp": "Click on any image to expand and explore the intricate craftsmanship of {{name}}.",
+    "visualDetails": "Visual Details.",
+    "suiteFallback": "Omorfi Suite",
+    "expandedAlt": "Expanded view",
+    "continueExploring": "Continue Exploring",
+    "viewVilla": "View Villa"
+  },
+  "testimonials": {
+    "label": "Client Experiences",
+    "heading": "Words of",
+    "headingItalic": "Distinction.",
+    "sub": "Hear from the investors, architects, and residents who have experienced the unparalleled luxury and craftsmanship of Grey House Villas.",
+    "items": [
+      {
+        "name": "Eleanor Vance",
+        "role": "Property Investor, London",
+        "text": "The attention to detail at Grey House Villas is unparalleled. The seamless integration of Katouna stone with modern Italian finishings creates an atmosphere that is both grounded and incredibly luxurious. A truly exceptional addition to our portfolio."
+      },
+      {
+        "name": "Marcus Thorne",
+        "role": "Architectural Digest Contributor",
+        "text": "What Katouna has achieved here is a masterclass in contextual architecture. The way the structures step down the mountain, offering complete privacy while maximizing those endless Ionian views, is nothing short of brilliant."
+      },
+      {
+        "name": "Sophia & Julian Wright",
+        "role": "Private Owners",
+        "text": "From the moment we stepped onto the terrace of Villa Oneiro, we knew we had found our sanctuary. The underfloor heating makes it perfect for winter retreats, while the summer breeze off the sea is simply magical."
+      },
+      {
+        "name": "Isabella Rossi",
+        "role": "Boutique Hotelier",
+        "text": "The turnkey delivery exceeded all expectations. The curation of European designer furniture perfectly complements the raw, organic nature of the estate. It's rare to find a property that requires absolutely zero compromise."
+      }
+    ]
+  },
+  "schedule": {
+    "title": "Book a 30 Min Meeting With The Grey Villa Sales Team",
+    "duration": "30 min",
+    "videoNote": "Web conferencing details provided upon confirmation.",
+    "cookies": "Cookie settings",
+    "privacy": "Privacy Policy"
+  }
+}

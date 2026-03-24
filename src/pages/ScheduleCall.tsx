@@ -1,9 +1,11 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { InlineWidget } from 'react-calendly';
-import { ArrowLeft, Clock, Video, Calendar as CalendarIcon, Globe } from 'lucide-react';
+import { ArrowLeft, Clock, Video } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function ScheduleCall() {
+    const { t } = useTranslation();
     return (
         <div className="min-h-screen bg-[#FDFCFB] pt-32 pb-20 px-6 flex items-center justify-center">
             <div className="max-w-[1000px] w-full bg-white shadow-xl rounded-md overflow-hidden flex flex-col md:flex-row border border-gray-100 min-h-[650px]">
@@ -17,18 +19,18 @@ export default function ScheduleCall() {
                     </Link>
 
                     <h1 className="font-serif text-[32px] md:text-[40px] leading-[1.1] text-[#1A202C] mb-8 font-semibold">
-                        Book a 30 Min Meeting With The Grey Villa Sales Team
+                        {t('schedule.title')}
                     </h1>
 
                     <div className="space-y-6 text-[#4A5568] flex-grow">
                         <div className="flex items-start gap-4">
                             <Clock size={20} className="mt-0.5 shrink-0 opacity-70" strokeWidth={1.5} />
-                            <span className="text-[15px] font-medium text-[#1A202C]">30 min</span>
+                            <span className="text-[15px] font-medium text-[#1A202C]">{t('schedule.duration')}</span>
                         </div>
 
                         <div className="flex items-start gap-4">
                             <Video size={20} className="mt-0.5 shrink-0 opacity-70" strokeWidth={1.5} />
-                            <span className="text-[15px] leading-relaxed">Web conferencing details provided upon confirmation.</span>
+                            <span className="text-[15px] leading-relaxed">{t('schedule.videoNote')}</span>
                         </div>
 
                         {/* Mock layout for dynamic fields that appear after date selection - hid usually on initial load in Calendly but good for layout structure */}
@@ -45,8 +47,8 @@ export default function ScheduleCall() {
                     </div>
 
                     <div className="pt-12 mt-auto flex gap-6 text-[11px] font-medium text-[#0060E6]">
-                        <a href="#" className="hover:underline">Cookie settings</a>
-                        <a href="#" className="hover:underline">Privacy Policy</a>
+                        <a href="#" className="hover:underline">{t('schedule.cookies')}</a>
+                        <a href="#" className="hover:underline">{t('schedule.privacy')}</a>
                     </div>
                 </div>
 

@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Calendar as CalendarIcon, Info, CreditCard } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { DayPicker, DateRange } from 'react-day-picker';
-import { format, startOfMonth, differenceInCalendarDays } from 'date-fns';
+import { format, startOfMonth, differenceInCalendarDays, type Locale } from 'date-fns';
+import { enUS, fr, el, he } from 'date-fns/locale';
 import { io } from 'socket.io-client';
 import 'react-day-picker/style.css';
 import bookingPricingDefault from '../data/bookingPricing.json';
@@ -21,7 +23,11 @@ import {
 /** Fixed capacity per experience (no guest picker). */
 const PACKAGE_GUESTS: Record<'A' | 'B' | 'C', number> = { A: 4, B: 2, C: 6 };
 
+const DATE_FNS_LOCALES: Record<string, Locale> = { en: enUS, fr, el, he };
+
 export default function Booking() {
+    const { t, i18n } = useTranslation();
+    const dfLocale = useMemo(() => DATE_FNS_LOCALES[i18n.language] ?? enUS, [i18n.language]);
     const [selectedPackage, setSelectedPackage] = useState<'A' | 'B' | 'C' | 'none'>('none');
     const [date, setDate] = useState<DateRange | undefined>();
     const [name, setName] = useState('');
@@ -177,12 +183,12 @@ export default function Booking() {
     /** A booked stay occupies nights [from, to) (checkout morning is free), matching the server overlap check. */
     const isNightBooked = useCallback(
         (d: Date): boolean => {
-            const t = toDateOnly(d).getTime();
+            const dayMs = toDateOnly(d).getTime();
             return disabledDates.some((br) => {
                 if (!br.from || !br.to) return false;
                 const a = toDateOnly(br.from).getTime();
                 const b = toDateOnly(br.to).getTime();
-                return t >= a && t < b;
+                return dayMs >= a && dayMs < b;
             });
         },
         [disabledDates]
@@ -255,18 +261,27 @@ export default function Booking() {
                 fetchDisabledDates(pkg);
             } else if (response.status === 400 && data.error === 'dates_unavailable') {
                 setSubmitStatus('error');
-                setSubmitError(data.message || 'Some of these dates are no longer available. Please choose different dates.');
+                setSubmitError(
+                    typeof data.message === 'string' && data.message.trim()
+                        ? data.message
+                        : t('booking.error_datesUnavailable')
+                );
                 setDate(undefined);
                 fetchDisabledDates(pkg);
             } else {
                 setSubmitStatus('error');
-                setSubmitError(
-                    typeof data.error === 'string' ? data.error : 'Something went wrong. Please try again.'
-                );
+                const errCode = typeof data.error === 'string' ? data.error : '';
+                if (errCode === 'invalid_package' || errCode === 'Invalid package type') {
+                    setSubmitError(t('booking.error_invalidPackage'));
+                } else if (errCode) {
+                    setSubmitError(errCode);
+                } else {
+                    setSubmitError(t('booking.error_generic'));
+                }
             }
         } catch (err) {
             setSubmitStatus('error');
-            setSubmitError('Something went wrong. Please try again.');
+            setSubmitError(t('booking.error_generic'));
         } finally {
             submitLockRef.current = false;
             setIsSubmitting(false);
@@ -287,20 +302,21 @@ export default function Booking() {
                     </Link>
 
                     <h1 className="font-serif text-[32px] leading-tight text-[#1A202C] mb-4 font-semibold uppercase tracking-wide">
-                        Reserve Your Stay
+                        {t('booking.title')}
                     </h1>
                     <p className="text-[#4A5568] text-sm mb-10 leading-relaxed font-light">
-                        Select an option to request a booking at Grey House. We will review your request and contact you directly to arrange payment and details.
+                        {t('booking.intro')}
                     </p>
                     <p className="text-[10px] uppercase tracking-wider text-[#A89F91] mb-6 -mt-4">
-                        Nightly rates appear after check-in and check-out. Weekday vs weekend nights are priced
-                        separately (weekend = Fri–Sun nights). Minimum nights apply per season — the calendar will remind
-                        you if your stay is too short. Dates in <span className="text-rose-700 font-semibold">red</span> are
-                        free nights that still cannot start a stay (not enough consecutive nights before the next booking).
+                        {t('booking.ratesHintBefore')}
+                        <span className="text-rose-700 font-semibold">{t('booking.ratesHintRed')}</span>
+                        {t('booking.ratesHintAfter')}
                     </p>
 
                     <div className="mb-10 space-y-3">
-                        <label className="block text-[10px] uppercase tracking-wider text-gray-500 mb-4">Choose Your Experience</label>
+                        <label className="block text-[10px] uppercase tracking-wider text-gray-500 mb-4">
+                            {t('booking.chooseExperience')}
+                        </label>
 
                         <button
                             type="button"
@@ -319,8 +335,10 @@ export default function Booking() {
                                     ) : null}
                                 </div>
                             </div>
-                            <div className="text-xs text-gray-500 mt-1 font-light">Main House + Suite (3 Beds, 3.5 Baths)</div>
-                            <div className="text-[10px] uppercase tracking-wider text-[#A89F91] mt-1.5">Up to 4 guests</div>
+                            <div className="text-xs text-gray-500 mt-1 font-light">{t('booking.pkgA_desc')}</div>
+                            <div className="text-[10px] uppercase tracking-wider text-[#A89F91] mt-1.5">
+                                {t('booking.pkgA_guests')}
+                            </div>
                         </button>
 
                         <button
@@ -340,8 +358,10 @@ export default function Booking() {
                                     ) : null}
                                 </div>
                             </div>
-                            <div className="text-xs text-gray-500 mt-1 font-light">The Private Enclave (1 Bed, 1 Bath)</div>
-                            <div className="text-[10px] uppercase tracking-wider text-[#A89F91] mt-1.5">Up to 2 guests</div>
+                            <div className="text-xs text-gray-500 mt-1 font-light">{t('booking.pkgB_desc')}</div>
+                            <div className="text-[10px] uppercase tracking-wider text-[#A89F91] mt-1.5">
+                                {t('booking.pkgB_guests')}
+                            </div>
                         </button>
 
                         <button
@@ -361,22 +381,25 @@ export default function Booking() {
                                     ) : null}
                                 </div>
                             </div>
-                            <div className="text-xs text-gray-500 mt-1 font-light">The Ultimate Sanctuary (All 4 Beds & Both Pools)</div>
-                            <div className="text-[10px] uppercase tracking-wider text-[#A89F91] mt-1.5">Up to 6 guests</div>
+                            <div className="text-xs text-gray-500 mt-1 font-light">{t('booking.pkgC_desc')}</div>
+                            <div className="text-[10px] uppercase tracking-wider text-[#A89F91] mt-1.5">
+                                {t('booking.pkgC_guests')}
+                            </div>
                         </button>
                     </div>
 
                     {submitStatus === 'success' ? (
                         <div className="my-auto bg-[#F4F1ED] p-8 text-center rounded">
-                            <h3 className="font-serif text-xl mb-4 text-[#2C3539]">Request Received</h3>
+                            <h3 className="font-serif text-xl mb-4 text-[#2C3539]">{t('booking.successTitle')}</h3>
                             <p className="text-sm text-gray-600">
-                                Thank you for your interest in Grey House. We have received your booking request for{' '}
-                                {submittedSnapshot
-                                    ? `${format(submittedSnapshot.from, 'PPP')} to ${format(submittedSnapshot.to, 'PPP')}`
-                                    : date?.from && date?.to
-                                      ? `${format(date.from, 'PPP')} to ${format(date.to, 'PPP')}`
-                                      : 'your selected dates'}
-                                . Our concierge team will be in touch shortly.
+                                {t('booking.successBody', {
+                                    range:
+                                        submittedSnapshot
+                                            ? `${format(submittedSnapshot.from, 'PPP', { locale: dfLocale })} — ${format(submittedSnapshot.to, 'PPP', { locale: dfLocale })}`
+                                            : date?.from && date?.to
+                                              ? `${format(date.from, 'PPP', { locale: dfLocale })} — ${format(date.to, 'PPP', { locale: dfLocale })}`
+                                              : t('booking.successDatesFallback'),
+                                })}
                             </p>
                         </div>
                     ) : selectedPackage !== 'none' ? (
@@ -384,27 +407,37 @@ export default function Booking() {
                             <div className="space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-[10px] uppercase tracking-wider text-gray-500 mb-2">Check-in</label>
+                                        <label className="block text-[10px] uppercase tracking-wider text-gray-500 mb-2">
+                                            {t('booking.checkIn')}
+                                        </label>
                                         <div className="w-full border-b border-gray-200 pb-2 text-sm text-[#1A202C] font-medium min-h-[30px]">
-                                            {date?.from ? format(date.from, 'MMM dd, yyyy') : 'Select date'}
+                                            {date?.from
+                                                ? format(date.from, 'MMM dd, yyyy', { locale: dfLocale })
+                                                : t('booking.selectDate')}
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="block text-[10px] uppercase tracking-wider text-gray-500 mb-2">Check-out</label>
+                                        <label className="block text-[10px] uppercase tracking-wider text-gray-500 mb-2">
+                                            {t('booking.checkOut')}
+                                        </label>
                                         <div className="w-full border-b border-gray-200 pb-2 text-sm text-[#1A202C] font-medium min-h-[30px]">
-                                            {date?.to ? format(date.to, 'MMM dd, yyyy') : 'Select date'}
+                                            {date?.to
+                                                ? format(date.to, 'MMM dd, yyyy', { locale: dfLocale })
+                                                : t('booking.selectDate')}
                                         </div>
                                     </div>
                                 </div>
 
                                 <div className="pt-2 border-b border-gray-200 pb-2">
-                                    <span className="block text-[10px] uppercase tracking-wider text-gray-500 mb-1">Guests</span>
-                                    <span className="text-sm text-[#1A202C] font-medium">
-                                        {selectedPackage === 'A' && '4 guests (Oneiro)'}
-                                        {selectedPackage === 'B' && '2 guests (Villa Pétra)'}
-                                        {selectedPackage === 'C' && '6 guests (Grey Estate)'}
+                                    <span className="block text-[10px] uppercase tracking-wider text-gray-500 mb-1">
+                                        {t('booking.guests')}
                                     </span>
-                                    <p className="text-[10px] text-gray-400 mt-1 font-light">Capacity is fixed for each experience.</p>
+                                    <span className="text-sm text-[#1A202C] font-medium">
+                                        {selectedPackage === 'A' && t('booking.guestLineA')}
+                                        {selectedPackage === 'B' && t('booking.guestLineB')}
+                                        {selectedPackage === 'C' && t('booking.guestLineC')}
+                                    </span>
+                                    <p className="text-[10px] text-gray-400 mt-1 font-light">{t('booking.guestsFixed')}</p>
                                 </div>
 
                                 <div className="pt-2">
@@ -413,7 +446,7 @@ export default function Booking() {
                                         required
                                         value={name}
                                         onChange={(e) => setName(e.target.value)}
-                                        placeholder="Full Name"
+                                        placeholder={t('booking.fullName')}
                                         className="w-full border-b border-gray-200 pb-2 text-sm text-[#1A202C] bg-transparent focus:outline-none focus:border-[#A89F91] placeholder-gray-400"
                                     />
                                 </div>
@@ -424,7 +457,7 @@ export default function Booking() {
                                         required
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
-                                        placeholder="Email Address"
+                                        placeholder={t('booking.emailPh')}
                                         className="w-full border-b border-gray-200 pb-2 text-sm text-[#1A202C] bg-transparent focus:outline-none focus:border-[#A89F91] placeholder-gray-400"
                                     />
                                 </div>
@@ -434,7 +467,7 @@ export default function Booking() {
                                         type="text"
                                         value={message}
                                         onChange={(e) => setMessage(e.target.value)}
-                                        placeholder="Special Requests (Optional)"
+                                        placeholder={t('booking.specialRequests')}
                                         className="w-full border-b border-gray-200 pb-2 text-sm text-[#1A202C] bg-transparent focus:outline-none focus:border-[#A89F91] placeholder-gray-400"
                                     />
                                 </div>
@@ -443,20 +476,27 @@ export default function Booking() {
                             <div className="mt-8 pt-8 border-t border-gray-100 flex-grow flex flex-col justify-end">
                                 <div className="flex justify-between items-end mb-6">
                                     <div>
-                                        <div className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">Estimated Total</div>
+                                        <div className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">
+                                            {t('booking.estimatedTotal')}
+                                        </div>
                                         <div className="font-serif text-2xl text-[#1A202C]">
                                             {total > 0 ? `€${total.toLocaleString()}` : '—'}
                                         </div>
                                         {stayQuote && stayQuote.discount > 0 && (
                                             <div className="text-[10px] text-emerald-700 mt-1">
-                                                Includes {pricingConfig.longStayDiscountPercent}% long-stay discount (€
-                                                {stayQuote.discount.toLocaleString()})
+                                                {t('booking.discountLine', {
+                                                    pct: pricingConfig.longStayDiscountPercent,
+                                                    amount: stayQuote.discount.toLocaleString(),
+                                                })}
                                             </div>
                                         )}
                                     </div>
                                     {stayQuote && stayQuote.nights > 0 && (
                                         <div className="text-xs text-gray-500 font-light">
-                                            {stayQuote.nights} {stayQuote.nights === 1 ? 'night' : 'nights'}
+                                            {stayQuote.nights}{' '}
+                                            {t(
+                                                stayQuote.nights === 1 ? 'booking.night_one' : 'booking.night_other'
+                                            )}
                                         </div>
                                     )}
                                 </div>
@@ -472,9 +512,9 @@ export default function Booking() {
                                         : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                                         }`}
                                 >
-                                    {isSubmitting ? 'Processing...' : 'Request Booking'}
+                                    {isSubmitting ? t('booking.processing') : t('booking.requestBooking')}
                                 </button>
-                                <p className="text-[10px] text-gray-400 text-center mt-4">You won't be charged yet. This is a booking request.</p>
+                                <p className="text-[10px] text-gray-400 text-center mt-4">{t('booking.notCharged')}</p>
                             </div>
                         </form>
                     ) : null}
@@ -485,16 +525,16 @@ export default function Booking() {
                     <div className="w-full max-w-[600px] mb-8 flex justify-between items-center text-sm text-gray-500">
                         <div className="flex items-center gap-2">
                             <CalendarIcon size={16} className="text-[#A89F91]" />
-                            <span>Select your check-in and check-out dates</span>
+                            <span>{t('booking.calendarPrompt')}</span>
                         </div>
                         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs justify-end">
                             <span className="flex items-center gap-2">
                                 <span className="w-3 h-3 bg-[#1A202C] rounded-full inline-block shrink-0" />
-                                Selected
+                                {t('booking.legendSelected')}
                             </span>
                             <span className="flex items-center gap-2">
                                 <span className="w-3 h-3 rounded-full inline-block shrink-0 border-2 border-rose-600 bg-rose-50" />
-                                <span className="text-rose-800">Can’t start here (min. stay)</span>
+                                <span className="text-rose-800">{t('booking.legendMinStay')}</span>
                             </span>
                         </div>
                     </div>
@@ -502,6 +542,7 @@ export default function Booking() {
                     <div className="relative bg-[#FDFCFB] p-4 lg:p-8 rounded-xl border border-gray-100 shadow-sm w-full max-w-[700px] overflow-x-auto flex justify-center">
                         <DayPicker
                             mode="range"
+                            locale={dfLocale}
                             selected={date}
                             onSelect={
                                 selectedPackage === 'none'
@@ -518,9 +559,7 @@ export default function Booking() {
                                               isMinStayGapDay(range.from)
                                           ) {
                                               setDate(undefined);
-                                              setSubmitError(
-                                                  'That night isn’t available as a check-in — there aren’t enough consecutive nights before the next booking for the minimum stay. You can still use it as a check-out if your stay ends the night before.'
-                                              );
+                                              setSubmitError(t('booking.error_gapCheckIn'));
                                               return;
                                           }
                                           if (selectionIncludesDisabled(range)) {
@@ -537,15 +576,11 @@ export default function Booking() {
                                               }
                                               if (range?.from && canUseAsCheckIn(range.from)) {
                                                   setDate({ from: range.from, to: undefined });
-                                                  setSubmitError(
-                                                      'That range includes booked dates. Choose a check-out that avoids booked nights, or tap another check-in date.'
-                                                  );
+                                                  setSubmitError(t('booking.error_rangeBooked'));
                                                   return;
                                               }
                                               setDate(undefined);
-                                              setSubmitError(
-                                                  'Those dates include booked nights. Please pick a new check-in.'
-                                              );
+                                              setSubmitError(t('booking.error_bookedNights'));
                                               return;
                                           }
                                           // RDP often sets from === to on the first click; nights === 0 then.
@@ -608,7 +643,7 @@ export default function Booking() {
                         {selectedPackage === 'none' && (
                             <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
                                 <div className="bg-[#FDFCFB]/90 px-6 py-3 rounded-full border border-dashed border-gray-300 text-xs uppercase tracking-[0.18em] text-gray-500 text-center">
-                                    Select an experience on the left to enable dates
+                                    {t('booking.selectExperienceCalendar')}
                                 </div>
                             </div>
                         )}
@@ -620,25 +655,40 @@ export default function Booking() {
                             role="status"
                         >
                             <span className="font-semibold">
-                                Minimum stay: {calendarMinStayHint.minN}{' '}
-                                {calendarMinStayHint.minN === 1 ? 'night' : 'nights'}
+                                {t('booking.minHint_prefix')} {calendarMinStayHint.minN}{' '}
+                                {t(
+                                    calendarMinStayHint.minN === 1
+                                        ? 'booking.night_one'
+                                        : 'booking.night_other'
+                                )}
                             </span>
                             {calendarMinStayHint.touchedSeasonLabels.length > 0 ? (
                                 <>
                                     {' '}
-                                    (may apply across season changes). Periods near your dates:{' '}
+                                    {t('booking.minHint_mid')}{' '}
                                     <span className="font-medium">
                                         {calendarMinStayHint.touchedSeasonLabels.join(' · ')}
                                     </span>
-                                    . Choose check-out at least {calendarMinStayHint.minN}{' '}
-                                    {calendarMinStayHint.minN === 1 ? 'night' : 'nights'} after check-in.
+                                    {t('booking.minHint_suffix', {
+                                        n: calendarMinStayHint.minN,
+                                        nights: t(
+                                            calendarMinStayHint.minN === 1
+                                                ? 'booking.night_one'
+                                                : 'booking.night_other'
+                                        ),
+                                    })}
                                 </>
                             ) : (
                                 <>
                                     {' '}
-                                    Choose check-out at least {calendarMinStayHint.minN}{' '}
-                                    {calendarMinStayHint.minN === 1 ? 'night' : 'nights'} after check-in (rules tighten
-                                    near season boundaries).
+                                    {t('booking.minHint_simple', {
+                                        n: calendarMinStayHint.minN,
+                                        nights: t(
+                                            calendarMinStayHint.minN === 1
+                                                ? 'booking.night_one'
+                                                : 'booking.night_other'
+                                        ),
+                                    })}
                                 </>
                             )}
                         </div>
@@ -647,13 +697,13 @@ export default function Booking() {
                     <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-[600px]">
                         <div className="bg-[#F4F1ED]/50 p-6 flex flex-col gap-2 rounded-sm">
                             <Info size={18} className="text-[#A89F91] mb-2" />
-                            <h4 className="font-serif text-[#1A202C]">Booking Policy</h4>
-                            <p className="text-xs text-gray-500 leading-relaxed">A 50% deposit is required to secure your reservation. The remaining balance is due 30 days prior to arrival.</p>
+                            <h4 className="font-serif text-[#1A202C]">{t('booking.policyTitle')}</h4>
+                            <p className="text-xs text-gray-500 leading-relaxed">{t('booking.policyText')}</p>
                         </div>
                         <div className="bg-[#F4F1ED]/50 p-6 flex flex-col gap-2 rounded-sm">
                             <CreditCard size={18} className="text-[#A89F91] mb-2" />
-                            <h4 className="font-serif text-[#1A202C]">Secure Payments</h4>
-                            <p className="text-xs text-gray-500 leading-relaxed">All payments are processed securely via wire transfer or encrypted credit card link upon booking confirmation.</p>
+                            <h4 className="font-serif text-[#1A202C]">{t('booking.secureTitle')}</h4>
+                            <p className="text-xs text-gray-500 leading-relaxed">{t('booking.secureText')}</p>
                         </div>
                     </div>
                 </div>
@@ -677,40 +727,41 @@ export default function Booking() {
                             id="min-stay-dialog-title"
                             className="font-serif text-xl text-[#1A202C] mb-4"
                         >
-                            Minimum stay required
+                            {t('booking.minStayModalTitle')}
                         </h2>
                         <p className="text-sm text-[#4A5568] leading-relaxed mb-2">
-                            Your selection is only <strong>{minStayModal.nights}</strong>{' '}
-                            {minStayModal.nights === 1 ? 'night' : 'nights'} (
-                            {format(minStayModal.checkIn, 'MMM d, yyyy')} →{' '}
-                            {format(minStayModal.checkOut, 'MMM d, yyyy')}).
+                            {t('booking.minStayModalP1', {
+                                count: minStayModal.nights,
+                                nightWord: t(
+                                    minStayModal.nights === 1 ? 'booking.night_one' : 'booking.night_other'
+                                ),
+                                from: format(minStayModal.checkIn, 'MMM d, yyyy', { locale: dfLocale }),
+                                to: format(minStayModal.checkOut, 'MMM d, yyyy', { locale: dfLocale }),
+                            })}
                         </p>
                         <p className="text-sm text-[#4A5568] leading-relaxed mb-6">
-                            The minimum stay for nights you selected is{' '}
-                            <strong>
-                                {minStayModal.required}{' '}
-                                {minStayModal.required === 1 ? 'night' : 'nights'}
-                            </strong>
+                            {t('booking.minStayModalP2a', {
+                                required: minStayModal.required,
+                                reqNightWord: t(
+                                    minStayModal.required === 1 ? 'booking.night_one' : 'booking.night_other'
+                                ),
+                            })}
                             {minStayModal.periodLabel ? (
                                 <>
                                     {' '}
-                                    (pricing periods included:{' '}
-                                    <span className="font-medium text-[#1A202C]">{minStayModal.periodLabel}</span>
-                                    {minStayModal.periodLabel.includes('·') ? (
-                                        <span> — rules use the strictest minimum when seasons differ</span>
-                                    ) : null}
+                                    {t('booking.minStayModalP2period', { label: minStayModal.periodLabel })}
+                                    {minStayModal.periodLabel.includes('·') ? t('booking.minStayModalP2strict') : ''}
                                     )
                                 </>
                             ) : null}
-                            . Please choose a later check-out. Your check-in is kept — pick a new check-out on the
-                            calendar.
+                            {t('booking.minStayModalP2end')}
                         </p>
                         <button
                             type="button"
                             onClick={() => setMinStayModal(null)}
                             className="w-full py-3 text-[11px] uppercase tracking-[0.2em] font-bold bg-[#1A202C] text-white hover:bg-[#2C3539] transition-colors rounded-sm"
                         >
-                            OK
+                            {t('booking.minStayOk')}
                         </button>
                     </div>
                 </div>

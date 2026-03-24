@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router-dom';
 import '../types.ts';
+import LanguageSwitcher from './LanguageSwitcher';
 import { Menu, X, Users, Instagram, Facebook, Linkedin, ChevronDown, Mail, Phone, MapPin, ChevronLeft } from 'lucide-react';
 import { io, Socket } from 'socket.io-client';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -13,6 +15,7 @@ interface LayoutProps {
 }
 
 export default function Layout({ children, villas }: LayoutProps) {
+  const { t, i18n } = useTranslation();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeSubMenu, setActiveSubMenu] = useState<string | null>(null);
@@ -60,6 +63,26 @@ export default function Layout({ children, villas }: LayoutProps) {
       });
   }, []);
 
+  const isEn = i18n.language === 'en';
+  const footerTagline = isEn
+    ? (footer?.brandTagline ?? t('layout.footer.defaultTagline'))
+    : t('layout.footer.defaultTagline');
+  const footerDirectTitle = isEn
+    ? (footer?.directInquiriesTitle ?? t('layout.footer.directInquiries'))
+    : t('layout.footer.directInquiries');
+  const footerRegisterTitle = isEn
+    ? (footer?.registerInterestTitle ?? t('layout.footer.registerInterest'))
+    : t('layout.footer.registerInterest');
+  const footerCopyright = isEn
+    ? (footer?.copyright ?? t('layout.footer.copyright'))
+    : t('layout.footer.copyright');
+  const footerPrivacy = isEn
+    ? (footer?.privacyLabel ?? t('layout.footer.privacy'))
+    : t('layout.footer.privacy');
+  const footerDisclaimer = isEn
+    ? (footer?.disclaimerLabel ?? t('layout.footer.disclaimer'))
+    : t('layout.footer.disclaimer');
+
   const handleInquiry = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -95,7 +118,8 @@ export default function Layout({ children, villas }: LayoutProps) {
         <div className="bg-[#8B6F5A] text-[#EFEBE4] text-[10px] md:text-xs text-center py-2.5 px-4 tracking-wide flex items-center justify-center gap-4 relative">
           <span className="flex items-center gap-2">
             <Users size={12} className="text-white/80" />
-            <span className="font-semibold text-white">{viewers}</span> {viewers === 1 ? 'person' : 'people'} currently viewing this estate
+            <span className="font-semibold text-white">{viewers}</span>{' '}
+            {viewers === 1 ? t('layout.viewing_one') : t('layout.viewing_other')}
           </span>
           {/* <span className="hidden md:inline opacity-30">|</span> */}
           {/* <span className="hidden md:inline"> */}
@@ -135,7 +159,7 @@ export default function Layout({ children, villas }: LayoutProps) {
                   }`
                 }
               >
-                Get in Touch
+                {t('layout.getInTouch')}
               </a>
               <Link
                 to="/booking"
@@ -145,12 +169,14 @@ export default function Layout({ children, villas }: LayoutProps) {
                   : 'border-[#2C3539] text-[#2C3539] hover:bg-[#2C3539] hover:text-white'
                 }`}
               >
-                Book Now
+                {t('layout.bookNow')}
               </Link>
+
+              <LanguageSwitcher className="min-h-[44px] max-w-[140px] px-2 py-1 text-[10px] uppercase tracking-wider border border-[#2C3539] rounded-full bg-white/90 text-[#2C3539] cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#A89F91]" />
 
               <button
                 type="button"
-                aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+                aria-label={mobileMenuOpen ? t('layout.closeMenu') : t('layout.openMenu')}
                 className={`min-w-[44px] min-h-[44px] p-3 border transition-all duration-300 z-[80] relative flex items-center justify-center touch-manipulation ${mobileMenuOpen
                   ? 'border-[#2C3539] text-[#2C3539] bg-white'
                   : isScrolled || isDarkHeader
@@ -203,23 +229,23 @@ export default function Layout({ children, villas }: LayoutProps) {
                       exit={{ x: -20, opacity: 0 }}
                       className="flex flex-col space-y-2"
                     >
-                      <Link to="/" onClick={() => setMobileMenuOpen(false)} className="min-h-[48px] flex items-center text-3xl font-serif text-[#2C3539] hover:text-[#A89F91] transition-colors py-2">Home</Link>
+                      <Link to="/" onClick={() => setMobileMenuOpen(false)} className="min-h-[48px] flex items-center text-3xl font-serif text-[#2C3539] hover:text-[#A89F91] transition-colors py-2">{t('layout.home')}</Link>
                       <button
                         onClick={() => setActiveSubMenu('villas')}
                         className="min-h-[48px] text-left text-3xl font-serif text-[#2C3539] hover:text-[#A89F91] transition-colors flex items-center group py-2 touch-manipulation"
                       >
-                        Villas <ChevronDown size={20} className="-rotate-90 ml-2 opacity-40 group-hover:opacity-100 transition-opacity" />
+                        {t('layout.villas')} <ChevronDown size={20} className="-rotate-90 ml-2 opacity-40 group-hover:opacity-100 transition-opacity" />
                       </button>
-                      <Link to="/testimonials" onClick={() => setMobileMenuOpen(false)} className="min-h-[48px] flex items-center text-3xl font-serif text-[#2C3539] hover:text-[#A89F91] transition-colors py-2">Testimonials</Link>
+                      <Link to="/testimonials" onClick={() => setMobileMenuOpen(false)} className="min-h-[48px] flex items-center text-3xl font-serif text-[#2C3539] hover:text-[#A89F91] transition-colors py-2">{t('layout.testimonials')}</Link>
                       <a href="/#gallery" onClick={() => setMobileMenuOpen(false)} className="min-h-[48px] flex items-center text-3xl font-serif text-[#2C3539] hover:text-[#A89F91] transition-colors py-2 group">
-                        Gallery <ChevronDown size={20} className="-rotate-90 ml-2 opacity-40 group-hover:opacity-100 transition-opacity" />
+                        {t('layout.gallery')} <ChevronDown size={20} className="-rotate-90 ml-2 opacity-40 group-hover:opacity-100 transition-opacity" />
                       </a>
                       <Link
                         to="/booking"
                         onClick={() => setMobileMenuOpen(false)}
                         className="min-h-[48px] flex items-center mt-4 px-6 py-3 rounded-full bg-[#2C3539] text-white text-[11px] uppercase tracking-widest font-bold hover:bg-[#8B6F5A] transition-colors touch-manipulation w-fit"
                       >
-                        Book Now
+                        {t('layout.bookNow')}
                       </Link>
                     </motion.nav>
                   ) : (
@@ -234,7 +260,7 @@ export default function Layout({ children, villas }: LayoutProps) {
                         onClick={() => setActiveSubMenu(null)}
                         className="flex items-center text-xl font-serif text-[#2C3539] opacity-60 hover:opacity-100 transition-opacity mb-4"
                       >
-                        <ChevronLeft size={20} className="mr-2" /> Back
+                        <ChevronLeft size={20} className="mr-2" /> {t('layout.back')}
                       </button>
                       {villas.map((villa) => (
                         <Link
@@ -251,6 +277,10 @@ export default function Layout({ children, villas }: LayoutProps) {
               </div>
 
               <div className="pt-12 border-t border-[#2C3539]/10 mt-8">
+                <div className="mb-6">
+                  <span className="text-[10px] uppercase tracking-wider text-[#A89F91] block mb-2">{t('layout.languageLabel')}</span>
+                  <LanguageSwitcher className="w-full max-w-[220px] min-h-[44px] px-3 py-2 text-sm border border-[#2C3539] rounded-sm bg-white text-[#2C3539] cursor-pointer" />
+                </div>
                 <div className="flex space-x-4 mb-8">
                   <a href="#" className="w-10 h-10 rounded-full bg-[#8B6F5A] flex items-center justify-center text-white hover:bg-[#2C3539] transition-colors">
                     <Instagram size={18} />
@@ -284,7 +314,7 @@ export default function Layout({ children, villas }: LayoutProps) {
           <div>
             <div className="font-serif text-2xl tracking-wider uppercase text-white mb-6">{footer?.brandName ?? 'Grey House'}</div>
             <p className="text-gray-400 font-light text-sm mb-8 leading-relaxed">
-              {footer?.brandTagline ?? 'A limited opportunity to acquire a turnkey, fully-managed luxury estate in Katouna, Lefkas. Blending timeless natural stone architecture with European luxury.'}
+              {footerTagline}
             </p>
             <div className="flex space-x-4">
               <a href={footer?.social?.facebookUrl ?? '#'} className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white hover:bg-[#D4C3B3] transition-colors">
@@ -300,7 +330,7 @@ export default function Layout({ children, villas }: LayoutProps) {
           </div>
 
           <div>
-            <h4 className="text-white font-serif text-xl mb-6">{footer?.directInquiriesTitle ?? 'Direct Inquiries'}</h4>
+            <h4 className="text-white font-serif text-xl mb-6">{footerDirectTitle}</h4>
             <div className="space-y-4">
               <a href={`mailto:${footer?.email ?? 'sales@greyhousevillas.com'}`} className="flex items-center text-gray-400 hover:text-white transition-colors">
                 <Mail size={18} className="mr-4 text-[#A89F91]" />
@@ -322,11 +352,11 @@ export default function Layout({ children, villas }: LayoutProps) {
           </div>
 
           <div>
-            <h4 className="text-white font-serif text-xl mb-6">{footer?.registerInterestTitle ?? 'Register Interest'}</h4>
+            <h4 className="text-white font-serif text-xl mb-6">{footerRegisterTitle}</h4>
             <form className="space-y-4" onSubmit={handleInquiry}>
               <input
                 type="text"
-                placeholder="Full Name"
+                placeholder={t('layout.footer.fullName')}
                 required
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -334,14 +364,14 @@ export default function Layout({ children, villas }: LayoutProps) {
               />
               <input
                 type="email"
-                placeholder="Email Address"
+                placeholder={t('layout.footer.email')}
                 required
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 className="w-full bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#D4C3B3] transition-colors"
               />
               <textarea
-                placeholder="Your Message"
+                placeholder={t('layout.footer.message')}
                 rows={4}
                 value={formData.message}
                 onChange={(e) => setFormData({ ...formData, message: e.target.value })}
@@ -352,23 +382,23 @@ export default function Layout({ children, villas }: LayoutProps) {
                 disabled={isSubmitting}
                 className="w-full bg-[#D4C3B3] text-[#2C3539] font-medium tracking-widest uppercase py-3 hover:bg-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isSubmitting ? 'Sending...' : 'Request Brochure'}
+                {isSubmitting ? t('layout.footer.sending') : t('layout.footer.requestBrochure')}
               </button>
               {submitStatus === 'success' && (
-                <p className="text-emerald-400 text-xs mt-2">Thank you. Your inquiry has been received.</p>
+                <p className="text-emerald-400 text-xs mt-2">{t('layout.footer.inquirySuccess')}</p>
               )}
               {submitStatus === 'error' && (
-                <p className="text-rose-400 text-xs mt-2">Something went wrong. Please try again.</p>
+                <p className="text-rose-400 text-xs mt-2">{t('layout.footer.inquiryError')}</p>
               )}
             </form>
           </div>
         </div>
 
         <div className="max-w-7xl mx-auto px-6 pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center text-xs text-gray-500 font-light">
-          <p>{footer?.copyright ?? '© 2026 Grey House Villas. All rights reserved.'}</p>
+          <p>{footerCopyright}</p>
           <div className="flex space-x-6 mt-4 md:mt-0">
-            <a href={footer?.privacyUrl ?? '#'} className="hover:text-white transition-colors">{footer?.privacyLabel ?? 'Privacy Policy'}</a>
-            <a href={footer?.disclaimerUrl ?? '#'} className="hover:text-white transition-colors">{footer?.disclaimerLabel ?? 'Disclaimer'}</a>
+            <a href={footer?.privacyUrl ?? '#'} className="hover:text-white transition-colors">{footerPrivacy}</a>
+            <a href={footer?.disclaimerUrl ?? '#'} className="hover:text-white transition-colors">{footerDisclaimer}</a>
           </div>
         </div>
       </footer>
