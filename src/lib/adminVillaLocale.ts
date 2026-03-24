@@ -1,5 +1,6 @@
 import type { Villa, VillaLocaleContent } from '../types';
 import type { AdminContentLocale, CMSLocaleKey } from './cmsLocaleTypes';
+import { mergeVillaWithLocale } from './mergeVillaWithLocale';
 
 const CMS_LOCALES: CMSLocaleKey[] = ['fr', 'he', 'el'];
 
@@ -146,6 +147,46 @@ export function readVillaGalleryTitle(
   }
   const t = v.localeStrings?.[loc]?.gallerySectionTitles?.[sectionIdx];
   return t ?? '';
+}
+
+/**
+ * Values shown in Admin for fr/he/el: same effective copy as the public site (locale JSON + CMS
+ * `localeStrings`). Plain `readVilla*` only returns CMS overrides, so empty fields looked like
+ * “English only” and Save would wipe translations.
+ */
+export function readVillaNameForAdmin(v: Villa, loc: AdminContentLocale): string {
+  if (loc === 'en') return v.name;
+  return mergeVillaWithLocale(v, loc).name;
+}
+
+export function readVillaSubtitleForAdmin(v: Villa, loc: AdminContentLocale): string {
+  if (loc === 'en') return v.subtitle;
+  return mergeVillaWithLocale(v, loc).subtitle;
+}
+
+export function readVillaDescriptionForAdmin(v: Villa, loc: AdminContentLocale): string {
+  if (loc === 'en') return v.description;
+  return mergeVillaWithLocale(v, loc).description;
+}
+
+export function readVillaSpecForAdmin(
+  v: Villa,
+  loc: AdminContentLocale,
+  specIdx: number
+): { label: string; value: string } {
+  if (loc === 'en') return v.specs[specIdx] || { label: '', value: '' };
+  const m = mergeVillaWithLocale(v, loc);
+  return m.specs[specIdx] || { label: '', value: '' };
+}
+
+export function readVillaGalleryTitleForAdmin(
+  v: Villa,
+  loc: AdminContentLocale,
+  sectionIdx: number
+): string {
+  if (loc === 'en') return readVillaGalleryTitle(v, loc, sectionIdx);
+  const m = mergeVillaWithLocale(v, loc);
+  return (m.gallerySections?.[sectionIdx]?.title as string) ?? '';
 }
 
 /** After removing an accordion in English, drop the same index from every locale’s `gallerySectionTitles`. */

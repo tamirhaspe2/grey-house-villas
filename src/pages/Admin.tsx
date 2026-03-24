@@ -7,19 +7,20 @@ import { Villa } from '../types';
 import type { BookingPricingConfig, BookingSeason, PackageCode } from '../lib/bookingPricing';
 import type { AdminContentLocale } from '../lib/cmsLocaleTypes';
 import { ADMIN_CONTENT_LOCALE_OPTIONS } from '../lib/cmsLocaleTypes';
-import { editHomeAtPath, readHomeAtPath } from '../lib/cmsHomeLocale';
+import { editHomeAtPath, readHomeAtPath, readHomeFieldForAdmin } from '../lib/cmsHomeLocale';
 import {
-    readVillaSubtitle,
-    readVillaDescription,
     readVillaName,
+    readVillaSubtitleForAdmin,
+    readVillaDescriptionForAdmin,
+    readVillaNameForAdmin,
     writeVillaSubtitle,
     writeVillaDescription,
     writeVillaName,
-    readVillaSpec,
+    readVillaSpecForAdmin,
     writeVillaSpecField,
     removeVillaSpec,
     addVillaSpec,
-    readVillaGalleryTitle,
+    readVillaGalleryTitleForAdmin,
     writeVillaGalleryTitle,
     removeVillaGallerySection,
 } from '../lib/adminVillaLocale';
@@ -291,10 +292,9 @@ export default function Admin() {
 
     const homeText = useCallback(
         (path: string[]): string => {
-            const raw = readHomeAtPath(homeData as unknown as Record<string, unknown>, adminContentLocale, path);
-            if (adminContentLocale === 'en') return raw == null ? '' : String(raw);
-            if (raw != null) return String(raw);
-            return '';
+            const raw = readHomeFieldForAdmin(homeData as unknown as Record<string, unknown>, adminContentLocale, path);
+            if (raw == null) return '';
+            return String(raw);
         },
         [homeData, adminContentLocale]
     );
@@ -311,12 +311,11 @@ export default function Admin() {
     );
 
     const homeFeaturesLines = useCallback((): string => {
-        const raw = readHomeAtPath(homeData as unknown as Record<string, unknown>, adminContentLocale, [
+        const raw = readHomeFieldForAdmin(homeData as unknown as Record<string, unknown>, adminContentLocale, [
             'interior',
             'features',
         ]);
         if (Array.isArray(raw)) return (raw as string[]).join('\n');
-        if (adminContentLocale === 'en') return homeData.interior.features.join('\n');
         return '';
     }, [homeData, adminContentLocale]);
 
@@ -676,7 +675,7 @@ export default function Admin() {
                 <div className="bg-amber-50 border-b border-amber-200 text-amber-950 text-center text-xs py-2.5 px-4 leading-relaxed">
                     Editing{' '}
                     <strong>{ADMIN_CONTENT_LOCALE_OPTIONS.find((o) => o.value === adminContentLocale)?.label}</strong>{' '}
-                    copy only. Switch to English to change images, gallery layout, or specs list length. Empty fields use English on the public site.
+                    copy. Text fields show what visitors see for this language (locale files plus any saved CMS overrides). Save updates overrides only for this language. Switch to English to change images, gallery layout, or specs list length.
                 </div>
             )}
 
@@ -1917,7 +1916,7 @@ export default function Admin() {
                                     <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Name</label>
                                     <input
                                         type="text"
-                                        value={readVillaName(currentVilla, adminContentLocale)}
+                                        value={readVillaNameForAdmin(currentVilla, adminContentLocale)}
                                         placeholder={
                                             adminContentLocale === 'en'
                                                 ? undefined
@@ -1935,7 +1934,7 @@ export default function Admin() {
                                     <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Subtitle</label>
                                     <input
                                         type="text"
-                                        value={readVillaSubtitle(currentVilla, adminContentLocale)}
+                                        value={readVillaSubtitleForAdmin(currentVilla, adminContentLocale)}
                                         placeholder={
                                             adminContentLocale === 'en'
                                                 ? undefined
@@ -1952,7 +1951,7 @@ export default function Admin() {
                                 <div>
                                     <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Description</label>
                                     <textarea
-                                        value={readVillaDescription(currentVilla, adminContentLocale)}
+                                        value={readVillaDescriptionForAdmin(currentVilla, adminContentLocale)}
                                         placeholder={
                                             adminContentLocale === 'en'
                                                 ? undefined
@@ -1974,7 +1973,7 @@ export default function Admin() {
                                     <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-4">Specs</label>
                                     <div className="space-y-3">
                                         {currentVilla.specs.map((spec, specIdx) => {
-                                            const locSpec = readVillaSpec(currentVilla, adminContentLocale, specIdx);
+                                            const locSpec = readVillaSpecForAdmin(currentVilla, adminContentLocale, specIdx);
                                             return (
                                             <div key={specIdx} className="flex gap-4 items-center">
                                                 <div className="w-1/3">
@@ -2176,7 +2175,7 @@ export default function Admin() {
                                                     <label className="block text-[10px] uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">Accordion Title</label>
                                                     <input
                                                         type="text"
-                                                        value={readVillaGalleryTitle(currentVilla, adminContentLocale, sectionIdx)}
+                                                        value={readVillaGalleryTitleForAdmin(currentVilla, adminContentLocale, sectionIdx)}
                                                         onChange={(e) =>
                                                             setVillas(
                                                                 writeVillaGalleryTitle(

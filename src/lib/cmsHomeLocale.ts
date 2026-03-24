@@ -1,4 +1,6 @@
 import type { AdminContentLocale } from './cmsLocaleTypes';
+import i18n from '../i18n';
+import { mergeHomeWithLocale, type HomeContentShape } from './mergeHomeWithLocale';
 
 function getDeep(obj: unknown, path: string[]): unknown {
   if (obj == null || path.length === 0) return path.length === 0 ? obj : undefined;
@@ -69,4 +71,29 @@ export function editHomeAtPath(
   const slice = { ...(ls[locale] as Record<string, unknown> | undefined) || {} };
   ls[locale] = setDeepImmutable(slice, path, value);
   return { ...home, localeStrings: ls };
+}
+
+/** Same merged home object the public Home page uses for `lng` (locale JSON + `localeStrings`). */
+export function getMergedHomeDisplayForAdmin(
+  home: Record<string, unknown>,
+  lng: string
+): Record<string, unknown> {
+  if (lng === 'en') return home;
+  const afterJson = mergeHomeWithLocale(
+    home as unknown as HomeContentShape,
+    lng,
+    i18n.getResourceBundle(lng, 'translation') as { home?: Partial<HomeContentShape> }
+  );
+  return mergeHomeDataWithCmsLocale(afterJson as unknown as Record<string, unknown>, lng);
+}
+
+/** Admin field value for a path: matches the live site for non-English (not CMS-only). */
+export function readHomeFieldForAdmin(
+  home: Record<string, unknown>,
+  locale: AdminContentLocale,
+  path: string[]
+): unknown {
+  if (locale === 'en') return getDeep(home, path);
+  const merged = getMergedHomeDisplayForAdmin(home, locale);
+  return getDeep(merged, path);
 }
