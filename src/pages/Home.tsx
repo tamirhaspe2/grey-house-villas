@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, Maximize, Home as HomeIcon, Droplets, Wind, Check, X } from 'lucide-react';
+import { ArrowRight, Maximize, Home as HomeIcon, Droplets, Wind, Check } from 'lucide-react';
 import { Villa } from '../types';
 import homeDataDefault from '../data/home.json';
 
@@ -16,6 +16,7 @@ interface HomeData {
     title: string;
     subtitle: string;
     description: string;
+    button1: string;
     button2: string;
     videoUrl?: string;
   };
@@ -80,7 +81,6 @@ export default function Home({ villas }: HomeProps) {
   const [homeData, setHomeData] = useState<HomeData>(homeDataDefault as HomeData);
   const [isLoading, setIsLoading] = useState(true);
   const [galleryIndex, setGalleryIndex] = useState(0);
-  const [isVideoVisible, setIsVideoVisible] = useState(true);
 
   useEffect(() => {
     // Fetch home data from API
@@ -179,40 +179,6 @@ export default function Home({ villas }: HomeProps) {
         >
           <div className="w-[1px] h-16 bg-gradient-to-b from-white/50 to-transparent"></div>
         </motion.div>
-
-        {/* Floating Hero Video */}
-        <AnimatePresence>
-          {homeData.hero.videoUrl && isVideoVisible && (
-            <motion.div
-              initial={{ opacity: 0, y: 50, scale: 0.9 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 50, scale: 0.9 }}
-              transition={{ duration: 0.8, ease: [0.25, 1, 0.5, 1], delay: 1 }}
-              className="absolute bottom-8 right-8 z-40 w-72 lg:w-80 aspect-video rounded-sm overflow-hidden shadow-2xl border border-white/20 group cursor-pointer hidden md:block"
-            >
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsVideoVisible(false);
-                }}
-                className="absolute top-2 right-2 z-50 w-8 h-8 min-w-[44px] min-h-[44px] bg-black/40 hover:bg-black/80 backdrop-blur-md flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity touch-manipulation"
-                aria-label="Close video"
-              >
-                <X size={12} />
-              </button>
-              <video
-                src={homeData.hero.videoUrl}
-                poster={homeData.hero.backgroundImage}
-                autoPlay
-                muted
-                loop
-                playsInline
-                preload="metadata"
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
       </section>
 
       {/* Architectural Philosophy - Warm Organic Recipe */}
@@ -372,7 +338,7 @@ export default function Home({ villas }: HomeProps) {
       </section>
 
       {/* Interior & Lifestyle - Minimal Utility Recipe */}
-      <section className="py-32 px-6 bg-white">
+      {/* <section className="py-32 px-6 bg-white">
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-24 items-center">
             <div className="order-2 lg:order-1 relative">
@@ -427,10 +393,53 @@ export default function Home({ villas }: HomeProps) {
             </div>
           </div>
         </div>
+      </section> */}
+
+      {/* Gallery — featured film (same copy as data gallery; carousel implementation remains in comments below) */}
+      <section id="gallery" className="py-32 bg-[#1A1A1A] text-white overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6 mb-12 lg:mb-16">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
+            <div>
+              <span className="text-[10px] uppercase tracking-[0.4em] text-white/40 mb-4 block">{homeData.gallery.sectionLabel}</span>
+              <h2 className="text-4xl md:text-6xl font-serif">
+                {homeData.gallery.heading}{' '}
+                <span className="italic font-light">{homeData.gallery.headingHighlight}</span>
+              </h2>
+            </div>
+            <p className="text-white/50 font-light max-w-md text-lg">{homeData.gallery.description}</p>
+          </div>
+        </div>
+
+        {homeData.hero.videoUrl ? (
+          <div className="max-w-6xl mx-auto px-6">
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.9, ease: [0.25, 1, 0.5, 1] }}
+              className="relative w-full aspect-video rounded-sm overflow-hidden shadow-2xl border border-white/15 bg-black"
+            >
+              <video
+                src={homeData.hero.videoUrl}
+                poster={homeData.hero.backgroundImage}
+                autoPlay
+                muted
+                loop
+                playsInline
+                preload="metadata"
+                className="absolute inset-0 w-full h-full object-cover"
+                aria-label="Grey House estate film"
+              />
+            </motion.div>
+          </div>
+        ) : (
+          <p className="text-center text-white/40 text-sm px-6">Film coming soon.</p>
+        )}
       </section>
 
       {/* Gallery - Rolling Accordion */}
-      <section id="gallery" className="py-32 bg-[#1A1A1A] text-white overflow-hidden">
+      
+      {/* <section id="gallery" className="py-32 bg-[#1A1A1A] text-white overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 mb-20">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
             <div>
@@ -495,10 +504,10 @@ export default function Home({ villas }: HomeProps) {
               </AnimatePresence>
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* Progress dots */}
-        <div className="flex justify-center gap-2 mt-8">
+        {/* <div className="flex justify-center gap-2 mt-8">
           {homeData.gallery.images.map((_, idx) => (
             <button
               key={idx}
@@ -509,6 +518,7 @@ export default function Home({ villas }: HomeProps) {
           ))}
         </div>
       </section>
+ */}
     </div>
   );
 }
