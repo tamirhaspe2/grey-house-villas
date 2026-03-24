@@ -164,6 +164,9 @@ async function startServer() {
     if (!name || !email || !checkIn || !checkOut || !packageType) {
       return res.status(400).json({ error: "Missing required fields" });
     }
+    if (!['A', 'B', 'C'].includes(String(packageType))) {
+      return res.status(400).json({ error: "Invalid package type" });
+    }
 
     try {
       const conflictingPackages = getConflictingPackages(packageType);

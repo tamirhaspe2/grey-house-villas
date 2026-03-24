@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { ArrowLeft, Calendar as CalendarIcon, Info, CreditCard } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { DayPicker, DateRange } from 'react-day-picker';
@@ -43,6 +43,9 @@ export default function Booking() {
         checkOut: Date;
         periodLabel: string | null;
     } | null>(null);
+    /** Snapshot at submit success so confirmation text does not clear if package changes or date resets (common on mobile). */
+    const [submittedSnapshot, setSubmittedSnapshot] = useState<{ from: Date; to: Date } | null>(null);
+    const submitLockRef = useRef(false);
 
     const loadPricing = useCallback(() => {
         fetch('/api/booking-pricing', { cache: 'no-store' })
@@ -80,7 +83,7 @@ export default function Booking() {
     }, [minStayModal]);
 
     const fetchDisabledDates = useCallback((packageType: 'A' | 'B' | 'C') => {
-        fetch(`/api/bookings/dates?package=${packageType}`)
+        fetch(`/api/bookings/dates?package=${packageType}`, { cache: 'no-store' })
             .then(res => res.json())
             .then(data => {
                 if (Array.isArray(data)) {
@@ -128,9 +131,11 @@ export default function Booking() {
         };
     }, [selectedPackage, fetchDisabledDates]);
 
-    // Reset selected dates whenever the package changes
+    // Reset selected dates whenever the package changes; leaving success clears the confirmation so a new flow can start
     useEffect(() => {
         setDate(undefined);
+        setSubmitStatus((s) => (s === 'success' ? 'idle' : s));
+        setSubmittedSnapshot(null);
     }, [selectedPackage]);
 
     /** Per-night copy on each card only after check-in & check-out (≥1 night), from actual weekday/weekend mix. */
@@ -209,24 +214,32 @@ export default function Booking() {
 
     const handleBookingRequest = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (submitLockRef.current) return;
         if (!date?.from || !date?.to) return;
+        if (selectedPackage !== 'A' && selectedPackage !== 'B' && selectedPackage !== 'C') return;
 
+        submitLockRef.current = true;
         setIsSubmitting(true);
         setSubmitStatus('idle');
         setSubmitError('');
+
+        const pkg = selectedPackage;
+        const checkInIso = date.from.toISOString();
+        const checkOutIso = date.to.toISOString();
 
         try {
             const response = await fetch('/api/booking', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                cache: 'no-store',
                 body: JSON.stringify({
                     name,
                     email,
-                    guests: String(PACKAGE_GUESTS[selectedPackage]),
+                    guests: String(PACKAGE_GUESTS[pkg]),
                     message,
-                    packageType: selectedPackage,
-                    checkIn: date.from.toISOString(),
-                    checkOut: date.to.toISOString(),
+                    packageType: pkg,
+                    checkIn: checkInIso,
+                    checkOut: checkOutIso,
                     total
                 })
             });
@@ -234,20 +247,28 @@ export default function Booking() {
             const data = await response.json().catch(() => ({}));
 
             if (response.ok) {
+                setSubmittedSnapshot({
+                    from: new Date(checkInIso),
+                    to: new Date(checkOutIso),
+                });
                 setSubmitStatus('success');
+                fetchDisabledDates(pkg);
             } else if (response.status === 400 && data.error === 'dates_unavailable') {
                 setSubmitStatus('error');
                 setSubmitError(data.message || 'Some of these dates are no longer available. Please choose different dates.');
                 setDate(undefined);
-                if (selectedPackage !== 'none') fetchDisabledDates(selectedPackage);
+                fetchDisabledDates(pkg);
             } else {
                 setSubmitStatus('error');
-                setSubmitError('Something went wrong. Please try again.');
+                setSubmitError(
+                    typeof data.error === 'string' ? data.error : 'Something went wrong. Please try again.'
+                );
             }
         } catch (err) {
             setSubmitStatus('error');
             setSubmitError('Something went wrong. Please try again.');
         } finally {
+            submitLockRef.current = false;
             setIsSubmitting(false);
         }
     };
@@ -282,6 +303,7 @@ export default function Booking() {
                         <label className="block text-[10px] uppercase tracking-wider text-gray-500 mb-4">Choose Your Experience</label>
 
                         <button
+                            type="button"
                             onClick={() => setSelectedPackage('A')}
                             className={`w-full text-left p-4 border transition-all ${selectedPackage === 'A' ? 'border-[#2C3539] bg-[#F4F1ED]' : 'border-gray-200 hover:border-gray-300 bg-transparent'}`}
                         >
@@ -302,6 +324,7 @@ export default function Booking() {
                         </button>
 
                         <button
+                            type="button"
                             onClick={() => setSelectedPackage('B')}
                             className={`w-full text-left p-4 border transition-all ${selectedPackage === 'B' ? 'border-[#2C3539] bg-[#F4F1ED]' : 'border-gray-200 hover:border-gray-300 bg-transparent'}`}
                         >
@@ -322,6 +345,7 @@ export default function Booking() {
                         </button>
 
                         <button
+                            type="button"
                             onClick={() => setSelectedPackage('C')}
                             className={`w-full text-left p-4 border transition-all ${selectedPackage === 'C' ? 'border-[#2C3539] bg-[#F4F1ED]' : 'border-gray-200 hover:border-gray-300 bg-transparent'}`}
                         >
@@ -346,7 +370,13 @@ export default function Booking() {
                         <div className="my-auto bg-[#F4F1ED] p-8 text-center rounded">
                             <h3 className="font-serif text-xl mb-4 text-[#2C3539]">Request Received</h3>
                             <p className="text-sm text-gray-600">
-                                Thank you for your interest in Grey House. We have received your booking request for {date?.from ? format(date.from, 'PPP') : ''} to {date?.to ? format(date.to, 'PPP') : ''}. Our concierge team will be in touch shortly.
+                                Thank you for your interest in Grey House. We have received your booking request for{' '}
+                                {submittedSnapshot
+                                    ? `${format(submittedSnapshot.from, 'PPP')} to ${format(submittedSnapshot.to, 'PPP')}`
+                                    : date?.from && date?.to
+                                      ? `${format(date.from, 'PPP')} to ${format(date.to, 'PPP')}`
+                                      : 'your selected dates'}
+                                . Our concierge team will be in touch shortly.
                             </p>
                         </div>
                     ) : selectedPackage !== 'none' ? (
