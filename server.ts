@@ -51,7 +51,18 @@ async function startServer() {
 
   app.use(express.json());
   app.use(cookieParser());
-  app.use(express.static(path.join(process.cwd(), "public")));
+
+  const publicRoot = path.join(process.cwd(), "public");
+  /** Same middleware reused in production after `dist` so MP4 headers stay consistent. */
+  const servePublic = express.static(publicRoot, {
+    setHeaders(res, filePath) {
+      if (/\.(mp4|m4v|webm|mov)$/i.test(filePath)) {
+        res.setHeader("Accept-Ranges", "bytes");
+        res.setHeader("Cache-Control", "public, max-age=7200, must-revalidate");
+      }
+    },
+  });
+  app.use(servePublic);
 
   // API Routes
   app.post("/api/inquiry", async (req, res) => {
@@ -557,15 +568,21 @@ async function startServer() {
           const localData = JSON.parse(localDataRaw);
 
           await docRef.set({ data: localData });
+          res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+          res.setHeader("Pragma", "no-cache");
           return res.json(localData);
         }
 
+        res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+        res.setHeader("Pragma", "no-cache");
         res.json(cleanDataUrls(doc.data().data));
       } else {
         // Use local JSON file
         const dataPath = path.join(process.cwd(), "src", "data", "home.json");
         const localDataRaw = await fs.readFile(dataPath, 'utf8');
         const localData = JSON.parse(localDataRaw);
+        res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+        res.setHeader("Pragma", "no-cache");
         res.json(cleanDataUrls(localData));
       }
     } catch (err) {
@@ -732,9 +749,30 @@ async function startServer() {
 
     app.use(vite.middlewares);
   } else {
-    app.use(express.static(path.join(process.cwd(), "dist")));
-    app.use(express.static(path.join(process.cwd(), "public")));
+    app.use(
+      express.static(path.join(process.cwd(), "dist"), {
+        index: false,
+        setHeaders(res, filePath) {
+          if (filePath.endsWith("index.html")) {
+            res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+            res.setHeader("Pragma", "no-cache");
+          }
+        },
+      })
+    );
+    app.use(servePublic);
     app.get("*", (req, res) => {
+      if (req.path.startsWith("/api")) {
+        res.status(404).json({ error: "Not found" });
+        return;
+      }
+      const ext = path.extname(req.path);
+      if (ext && ext !== ".html") {
+        res.status(404).send("Not found");
+        return;
+      }
+      res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+      res.setHeader("Pragma", "no-cache");
       res.sendFile(path.join(process.cwd(), "dist", "index.html"));
     });
   }

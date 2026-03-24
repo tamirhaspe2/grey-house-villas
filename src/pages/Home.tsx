@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Maximize, Home as HomeIcon, Droplets, Wind, Check } from 'lucide-react';
 import { Villa } from '../types';
 import homeDataDefault from '../data/home.json';
+import { encodePublicMediaUrl } from '../lib/mediaUrl';
 
 interface HomeProps {
   villas: Villa[];
@@ -76,6 +77,54 @@ interface HomeData {
 const GALLERY_VISIBLE = 5; // how many images visible in accordion
 const GALLERY_AUTOPLAY_MS = 4000;
 
+/** iOS Safari: inline + muted + programmatic play(); optional controls if autoplay is blocked (Low Power Mode, etc.). No poster — avoids stuck frame + wrong hero image flash. */
+function EstateFilmVideo({ src }: { src: string }) {
+  const ref = useRef<HTMLVideoElement>(null);
+  const [showControls, setShowControls] = useState(false);
+  const encodedSrc = encodePublicMediaUrl(src);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.setAttribute('playsinline', 'true');
+    el.setAttribute('webkit-playsinline', 'true');
+    el.muted = true;
+    el.defaultMuted = true;
+
+    const tryPlay = () => {
+      el.muted = true;
+      void el.play().catch(() => setShowControls(true));
+    };
+
+    el.addEventListener('loadedmetadata', tryPlay);
+    el.addEventListener('canplay', tryPlay);
+    const retry = window.setTimeout(tryPlay, 400);
+    tryPlay();
+
+    return () => {
+      window.clearTimeout(retry);
+      el.removeEventListener('loadedmetadata', tryPlay);
+      el.removeEventListener('canplay', tryPlay);
+    };
+  }, [encodedSrc]);
+
+  return (
+    <video
+      ref={ref}
+      src={encodedSrc}
+      autoPlay
+      muted
+      defaultMuted
+      loop
+      playsInline
+      preload="auto"
+      controls={showControls}
+      className="absolute inset-0 w-full h-full object-cover"
+      aria-label="Grey House estate film"
+    />
+  );
+}
+
 export default function Home({ villas }: HomeProps) {
   const [activeVillaIndex, setActiveVillaIndex] = useState(0);
   const [homeData, setHomeData] = useState<HomeData>(homeDataDefault as HomeData);
@@ -84,7 +133,7 @@ export default function Home({ villas }: HomeProps) {
 
   useEffect(() => {
     // Fetch home data from API
-    fetch('/api/home')
+    fetch('/api/home', { cache: 'no-store' })
       .then(res => res.json())
       .then(data => {
         setHomeData(data);
@@ -413,23 +462,13 @@ export default function Home({ villas }: HomeProps) {
         {homeData.hero.videoUrl ? (
           <div className="max-w-6xl mx-auto px-6">
             <motion.div
-              initial={{ opacity: 0, y: 24 }}
+              initial={{ opacity: 1, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.9, ease: [0.25, 1, 0.5, 1] }}
+              viewport={{ once: true, amount: 0.2 }}
+              transition={{ duration: 0.7, ease: [0.25, 1, 0.5, 1] }}
               className="relative w-full aspect-video rounded-sm overflow-hidden shadow-2xl border border-white/15 bg-black"
             >
-              <video
-                src={homeData.hero.videoUrl}
-                poster={homeData.hero.backgroundImage}
-                autoPlay
-                muted
-                loop
-                playsInline
-                preload="metadata"
-                className="absolute inset-0 w-full h-full object-cover"
-                aria-label="Grey House estate film"
-              />
+              <EstateFilmVideo src={homeData.hero.videoUrl} />
             </motion.div>
           </div>
         ) : (
