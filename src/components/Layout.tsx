@@ -118,12 +118,15 @@ export default function Layout({ children, villas }: LayoutProps) {
     return s || fallback;
   };
 
-  const footerTagline = pickFooterStr(footer.brandTagline, t('layout.footer.defaultTagline'));
   const footerDirectTitle = pickFooterStr(footer.directInquiriesTitle, t('layout.footer.directInquiries'));
   const footerRegisterTitle = pickFooterStr(footer.registerInterestTitle, t('layout.footer.registerInterest'));
   const footerCopyright = pickFooterStr(footer.copyright, t('layout.footer.copyright'));
   const footerPrivacy = pickFooterStr(footer.privacyLabel, t('layout.footer.privacy'));
   const footerDisclaimer = pickFooterStr(footer.disclaimerLabel, t('layout.footer.disclaimer'));
+
+  const footerMapSrc = buildGoogleMapsEmbedSrc(
+    footer as Parameters<typeof buildGoogleMapsEmbedSrc>[0]
+  );
 
   const handleInquiry = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -374,14 +377,31 @@ export default function Layout({ children, villas }: LayoutProps) {
             >
               {footer?.brandName ?? 'Grey House'}
             </div>
-            <p
-              className={`font-light mb-8 leading-relaxed ${
-                siteUi.footer.textStyles?.body?.fontSizePx == null ? 'text-sm' : ''
-              }`}
-              style={homeUiTextStyle(siteUi.footer.textStyles?.body)}
-            >
-              {footerTagline}
-            </p>
+            <div className="flex items-start text-gray-400 mb-6">
+              <MapPin size={18} className="mr-4 mt-1 text-[#A89F91] shrink-0" />
+              <span
+                className={`font-light leading-relaxed ${
+                  siteUi.footer.textStyles?.body?.fontSizePx == null ? 'text-sm' : ''
+                }`}
+                style={homeUiTextStyle(siteUi.footer.textStyles?.body)}
+              >
+                {footer.addressLine1 ?? 'Katouna, Lefkas Island'}
+                <br />
+                {footer.addressLine2 ?? 'Ionian Islands, Greece 311 00'}
+              </span>
+            </div>
+            {footerMapSrc ? (
+              <div className="mb-8 w-full overflow-hidden rounded-sm border border-white/10 bg-black/20 aspect-[4/3] min-h-[200px]">
+                <iframe
+                  title={t('layout.footer.mapEmbedTitle')}
+                  src={footerMapSrc}
+                  className="h-full w-full border-0"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  allowFullScreen
+                />
+              </div>
+            ) : null}
             <div className="flex space-x-4">
               <a href={footer.social?.facebookUrl ?? '#'} className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white hover:bg-[#D4C3B3] transition-colors">
                 <Facebook size={18} />
@@ -413,30 +433,6 @@ export default function Layout({ children, villas }: LayoutProps) {
                 <Phone size={18} className="mr-4 text-[#A89F91]" />
                 {footer.phone ?? '+30 690 000 0000'}
               </a>
-              <div className="flex items-start text-gray-400">
-                <MapPin size={18} className="mr-4 mt-1 text-[#A89F91] shrink-0" />
-                <span>
-                  {footer.addressLine1 ?? 'Katouna, Lefkas Island'}
-                  <br />
-                  {footer.addressLine2 ?? 'Ionian Islands, Greece 311 00'}
-                </span>
-              </div>
-              {(() => {
-                const mapSrc = buildGoogleMapsEmbedSrc(footer as Parameters<typeof buildGoogleMapsEmbedSrc>[0]);
-                if (!mapSrc) return null;
-                return (
-                  <div className="mt-6 w-full overflow-hidden rounded-sm border border-white/10 bg-black/20 aspect-[4/3] min-h-[200px]">
-                    <iframe
-                      title={t('layout.footer.mapEmbedTitle')}
-                      src={mapSrc}
-                      className="h-full w-full border-0"
-                      loading="lazy"
-                      referrerPolicy="no-referrer-when-downgrade"
-                      allowFullScreen
-                    />
-                  </div>
-                );
-              })()}
             </div>
           </div>
 
