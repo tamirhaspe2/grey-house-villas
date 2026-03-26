@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, Link, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Maximize, Home as HomeIcon, Droplets, Wind, ChevronLeft, X } from 'lucide-react';
+import { Maximize, Home as HomeIcon, Droplets, Wind, ChevronLeft, X, Leaf } from 'lucide-react';
 import { RollingGalleryStrip } from '../components/RollingGalleryStrip';
 import { Villa } from '../types';
 
@@ -17,34 +17,6 @@ export default function VillaDetail({ villas }: VillaDetailProps) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   /** Rolling carousel index per gallery section (Home-style strip) */
   const [rollingBySection, setRollingBySection] = useState<Record<number, number>>({});
-  const [formData, setFormData] = useState({ name: '', email: '', message: '' });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
-
-  const handleInquiry = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setSubmitStatus('idle');
-
-    try {
-      const response = await fetch('/api/inquiry', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
-
-      if (response.ok) {
-        setSubmitStatus('success');
-        setFormData({ name: '', email: '', message: '' });
-      } else {
-        setSubmitStatus('error');
-      }
-    } catch (err) {
-      setSubmitStatus('error');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const gallerySections = useMemo(() => {
     if (!villa) return [];
@@ -99,6 +71,11 @@ export default function VillaDetail({ villas }: VillaDetailProps) {
   if (!villa) {
     return <Navigate to="/" replace />;
   }
+
+  const comfortNote = (villa.allSeasonsNote ?? '').trim();
+  const comfortLines = comfortNote ? comfortNote.split(/\n/).map((l) => l.trim()).filter(Boolean) : [];
+  const comfortHead = comfortLines[0];
+  const comfortBody = comfortLines.slice(1).join('\n');
 
   return (
     <div className="bg-[#FDFCFB] min-h-screen">
@@ -169,49 +146,33 @@ export default function VillaDetail({ villas }: VillaDetailProps) {
           </div>
 
           <div className="lg:col-span-5">
-            <div className="bg-[#F9F8F6] p-12 lg:p-16 sticky top-32">
-              <h3 className="text-2xl font-serif mb-8 text-[#2C3539]">{t('villa.inquireTitle')}</h3>
-              <p className="text-gray-500 font-light mb-10 leading-relaxed">
-                {t('villa.inquireIntro')}
+            <div
+              className="bg-[#F9F8F6] p-12 lg:p-16 sticky top-32 border border-[#E8E4DF]"
+              dir={i18n.dir()}
+            >
+              <div className="flex items-center gap-3 mb-6 text-[#8B6F5A]">
+                <Leaf size={22} strokeWidth={1.25} className="shrink-0" aria-hidden />
+                <span className="text-[10px] uppercase tracking-[0.35em] font-bold">
+                  {t('villa.allSeasonsLabel')}
+                </span>
+              </div>
+              {comfortNote ? (
+                <div className="text-[#2C3539] leading-relaxed">
+                  {comfortBody ? (
+                    <>
+                      <p className="text-lg font-serif font-semibold text-[#2C3539] mb-4">{comfortHead}</p>
+                      <p className="text-base font-light text-gray-600 whitespace-pre-line">{comfortBody}</p>
+                    </>
+                  ) : (
+                    <p className="text-base font-light text-gray-600 whitespace-pre-line">{comfortHead}</p>
+                  )}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-400 font-light">{t('villa.allSeasonsEmpty')}</p>
+              )}
+              <p className="mt-10 text-xs text-gray-400 font-light leading-relaxed border-t border-black/5 pt-8">
+                {t('villa.bookingInsteadHint')}
               </p>
-              <form className="space-y-6" onSubmit={handleInquiry}>
-                <input
-                  type="text"
-                  required
-                  value={formData.name}
-                  onChange={(e) => setFormData((f) => ({ ...f, name: e.target.value }))}
-                  placeholder={t('villa.fullName')}
-                  className="w-full bg-transparent border-b border-black/10 py-4 text-sm focus:border-black outline-none transition-colors"
-                />
-                <input
-                  type="email"
-                  required
-                  value={formData.email}
-                  onChange={(e) => setFormData((f) => ({ ...f, email: e.target.value }))}
-                  placeholder={t('villa.emailPh')}
-                  className="w-full bg-transparent border-b border-black/10 py-4 text-sm focus:border-black outline-none transition-colors"
-                />
-                <textarea
-                  value={formData.message}
-                  onChange={(e) => setFormData((f) => ({ ...f, message: e.target.value }))}
-                  placeholder={t('villa.messagePh')}
-                  rows={4}
-                  className="w-full bg-transparent border-b border-black/10 py-4 text-sm focus:border-black outline-none transition-colors resize-none"
-                />
-                {submitStatus === 'success' && (
-                  <p className="text-sm text-emerald-800">{t('layout.footer.inquirySuccess')}</p>
-                )}
-                {submitStatus === 'error' && (
-                  <p className="text-sm text-rose-700">{t('layout.footer.inquiryError')}</p>
-                )}
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full py-5 bg-[#2C3539] text-white text-[10px] uppercase tracking-[0.3em] font-bold hover:bg-[#8B6F5A] transition-all disabled:opacity-60"
-                >
-                  {isSubmitting ? t('layout.footer.sending') : t('villa.requestBrochure')}
-                </button>
-              </form>
             </div>
           </div>
         </div>

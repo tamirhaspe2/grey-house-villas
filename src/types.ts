@@ -5,6 +5,8 @@ export interface VillaLocaleContent {
   name?: string;
   subtitle?: string;
   description?: string;
+  /** Sidebar note on villa detail (replaces inquiry form); year-round comfort, etc. */
+  allSeasonsNote?: string;
   specs?: { label: string; value: string }[];
   /** One string per `gallerySections` index (images always from English). */
   gallerySectionTitles?: string[];
@@ -16,6 +18,8 @@ export interface Villa {
   subtitle: string;
   image: string;
   description: string;
+  /** English default; merged with locale JSON + CMS for other languages. */
+  allSeasonsNote?: string;
   specs: { label: string; value: string }[];
   // Legacy single gallery array (kept for backwards compatibility)
   gallery?: string[];

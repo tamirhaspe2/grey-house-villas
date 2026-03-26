@@ -5,7 +5,7 @@ const NATIVE_LABELS: Record<SupportedLocale, string> = {
   en: 'English',
   he: 'עברית',
   fr: 'Français',
-  el: 'Ελληνικά',
+  // el: 'Ελληνικά',
 };
 
 export default function LanguageSwitcher({

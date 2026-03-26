@@ -270,7 +270,7 @@ export default function Home({ villas }: HomeProps) {
       </section>
 
       {/* Architectural Philosophy - Warm Organic Recipe */}
-      <section id="estate" className="py-32 lg:py-48 px-6 overflow-hidden">
+      <section id="estate" className="py-32 lg:py-48 px-6 overflow-hidden bg-[#C7C6C4]">
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-12 gap-16 items-center">
             <div className="lg:col-span-5">

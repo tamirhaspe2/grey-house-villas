@@ -12,9 +12,11 @@ import {
     readVillaName,
     readVillaSubtitleForAdmin,
     readVillaDescriptionForAdmin,
+    readVillaAllSeasonsNoteForAdmin,
     readVillaNameForAdmin,
     writeVillaSubtitle,
     writeVillaDescription,
+    writeVillaAllSeasonsNote,
     writeVillaName,
     readVillaSpecForAdmin,
     writeVillaSpecField,
@@ -2029,6 +2031,31 @@ export default function Admin() {
                                         }
                                         rows={5}
                                         className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">
+                                        All-seasons note (sidebar)
+                                    </label>
+                                    <p className="text-xs text-gray-500 mb-2">
+                                        First line shows as a heading; use Enter for the body. Shown instead of the old inquiry form on the public villa page.
+                                    </p>
+                                    <textarea
+                                        value={readVillaAllSeasonsNoteForAdmin(currentVilla, adminContentLocale)}
+                                        placeholder={
+                                            adminContentLocale === 'en'
+                                                ? undefined
+                                                : currentVilla.allSeasonsNote
+                                                  ? `EN: ${currentVilla.allSeasonsNote.slice(0, 100)}${(currentVilla.allSeasonsNote?.length ?? 0) > 100 ? '…' : ''}`
+                                                  : undefined
+                                        }
+                                        onChange={(e) =>
+                                            setVillas(
+                                                writeVillaAllSeasonsNote(villas, activeVilla, adminContentLocale, e.target.value)
+                                            )
+                                        }
+                                        rows={4}
+                                        className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none font-sans text-sm"
                                     />
                                 </div>
 

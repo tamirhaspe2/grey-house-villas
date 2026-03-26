@@ -10,6 +10,7 @@ export type VillaLocaleOverlay = {
   name?: string;
   subtitle?: string;
   description?: string;
+  allSeasonsNote?: string;
   specs?: { label?: string; value?: string }[];
   gallerySections?: { title?: string }[];
 };
@@ -38,6 +39,7 @@ function applyJsonOverlay(villa: Villa, lng: string): Villa {
     name: ov.name ?? villa.name,
     subtitle: ov.subtitle ?? villa.subtitle,
     description: ov.description ?? villa.description,
+    allSeasonsNote: ov.allSeasonsNote ?? villa.allSeasonsNote,
     specs,
     gallerySections: gallerySections.length > 0 ? gallerySections : villa.gallerySections,
   };
@@ -69,6 +71,10 @@ function applyCmsLocaleStrings(villa: Villa, lng: string): Villa {
     name: cms.name !== undefined && cms.name !== '' ? cms.name : villa.name,
     subtitle: cms.subtitle !== undefined && cms.subtitle !== '' ? cms.subtitle : villa.subtitle,
     description: cms.description !== undefined && cms.description !== '' ? cms.description : villa.description,
+    allSeasonsNote:
+      cms.allSeasonsNote !== undefined && cms.allSeasonsNote !== ''
+        ? cms.allSeasonsNote
+        : villa.allSeasonsNote,
     specs,
     gallerySections: gallerySections.length > 0 ? gallerySections : villa.gallerySections,
   };

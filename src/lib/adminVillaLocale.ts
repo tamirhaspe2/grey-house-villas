@@ -57,6 +57,30 @@ export function writeVillaDescription(
   });
 }
 
+export function readVillaAllSeasonsNote(v: Villa, loc: AdminContentLocale): string {
+  if (loc === 'en') return v.allSeasonsNote ?? '';
+  return v.localeStrings?.[loc]?.allSeasonsNote ?? '';
+}
+
+export function writeVillaAllSeasonsNote(
+  villas: Villa[],
+  activeId: string,
+  loc: AdminContentLocale,
+  text: string
+): Villa[] {
+  return villas.map((v) => {
+    if (v.id !== activeId) return v;
+    if (loc === 'en') return { ...v, allSeasonsNote: text };
+    return {
+      ...v,
+      localeStrings: {
+        ...v.localeStrings,
+        [loc]: { ...v.localeStrings?.[loc], allSeasonsNote: text },
+      },
+    };
+  });
+}
+
 export function writeVillaName(
   villas: Villa[],
   activeId: string,
@@ -167,6 +191,11 @@ export function readVillaSubtitleForAdmin(v: Villa, loc: AdminContentLocale): st
 export function readVillaDescriptionForAdmin(v: Villa, loc: AdminContentLocale): string {
   if (loc === 'en') return v.description;
   return mergeVillaWithLocale(v, loc).description;
+}
+
+export function readVillaAllSeasonsNoteForAdmin(v: Villa, loc: AdminContentLocale): string {
+  if (loc === 'en') return v.allSeasonsNote ?? '';
+  return mergeVillaWithLocale(v, loc).allSeasonsNote ?? '';
 }
 
 export function readVillaSpecForAdmin(

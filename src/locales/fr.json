@@ -170,7 +170,10 @@
     "suiteFallback": "Suite Omorfi",
     "expandedAlt": "Vue agrandie",
     "continueExploring": "Poursuivre la visite",
-    "viewVilla": "Voir la villa"
+    "viewVilla": "Voir la villa",
+    "allSeasonsLabel": "Confort toute l’année",
+    "allSeasonsEmpty": "Aucun texte n’a encore été défini pour cette villa. Ajoutez-le dans l’administration.",
+    "bookingInsteadHint": "Pour la disponibilité ou un message, utilisez le parcours de réservation sur ce site."
   },
   "testimonials": {
     "label": "Expériences clients",
@@ -211,6 +214,7 @@
     "villa-oneiro": {
       "subtitle": "La maison principale & la suite",
       "description": "Une résidence remarquable de 175 m² sur deux niveaux alliant design italien haut de gamme et matières naturelles, avec une discrète suite de 25 m² sous la piscine extérieure principale. Éclairage extérieur multizone, chauffage au sol et vastes terrasses en pierre naturelle.",
+      "allSeasonsNote": "Il est important de le préciser\nLes villas ont été conçues pour que vous puissiez en profiter toute l’année, grâce à un poêle à bois et à une climatisation modulaire pour chaque logement séparément.",
       "specs": [
         {
           "label": "Surface",
@@ -239,6 +243,7 @@
     "villa-petra": {
       "subtitle": "L’enclave privée",
       "description": "Située 50 mètres sous la maison principale, pour une intimité absolue. Accès par une voie privée avec parking dédié et terrasses en restanques.",
+      "allSeasonsNote": "Il est important de le préciser\nLes villas ont été conçues pour que vous puissiez en profiter toute l’année, grâce à un poêle à bois et à une climatisation modulaire pour chaque logement séparément.",
       "specs": [
         {
           "label": "Surface",
@@ -266,6 +271,7 @@
     "grey-estate": {
       "subtitle": "Le sanctuaire ultime",
       "description": "L’expérience complète du domaine privé de 3000 m² : Villa Oneiro, suite Omorfi et Villa Pétra. Accès exclusif à la grande piscine d’eau salée, four à pizza extérieur, multiples terrasses et bassin privé à Pétra.",
+      "allSeasonsNote": "Il est important de le préciser\nLes villas ont été conçues pour que vous puissiez en profiter toute l’année, grâce à un poêle à bois et à une climatisation modulaire pour chaque logement séparément.",
       "specs": [
         {
           "label": "Surface",

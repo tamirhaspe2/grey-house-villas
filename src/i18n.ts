@@ -3,10 +3,11 @@ import { initReactI18next } from 'react-i18next';
 import en from './locales/en.json';
 import fr from './locales/fr.json';
 import he from './locales/he.json';
-import el from './locales/el.json';
+// import el from './locales/el.json';
 
 export const LOCALE_STORAGE_KEY = 'greyhouse-locale';
-export const SUPPORTED_LOCALES = ['en', 'he', 'fr', 'el'] as const;
+// export const SUPPORTED_LOCALES = ['en', 'he', 'fr', 'el'] as const;
+export const SUPPORTED_LOCALES = ['en', 'he', 'fr'] as const;
 export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
 
 /** Sync `<html lang dir>` with public locale (Admin forces LTR and restores this on unmount). */
@@ -26,7 +27,7 @@ void i18n.use(initReactI18next).init({
     en: { translation: en },
     fr: { translation: fr },
     he: { translation: he },
-    el: { translation: el },
+    // el: { translation: el },
   },
   lng: initialLng,
   fallbackLng: 'en',
