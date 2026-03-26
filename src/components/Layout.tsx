@@ -11,6 +11,27 @@ import homeDataDefault from '../data/home.json';
 import { buildGoogleMapsEmbedSrc } from '../lib/googleMapsEmbed';
 import type { HomeSiteUi } from '../lib/homeSiteUi';
 import { homeUiSectionBackground, homeUiTextStyle, mergeHomeSiteUi } from '../lib/homeSiteUi';
+import { mergeHomeDataWithCmsLocale } from '../lib/cmsHomeLocale';
+import { mergeHomeWithLocale } from '../lib/mergeHomeWithLocale';
+
+type FooterShape = {
+  brandName?: string;
+  brandTagline?: string;
+  social?: { instagramUrl?: string; facebookUrl?: string; linkedinUrl?: string };
+  directInquiriesTitle?: string;
+  email?: string;
+  phone?: string;
+  addressLine1?: string;
+  addressLine2?: string;
+  mapQuery?: string;
+  mapEmbedUrl?: string;
+  registerInterestTitle?: string;
+  copyright?: string;
+  privacyLabel?: string;
+  privacyUrl?: string;
+  disclaimerLabel?: string;
+  disclaimerUrl?: string;
+};
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -53,7 +74,7 @@ export default function Layout({ children, villas }: LayoutProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
-  const [footer, setFooter] = useState<any>((homeDataDefault as any).footer ?? null);
+  const [homePayload, setHomePayload] = useState<Record<string, unknown> | null>(null);
   const [siteUiRaw, setSiteUiRaw] = useState<HomeSiteUi | undefined>(
     (homeDataDefault as { siteUi?: HomeSiteUi }).siteUi
   );
@@ -63,13 +84,13 @@ export default function Layout({ children, villas }: LayoutProps) {
     const loadHome = () => {
       fetch('/api/home', { cache: 'no-store' })
         .then((res) => res.json())
-        .then((data) => {
-          if (data && data.footer) setFooter(data.footer);
-          if (data && data.siteUi) setSiteUiRaw(data.siteUi);
+        .then((data: Record<string, unknown>) => {
+          setHomePayload(data);
+          if (data?.siteUi) setSiteUiRaw(data.siteUi as HomeSiteUi);
           else setSiteUiRaw((homeDataDefault as { siteUi?: HomeSiteUi }).siteUi);
         })
         .catch(() => {
-          setFooter((homeDataDefault as any).footer ?? null);
+          setHomePayload(homeDataDefault as unknown as Record<string, unknown>);
           setSiteUiRaw((homeDataDefault as { siteUi?: HomeSiteUi }).siteUi);
         });
     };
@@ -78,25 +99,31 @@ export default function Layout({ children, villas }: LayoutProps) {
     return () => window.removeEventListener('home:updated', loadHome);
   }, []);
 
-  const isEn = i18n.language === 'en';
-  const footerTagline = isEn
-    ? (footer?.brandTagline ?? t('layout.footer.defaultTagline'))
-    : t('layout.footer.defaultTagline');
-  const footerDirectTitle = isEn
-    ? (footer?.directInquiriesTitle ?? t('layout.footer.directInquiries'))
-    : t('layout.footer.directInquiries');
-  const footerRegisterTitle = isEn
-    ? (footer?.registerInterestTitle ?? t('layout.footer.registerInterest'))
-    : t('layout.footer.registerInterest');
-  const footerCopyright = isEn
-    ? (footer?.copyright ?? t('layout.footer.copyright'))
-    : t('layout.footer.copyright');
-  const footerPrivacy = isEn
-    ? (footer?.privacyLabel ?? t('layout.footer.privacy'))
-    : t('layout.footer.privacy');
-  const footerDisclaimer = isEn
-    ? (footer?.disclaimerLabel ?? t('layout.footer.disclaimer'))
-    : t('layout.footer.disclaimer');
+  /** Same merge as Home page + Admin preview: locale JSON + CMS `localeStrings` per language. */
+  const mergedHome = useMemo(() => {
+    const raw = homePayload ?? (homeDataDefault as unknown as Record<string, unknown>);
+    const lng = i18n.language;
+    const afterJson = mergeHomeWithLocale(
+      raw as Parameters<typeof mergeHomeWithLocale>[0],
+      lng,
+      i18n.getResourceBundle(lng, 'translation') as { home?: Record<string, unknown> }
+    );
+    return mergeHomeDataWithCmsLocale(afterJson as unknown as Record<string, unknown>, lng);
+  }, [homePayload, i18n.language]);
+
+  const footer = (mergedHome.footer as FooterShape | undefined) ?? {};
+
+  const pickFooterStr = (v: unknown, fallback: string) => {
+    const s = v != null ? String(v).trim() : '';
+    return s || fallback;
+  };
+
+  const footerTagline = pickFooterStr(footer.brandTagline, t('layout.footer.defaultTagline'));
+  const footerDirectTitle = pickFooterStr(footer.directInquiriesTitle, t('layout.footer.directInquiries'));
+  const footerRegisterTitle = pickFooterStr(footer.registerInterestTitle, t('layout.footer.registerInterest'));
+  const footerCopyright = pickFooterStr(footer.copyright, t('layout.footer.copyright'));
+  const footerPrivacy = pickFooterStr(footer.privacyLabel, t('layout.footer.privacy'));
+  const footerDisclaimer = pickFooterStr(footer.disclaimerLabel, t('layout.footer.disclaimer'));
 
   const handleInquiry = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -356,13 +383,13 @@ export default function Layout({ children, villas }: LayoutProps) {
               {footerTagline}
             </p>
             <div className="flex space-x-4">
-              <a href={footer?.social?.facebookUrl ?? '#'} className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white hover:bg-[#D4C3B3] transition-colors">
+              <a href={footer.social?.facebookUrl ?? '#'} className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white hover:bg-[#D4C3B3] transition-colors">
                 <Facebook size={18} />
               </a>
-              <a href={footer?.social?.instagramUrl ?? '#'} className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white hover:bg-[#D4C3B3] transition-colors">
+              <a href={footer.social?.instagramUrl ?? '#'} className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white hover:bg-[#D4C3B3] transition-colors">
                 <Instagram size={18} />
               </a>
-              <a href={footer?.social?.linkedinUrl ?? '#'} className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white hover:bg-[#D4C3B3] transition-colors">
+              <a href={footer.social?.linkedinUrl ?? '#'} className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white hover:bg-[#D4C3B3] transition-colors">
                 <Linkedin size={18} />
               </a>
             </div>
@@ -378,24 +405,24 @@ export default function Layout({ children, villas }: LayoutProps) {
               {footerDirectTitle}
             </h4>
             <div className="space-y-4">
-              <a href={`mailto:${footer?.email ?? 'sales@greyhousevillas.com'}`} className="flex items-center text-gray-400 hover:text-white transition-colors">
+              <a href={`mailto:${footer.email ?? 'sales@greyhousevillas.com'}`} className="flex items-center text-gray-400 hover:text-white transition-colors">
                 <Mail size={18} className="mr-4 text-[#A89F91]" />
-                {footer?.email ?? 'sales@greyhousevillas.com'}
+                {footer.email ?? 'sales@greyhousevillas.com'}
               </a>
-              <a href={`tel:${(footer?.phone ?? '+30 690 000 0000').replace(/\s+/g, '')}`} className="flex items-center text-gray-400 hover:text-white transition-colors">
+              <a href={`tel:${(footer.phone ?? '+30 690 000 0000').replace(/\s+/g, '')}`} className="flex items-center text-gray-400 hover:text-white transition-colors">
                 <Phone size={18} className="mr-4 text-[#A89F91]" />
-                {footer?.phone ?? '+30 690 000 0000'}
+                {footer.phone ?? '+30 690 000 0000'}
               </a>
               <div className="flex items-start text-gray-400">
                 <MapPin size={18} className="mr-4 mt-1 text-[#A89F91] shrink-0" />
                 <span>
-                  {footer?.addressLine1 ?? 'Katouna, Lefkas Island'}
+                  {footer.addressLine1 ?? 'Katouna, Lefkas Island'}
                   <br />
-                  {footer?.addressLine2 ?? 'Ionian Islands, Greece 311 00'}
+                  {footer.addressLine2 ?? 'Ionian Islands, Greece 311 00'}
                 </span>
               </div>
               {(() => {
-                const mapSrc = footer ? buildGoogleMapsEmbedSrc(footer) : null;
+                const mapSrc = buildGoogleMapsEmbedSrc(footer as Parameters<typeof buildGoogleMapsEmbedSrc>[0]);
                 if (!mapSrc) return null;
                 return (
                   <div className="mt-6 w-full overflow-hidden rounded-sm border border-white/10 bg-black/20 aspect-[4/3] min-h-[200px]">
@@ -466,8 +493,8 @@ export default function Layout({ children, villas }: LayoutProps) {
         <div className="max-w-7xl mx-auto px-6 pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center text-xs text-gray-500 font-light">
           <p>{footerCopyright}</p>
           <div className="flex space-x-6 mt-4 md:mt-0">
-            <a href={footer?.privacyUrl ?? '#'} className="hover:text-white transition-colors">{footerPrivacy}</a>
-            <a href={footer?.disclaimerUrl ?? '#'} className="hover:text-white transition-colors">{footerDisclaimer}</a>
+            <a href={footer.privacyUrl ?? '#'} className="hover:text-white transition-colors">{footerPrivacy}</a>
+            <a href={footer.disclaimerUrl ?? '#'} className="hover:text-white transition-colors">{footerDisclaimer}</a>
           </div>
         </div>
       </footer>
