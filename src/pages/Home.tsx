@@ -342,13 +342,13 @@ export default function Home({ villas }: HomeProps) {
                   ...heroBlockPositionStyle(heroBlockPos.actions),
                 }}
               >
-                <a
-                  href="#villas"
+                <Link
+                  to="/villas"
                   className="min-h-[44px] inline-flex items-center justify-center px-8 sm:px-10 py-3.5 sm:py-4 bg-white uppercase tracking-[0.3em] hover:bg-[#D4C3B3] transition-all duration-500 shrink-0"
                   style={homeUiTextStyle(heroBtnP)}
                 >
                   {homeDisplay.hero.button1}
-                </a>
+                </Link>
                 <a
                   href="#gallery"
                   className="min-h-[44px] inline-flex items-center justify-center uppercase tracking-[0.3em] group shrink-0"
@@ -415,13 +415,13 @@ export default function Home({ villas }: HomeProps) {
                 {homeDisplay.hero.description}
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 flex-wrap">
-                <a
-                  href="#villas"
+                <Link
+                  to="/villas"
                   className="min-h-[44px] inline-flex items-center justify-center px-8 sm:px-10 py-3.5 sm:py-4 bg-white uppercase tracking-[0.3em] hover:bg-[#D4C3B3] transition-all duration-500 shrink-0"
                   style={homeUiTextStyle(heroBtnP)}
                 >
                   {homeDisplay.hero.button1}
-                </a>
+                </Link>
                 <a
                   href="#gallery"
                   className="min-h-[44px] inline-flex items-center justify-center uppercase tracking-[0.3em] group shrink-0"

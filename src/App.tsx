@@ -4,6 +4,7 @@ import { useLocalizedVillas } from './hooks/useLocalizedVillas';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
 import Home from './pages/Home';
+import Villas from './pages/Villas';
 import VillaDetail from './pages/VillaDetail';
 import Testimonials from './pages/Testimonials';
 import Admin from './pages/Admin';
@@ -60,6 +61,7 @@ export default function App() {
           <Layout villas={localizedVillas}>
             <Routes>
               <Route path="/" element={<Home villas={localizedVillas} />} />
+              <Route path="/villas" element={<Villas villas={localizedVillas} />} />
               <Route path="/villas/:id" element={<VillaDetail villas={localizedVillas} />} />
               <Route path="/testimonials" element={<Testimonials />} />
               <Route path="/schedule-call" element={<ScheduleCall />} />
