@@ -333,7 +333,7 @@ export default function Home({ villas }: HomeProps) {
       </section>
 
       {/* The Residences - Accordion Showcase */}
-      <section id="villas" className="py-32 bg-[#F9F8F6]">
+      {/* <section id="villas" className="py-32 bg-[#F9F8F6]">
         <div className="max-w-7xl mx-auto px-6">
           <div className="mb-20">
             <span className="text-[10px] uppercase tracking-[0.4em] text-[#A89F91] mb-4 block">{homeDisplay.residences.sectionLabel}</span>
@@ -423,7 +423,7 @@ export default function Home({ villas }: HomeProps) {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* Interior & Lifestyle - Minimal Utility Recipe */}
       {/* <section className="py-32 px-6 bg-white">
