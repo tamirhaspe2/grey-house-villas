@@ -19,6 +19,8 @@ import {
     maxMinStayNightsInRange,
     maxMinStayProspectFromCheckIn,
 } from '../lib/bookingPricing';
+import { bookingPageBlockStyle, bookingPageBlockText } from '../lib/bookingPageCopy';
+import type { BookingPageBlockKey } from '../lib/bookingPageCopy';
 
 /** Fixed capacity per experience (no guest picker). */
 const PACKAGE_GUESTS: Record<'A' | 'B' | 'C', number> = { A: 6, B: 2, C: 8 };
@@ -39,6 +41,15 @@ export default function Booking() {
     const [disabledDates, setDisabledDates] = useState<DateRange[]>([]);
     const [pricingConfig, setPricingConfig] = useState<BookingPricingConfig>(
         bookingPricingDefault as BookingPricingConfig
+    );
+
+    const bt = useCallback(
+        (key: BookingPageBlockKey) => bookingPageBlockText(key, pricingConfig, i18n.language, t),
+        [pricingConfig, i18n.language, t]
+    );
+    const bs = useCallback(
+        (key: BookingPageBlockKey) => bookingPageBlockStyle(key, pricingConfig, i18n.language),
+        [pricingConfig, i18n.language]
     );
     const [calendarMonth, setCalendarMonth] = useState(() => startOfMonth(new Date()));
     const [numMonths, setNumMonths] = useState(() => (typeof window !== 'undefined' && window.innerWidth > 768 ? 2 : 1));
@@ -301,21 +312,24 @@ export default function Booking() {
                         <ArrowLeft size={18} className="group-hover:-translate-x-0.5 transition-transform" />
                     </Link>
 
-                    <h1 className="font-serif text-[32px] leading-tight text-[#1A202C] mb-4 font-semibold uppercase tracking-wide">
-                        {t('booking.title')}
+                    <h1
+                        className="font-serif leading-tight mb-4 uppercase tracking-wide"
+                        style={bs('title')}
+                    >
+                        {bt('title')}
                     </h1>
-                    <p className="text-[#4A5568] text-sm mb-10 leading-relaxed font-light">
-                        {t('booking.intro')}
+                    <p className="mb-10 leading-relaxed" style={bs('intro')}>
+                        {bt('intro')}
                     </p>
-                    <p className="text-[10px] uppercase tracking-wider text-[#A89F91] mb-6 -mt-4">
-                        {t('booking.ratesHintBefore')}
-                        <span className="text-rose-700 font-semibold">{t('booking.ratesHintRed')}</span>
-                        {t('booking.ratesHintAfter')}
+                    <p className="uppercase tracking-wider mb-6 -mt-4 leading-relaxed">
+                        <span style={bs('ratesHintBefore')}>{bt('ratesHintBefore')}</span>
+                        <span style={bs('ratesHintHighlight')}>{bt('ratesHintHighlight')}</span>
+                        <span style={bs('ratesHintAfter')}>{bt('ratesHintAfter')}</span>
                     </p>
 
                     <div className="mb-10 space-y-3">
-                        <label className="block text-[10px] uppercase tracking-wider text-gray-500 mb-4">
-                            {t('booking.chooseExperience')}
+                        <label className="block uppercase tracking-wider mb-4" style={bs('chooseExperience')}>
+                            {bt('chooseExperience')}
                         </label>
 
                         <button
@@ -324,7 +338,9 @@ export default function Booking() {
                             className={`w-full text-left p-4 border transition-all ${selectedPackage === 'A' ? 'border-[#2C3539] bg-[#F4F1ED]' : 'border-gray-200 hover:border-gray-300 bg-transparent'}`}
                         >
                             <div className="flex justify-between gap-3 items-start">
-                                <span className="font-serif text-[#1A202C]">Oneiro</span>
+                                <span className="font-serif" style={bs('pkgA_name')}>
+                                    {bt('pkgA_name')}
+                                </span>
                                 <div className="text-xs text-gray-500 text-right shrink-0 max-w-[58%]">
                                     {rateLinesByPackage.A.length > 0 ? (
                                         <div className="flex flex-col items-end gap-0.5 leading-snug">
@@ -335,9 +351,11 @@ export default function Booking() {
                                     ) : null}
                                 </div>
                             </div>
-                            <div className="text-xs text-gray-500 mt-1 font-light">{t('booking.pkgA_desc')}</div>
-                            <div className="text-[10px] uppercase tracking-wider text-[#A89F91] mt-1.5">
-                                {t('booking.pkgA_guests')}
+                            <div className="mt-1" style={bs('pkgA_desc')}>
+                                {bt('pkgA_desc')}
+                            </div>
+                            <div className="uppercase tracking-wider mt-1.5" style={bs('pkgA_guests')}>
+                                {bt('pkgA_guests')}
                             </div>
                         </button>
 
@@ -347,7 +365,9 @@ export default function Booking() {
                             className={`w-full text-left p-4 border transition-all ${selectedPackage === 'B' ? 'border-[#2C3539] bg-[#F4F1ED]' : 'border-gray-200 hover:border-gray-300 bg-transparent'}`}
                         >
                             <div className="flex justify-between gap-3 items-start">
-                                <span className="font-serif text-[#1A202C]">Villa Pétra</span>
+                                <span className="font-serif" style={bs('pkgB_name')}>
+                                    {bt('pkgB_name')}
+                                </span>
                                 <div className="text-xs text-gray-500 text-right shrink-0 max-w-[58%]">
                                     {rateLinesByPackage.B.length > 0 ? (
                                         <div className="flex flex-col items-end gap-0.5 leading-snug">
@@ -358,9 +378,11 @@ export default function Booking() {
                                     ) : null}
                                 </div>
                             </div>
-                            <div className="text-xs text-gray-500 mt-1 font-light">{t('booking.pkgB_desc')}</div>
-                            <div className="text-[10px] uppercase tracking-wider text-[#A89F91] mt-1.5">
-                                {t('booking.pkgB_guests')}
+                            <div className="mt-1" style={bs('pkgB_desc')}>
+                                {bt('pkgB_desc')}
+                            </div>
+                            <div className="uppercase tracking-wider mt-1.5" style={bs('pkgB_guests')}>
+                                {bt('pkgB_guests')}
                             </div>
                         </button>
 
@@ -370,7 +392,9 @@ export default function Booking() {
                             className={`w-full text-left p-4 border transition-all ${selectedPackage === 'C' ? 'border-[#2C3539] bg-[#F4F1ED]' : 'border-gray-200 hover:border-gray-300 bg-transparent'}`}
                         >
                             <div className="flex justify-between gap-3 items-start">
-                                <span className="font-serif text-[#1A202C]">Grey Estate</span>
+                                <span className="font-serif" style={bs('pkgC_name')}>
+                                    {bt('pkgC_name')}
+                                </span>
                                 <div className="text-xs text-gray-500 text-right shrink-0 max-w-[58%]">
                                     {rateLinesByPackage.C.length > 0 ? (
                                         <div className="flex flex-col items-end gap-0.5 leading-snug">
@@ -381,9 +405,11 @@ export default function Booking() {
                                     ) : null}
                                 </div>
                             </div>
-                            <div className="text-xs text-gray-500 mt-1 font-light">{t('booking.pkgC_desc')}</div>
-                            <div className="text-[10px] uppercase tracking-wider text-[#A89F91] mt-1.5">
-                                {t('booking.pkgC_guests')}
+                            <div className="mt-1" style={bs('pkgC_desc')}>
+                                {bt('pkgC_desc')}
+                            </div>
+                            <div className="uppercase tracking-wider mt-1.5" style={bs('pkgC_guests')}>
+                                {bt('pkgC_guests')}
                             </div>
                         </button>
                     </div>
@@ -522,19 +548,19 @@ export default function Booking() {
 
                 {/* Right Pane - Calendar Selection */}
                 <div className="flex-1 bg-white p-8 lg:p-12 flex flex-col items-center justify-center">
-                    <div className="w-full max-w-[600px] mb-8 flex justify-between items-center text-sm text-gray-500">
+                    <div className="w-full max-w-[600px] mb-8 flex justify-between items-center flex-wrap gap-y-2">
                         <div className="flex items-center gap-2">
-                            <CalendarIcon size={16} className="text-[#A89F91]" />
-                            <span>{t('booking.calendarPrompt')}</span>
+                            <CalendarIcon size={16} className="text-[#A89F91] shrink-0" />
+                            <span style={bs('calendarPrompt')}>{bt('calendarPrompt')}</span>
                         </div>
-                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs justify-end">
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 justify-end">
                             <span className="flex items-center gap-2">
                                 <span className="w-3 h-3 bg-[#1A202C] rounded-full inline-block shrink-0" />
-                                {t('booking.legendSelected')}
+                                <span style={bs('legendSelected')}>{bt('legendSelected')}</span>
                             </span>
                             <span className="flex items-center gap-2">
                                 <span className="w-3 h-3 rounded-full inline-block shrink-0 border-2 border-rose-600 bg-rose-50" />
-                                <span className="text-rose-800">{t('booking.legendMinStay')}</span>
+                                <span style={bs('legendMinStay')}>{bt('legendMinStay')}</span>
                             </span>
                         </div>
                     </div>
@@ -642,8 +668,11 @@ export default function Booking() {
                         />
                         {selectedPackage === 'none' && (
                             <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                                <div className="bg-[#FDFCFB]/90 px-6 py-3 rounded-full border border-dashed border-gray-300 text-xs uppercase tracking-[0.18em] text-gray-500 text-center">
-                                    {t('booking.selectExperienceCalendar')}
+                                <div
+                                    className="bg-[#FDFCFB]/90 px-6 py-3 rounded-full border border-dashed border-gray-300 uppercase tracking-[0.18em] text-center"
+                                    style={bs('selectExperienceCalendar')}
+                                >
+                                    {bt('selectExperienceCalendar')}
                                 </div>
                             </div>
                         )}
@@ -697,13 +726,21 @@ export default function Booking() {
                     <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-[600px]">
                         <div className="bg-[#F4F1ED]/50 p-6 flex flex-col gap-2 rounded-sm">
                             <Info size={18} className="text-[#A89F91] mb-2" />
-                            <h4 className="font-serif text-[#1A202C]">{t('booking.policyTitle')}</h4>
-                            <p className="text-xs text-gray-500 leading-relaxed">{t('booking.policyText')}</p>
+                            <h4 className="font-serif" style={bs('policyTitle')}>
+                                {bt('policyTitle')}
+                            </h4>
+                            <p className="leading-relaxed" style={bs('policyText')}>
+                                {bt('policyText')}
+                            </p>
                         </div>
                         <div className="bg-[#F4F1ED]/50 p-6 flex flex-col gap-2 rounded-sm">
                             <CreditCard size={18} className="text-[#A89F91] mb-2" />
-                            <h4 className="font-serif text-[#1A202C]">{t('booking.secureTitle')}</h4>
-                            <p className="text-xs text-gray-500 leading-relaxed">{t('booking.secureText')}</p>
+                            <h4 className="font-serif" style={bs('secureTitle')}>
+                                {bt('secureTitle')}
+                            </h4>
+                            <p className="leading-relaxed" style={bs('secureText')}>
+                                {bt('secureText')}
+                            </p>
                         </div>
                     </div>
                 </div>

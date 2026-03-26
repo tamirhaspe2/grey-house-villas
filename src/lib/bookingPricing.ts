@@ -1,4 +1,5 @@
 import { differenceInCalendarDays, format } from 'date-fns';
+import type { BookingPageConfig } from './bookingPageCopy';
 
 export type PackageCode = 'A' | 'B' | 'C';
 
@@ -26,6 +27,8 @@ export interface BookingPricingConfig {
   seasons: BookingSeason[];
   /** Used when a date is outside all seasons */
   fallbackRates: Record<PackageCode, SeasonRates>;
+  /** Optional per-locale copy + typography for the public booking page (falls back to i18n). */
+  bookingPage?: BookingPageConfig;
 }
 
 export function parseLocalYMD(s: string): Date {

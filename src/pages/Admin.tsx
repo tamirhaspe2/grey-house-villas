@@ -1,10 +1,20 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Camera, Save, LogOut, Check, X, Image as ImageIcon, Home as HomeIcon, CreditCard } from 'lucide-react';
 import villasData from '../data/villas.json';
 import homeDataDefault from '../data/home.json';
 import bookingPricingDefault from '../data/bookingPricing.json';
 import { Villa } from '../types';
 import type { BookingPricingConfig, BookingSeason, PackageCode } from '../lib/bookingPricing';
+import {
+    BOOKING_PAGE_EDITOR_GROUPS,
+    BOOKING_PAGE_BLOCK_I18N,
+    defaultColorForBookingBlock,
+    defaultFontSizePxForBookingBlock,
+    patchBookingPageBlock,
+    readBookingPageBlockStyleForAdmin,
+    readBookingPageBlockTextForAdmin,
+    type BookingPageFontWeight,
+} from '../lib/bookingPageCopy';
 import type { AdminContentLocale } from '../lib/cmsLocaleTypes';
 import { ADMIN_CONTENT_LOCALE_OPTIONS } from '../lib/cmsLocaleTypes';
 import { editHomeAtPath, readHomeAtPath, readHomeFieldForAdmin } from '../lib/cmsHomeLocale';
@@ -205,7 +215,13 @@ export default function Admin() {
             .then((res) => res.json())
             .then((data) => {
                 if (data && Array.isArray(data.seasons)) {
-                    setBookingPricing(data as BookingPricingConfig);
+                    const base = bookingPricingDefault as BookingPricingConfig;
+                    const incoming = data as BookingPricingConfig;
+                    setBookingPricing({
+                        ...base,
+                        ...incoming,
+                        bookingPage: incoming.bookingPage ?? base.bookingPage,
+                    });
                 }
             })
             .catch(() => setBookingPricing(bookingPricingDefault as BookingPricingConfig));
@@ -284,6 +300,12 @@ export default function Admin() {
     };
 
     const currentVilla = villas.find(v => v.id === activeVilla);
+
+    /** Booking page admin fields: show copy for the selected content language (same as public site). */
+    const tBookingAdmin = useMemo(
+        () => i18n.getFixedT(adminContentLocale, 'translation'),
+        [adminContentLocale]
+    );
 
     const isEditingEnglish = adminContentLocale === 'en';
 
@@ -1675,6 +1697,224 @@ export default function Admin() {
                                         weekend ≠ only Saturday–Sunday.
                                     </p>
                                 </div>
+                            </div>
+
+                            <div className="border-b border-gray-100 pb-10 space-y-6">
+                                <h3 className="text-2xl font-serif text-[#2C3539]">Booking page — text &amp; typography</h3>
+                                <p className="text-sm text-gray-600 max-w-3xl leading-relaxed">
+                                    Fields show the <strong>live</strong> text and styles visitors see for the selected{' '}
+                                    <strong>Content language</strong> (from <code className="text-xs bg-gray-100 px-1">locales/*.json</code> plus any
+                                    saved overrides). Switch EN / FR / HE / EL to edit each language. Saving only writes what you changed; clearing the
+                                    text box removes the CMS override and the site goes back to the locale file. Matching the default size or color again
+                                    removes that style override.
+                                </p>
+                                {BOOKING_PAGE_EDITOR_GROUPS.map((group) => (
+                                    <div key={group.title} className="border border-gray-200 rounded-sm overflow-hidden">
+                                        <div className="bg-[#F4F1ED] px-4 py-2 text-xs font-bold uppercase tracking-widest text-[#2C3539]">
+                                            {group.title}
+                                        </div>
+                                        <div className="p-4 space-y-6 bg-white">
+                                            {group.blocks.map((def) => {
+                                                const displayText = readBookingPageBlockTextForAdmin(
+                                                    bookingPricing,
+                                                    adminContentLocale,
+                                                    def.key,
+                                                    tBookingAdmin
+                                                );
+                                                const styleAdm = readBookingPageBlockStyleForAdmin(
+                                                    bookingPricing,
+                                                    adminContentLocale,
+                                                    def.key
+                                                );
+                                                const raw =
+                                                    bookingPricing.bookingPage?.locales?.[adminContentLocale]?.[def.key];
+                                                const hasTextOverride = Boolean(raw?.text?.trim());
+                                                const defPx = defaultFontSizePxForBookingBlock(def.key);
+                                                const defColor = defaultColorForBookingBlock(def.key);
+                                                const normHex = (c: string) => {
+                                                    let s = c.trim();
+                                                    if (!s) return '';
+                                                    if (!s.startsWith('#')) s = `#${s}`;
+                                                    if (/^#[0-9A-Fa-f]{3}$/.test(s)) {
+                                                        const [, r, g, b] = s;
+                                                        s = `#${r}${r}${g}${g}${b}${b}`;
+                                                    }
+                                                    return s.toLowerCase();
+                                                };
+                                                const i18nK = BOOKING_PAGE_BLOCK_I18N[def.key];
+                                                const colorForPicker =
+                                                    styleAdm.colorHex && /^#[0-9A-Fa-f]{6}$/i.test(styleAdm.colorHex)
+                                                        ? styleAdm.colorHex
+                                                        : defColor;
+                                                return (
+                                                    <div
+                                                        key={def.key}
+                                                        className="grid lg:grid-cols-12 gap-4 border-b border-gray-100 pb-6 last:border-0 last:pb-0"
+                                                    >
+                                                        <div className="lg:col-span-4">
+                                                            <label className="block text-xs font-bold text-[#2C3539] mb-1">
+                                                                {def.label}
+                                                            </label>
+                                                            {def.hint ? (
+                                                                <p className="text-[10px] text-gray-500 leading-relaxed">{def.hint}</p>
+                                                            ) : null}
+                                                            {i18nK ? (
+                                                                <p className="text-[10px] text-[#8B6F5A] mt-1">i18n key: {i18nK}</p>
+                                                            ) : (
+                                                                <p className="text-[10px] text-[#8B6F5A] mt-1">
+                                                                    Built-in name if no CMS text
+                                                                </p>
+                                                            )}
+                                                            {!hasTextOverride ? (
+                                                                <p className="text-[10px] text-emerald-800 mt-1 font-medium">
+                                                                    Text: from locale (not stored in CMS yet)
+                                                                </p>
+                                                            ) : (
+                                                                <p className="text-[10px] text-gray-500 mt-1">
+                                                                    Text: CMS override for {adminContentLocale}
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                        <div className="lg:col-span-8 space-y-3">
+                                                            <textarea
+                                                                rows={def.rows ?? 3}
+                                                                value={displayText}
+                                                                onChange={(e) =>
+                                                                    setBookingPricing(
+                                                                        patchBookingPageBlock(
+                                                                            bookingPricing,
+                                                                            adminContentLocale,
+                                                                            def.key,
+                                                                            { text: e.target.value }
+                                                                        )
+                                                                    )
+                                                                }
+                                                                className="w-full border border-gray-200 px-3 py-2 text-sm focus:border-[#2C3539] outline-none"
+                                                            />
+                                                            <div className="flex flex-wrap gap-4 items-end">
+                                                                <div>
+                                                                    <label className="block text-[10px] uppercase tracking-wider text-gray-500 mb-1">
+                                                                        Size (px)
+                                                                    </label>
+                                                                    <input
+                                                                        type="number"
+                                                                        min={8}
+                                                                        max={72}
+                                                                        value={styleAdm.fontSizePx}
+                                                                        onChange={(e) => {
+                                                                            const v = e.target.value;
+                                                                            if (v === '') {
+                                                                                setBookingPricing(
+                                                                                    patchBookingPageBlock(
+                                                                                        bookingPricing,
+                                                                                        adminContentLocale,
+                                                                                        def.key,
+                                                                                        { fontSizePx: undefined }
+                                                                                    )
+                                                                                );
+                                                                                return;
+                                                                            }
+                                                                            const n = Math.min(
+                                                                                72,
+                                                                                Math.max(8, Number(v) || defPx)
+                                                                            );
+                                                                            setBookingPricing(
+                                                                                patchBookingPageBlock(
+                                                                                    bookingPricing,
+                                                                                    adminContentLocale,
+                                                                                    def.key,
+                                                                                    {
+                                                                                        fontSizePx:
+                                                                                            n === defPx ? undefined : n,
+                                                                                    }
+                                                                                )
+                                                                            );
+                                                                        }}
+                                                                        className="w-24 border border-gray-200 px-2 py-2 text-sm"
+                                                                    />
+                                                                </div>
+                                                                <div>
+                                                                    <label className="block text-[10px] uppercase tracking-wider text-gray-500 mb-1">
+                                                                        Color
+                                                                    </label>
+                                                                    <div className="flex gap-2 items-center">
+                                                                        <input
+                                                                            type="color"
+                                                                            value={colorForPicker}
+                                                                            onChange={(e) => {
+                                                                                const hex = e.target.value;
+                                                                                const same =
+                                                                                    normHex(hex) === normHex(defColor);
+                                                                                setBookingPricing(
+                                                                                    patchBookingPageBlock(
+                                                                                        bookingPricing,
+                                                                                        adminContentLocale,
+                                                                                        def.key,
+                                                                                        { color: same ? '' : hex }
+                                                                                    )
+                                                                                );
+                                                                            }}
+                                                                            className="h-10 w-12 cursor-pointer border border-gray-200 p-0 bg-white"
+                                                                        />
+                                                                        <input
+                                                                            type="text"
+                                                                            value={styleAdm.colorHex}
+                                                                            onChange={(e) => {
+                                                                                const c = e.target.value;
+                                                                                const same =
+                                                                                    !c.trim() ||
+                                                                                    normHex(c) === normHex(defColor);
+                                                                                setBookingPricing(
+                                                                                    patchBookingPageBlock(
+                                                                                        bookingPricing,
+                                                                                        adminContentLocale,
+                                                                                        def.key,
+                                                                                        { color: same ? '' : c }
+                                                                                    )
+                                                                                );
+                                                                            }}
+                                                                            className="w-28 border border-gray-200 px-2 py-2 text-xs font-mono"
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                                <div>
+                                                                    <label className="block text-[10px] uppercase tracking-wider text-gray-500 mb-1">
+                                                                        Weight
+                                                                    </label>
+                                                                    <select
+                                                                        value={styleAdm.fontWeight}
+                                                                        onChange={(e) => {
+                                                                            const v = e.target.value as
+                                                                                | BookingPageFontWeight
+                                                                                | '';
+                                                                            setBookingPricing(
+                                                                                patchBookingPageBlock(
+                                                                                    bookingPricing,
+                                                                                    adminContentLocale,
+                                                                                    def.key,
+                                                                                    {
+                                                                                        fontWeight: v || undefined,
+                                                                                    }
+                                                                                )
+                                                                            );
+                                                                        }}
+                                                                        className="border border-gray-200 px-2 py-2 text-sm min-w-[9rem] bg-white"
+                                                                    >
+                                                                        <option value="">Default</option>
+                                                                        <option value="normal">Normal</option>
+                                                                        <option value="medium">Medium</option>
+                                                                        <option value="semibold">Semibold</option>
+                                                                        <option value="bold">Bold</option>
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
 
                             <div className="grid md:grid-cols-3 gap-6 border-b border-gray-100 pb-8">

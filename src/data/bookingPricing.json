@@ -96,5 +96,8 @@
         "C": { "weekday": 720, "weekend": 792 }
       }
     }
-  ]
+  ],
+  "bookingPage": {
+    "locales": {}
+  }
 }
