@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router-dom';
 import '../types.ts';
@@ -9,6 +9,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Villa } from '../types';
 import homeDataDefault from '../data/home.json';
 import { buildGoogleMapsEmbedSrc } from '../lib/googleMapsEmbed';
+import type { HomeSiteUi } from '../lib/homeSiteUi';
+import { homeUiSectionBackground, homeUiTextStyle, mergeHomeSiteUi } from '../lib/homeSiteUi';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -52,21 +54,28 @@ export default function Layout({ children, villas }: LayoutProps) {
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
   const [footer, setFooter] = useState<any>((homeDataDefault as any).footer ?? null);
+  const [siteUiRaw, setSiteUiRaw] = useState<HomeSiteUi | undefined>(
+    (homeDataDefault as { siteUi?: HomeSiteUi }).siteUi
+  );
+  const siteUi = useMemo(() => mergeHomeSiteUi(siteUiRaw), [siteUiRaw]);
 
   useEffect(() => {
-    const loadFooter = () => {
+    const loadHome = () => {
       fetch('/api/home', { cache: 'no-store' })
         .then((res) => res.json())
         .then((data) => {
           if (data && data.footer) setFooter(data.footer);
+          if (data && data.siteUi) setSiteUiRaw(data.siteUi);
+          else setSiteUiRaw((homeDataDefault as { siteUi?: HomeSiteUi }).siteUi);
         })
         .catch(() => {
-          // keep default footer from bundled JSON
+          setFooter((homeDataDefault as any).footer ?? null);
+          setSiteUiRaw((homeDataDefault as { siteUi?: HomeSiteUi }).siteUi);
         });
     };
-    loadFooter();
-    window.addEventListener('home:updated', loadFooter);
-    return () => window.removeEventListener('home:updated', loadFooter);
+    loadHome();
+    window.addEventListener('home:updated', loadHome);
+    return () => window.removeEventListener('home:updated', loadHome);
   }, []);
 
   const isEn = i18n.language === 'en';
@@ -116,15 +125,27 @@ export default function Layout({ children, villas }: LayoutProps) {
 
   const isDarkHeader = location.pathname !== '/';
 // sss
+  const topLine = siteUi.topBar.textStyles?.line;
+  const topCount = siteUi.topBar.textStyles?.count;
+
   return (
-    <div className="min-h-screen bg-[#FDFCFB] text-[#2C3539] font-sans selection:bg-[#D4C3B3] selection:text-white">
+    <div
+      className="min-h-screen text-[#2C3539] font-sans selection:bg-[#D4C3B3] selection:text-white"
+      style={{ backgroundColor: siteUi.pageShell.backgroundColor }}
+    >
       {/* Fixed Top Navigation Container */}
       <div className="fixed w-full z-50 top-0">
         {/* Scarcity / Urgency Banner */}
-        <div className="bg-[#8B6F5A] text-[#EFEBE4] text-[10px] md:text-xs text-center py-2.5 px-4 tracking-wide flex items-center justify-center gap-4 relative">
-          <span className="flex items-center gap-2">
-            <Users size={12} className="text-white/80" />
-            <span className="font-semibold text-white">{viewers}</span>{' '}
+        <div
+          className="text-center py-2.5 px-4 tracking-wide flex items-center justify-center gap-4 relative md:text-xs"
+          style={homeUiSectionBackground(siteUi.topBar)}
+        >
+          <span className="flex items-center gap-2" style={homeUiTextStyle(topLine)}>
+            <Users
+              size={12}
+              style={{ color: topLine?.colorHex ? `${topLine.colorHex}99` : 'rgba(255,255,255,0.8)' }}
+            />
+            <span style={homeUiTextStyle(topCount)}>{viewers}</span>{' '}
             {viewers === 1 ? t('layout.viewing_one') : t('layout.viewing_other')}
           </span>
           {/* <span className="hidden md:inline opacity-30">|</span> */}
@@ -157,23 +178,19 @@ export default function Layout({ children, villas }: LayoutProps) {
               {/* : 'border-white text-white hover:bg-white hover:text-[#2C3539]' */}
               <a
                 href="#contact"
-                className={
-                  `hidden sm:inline-flex min-h-[44px] items-center justify-center px-6 sm:px-8 py-2.5 text-[11px] uppercase tracking-widest border rounded-full transition-all duration-300 touch-manipulation ${
-                    isScrolled || isDarkHeader
-                      ? 'border-[#2C3539] text-[#2C3539] hover:bg-[#2C3539] hover:text-white'
-                      : 'border-[#2C3539] text-[#2C3539] hover:bg-[#2C3539] hover:text-white'
-                  }`
-                }
+                className={`hidden sm:inline-flex min-h-[44px] items-center justify-center px-6 sm:px-8 py-2.5 uppercase tracking-widest border border-[#2C3539] rounded-full transition-all duration-300 touch-manipulation hover:bg-[#2C3539] hover:text-white ${
+                  siteUi.header.textStyles?.navButton?.fontSizePx == null ? 'text-[11px]' : ''
+                }`}
+                style={homeUiTextStyle(siteUi.header.textStyles?.navButton)}
               >
                 {t('layout.getInTouch')}
               </a>
               <Link
                 to="/booking"
-                // : 'border-white text-white hover:bg-white hover:text-[#2C3539]'
-                className={`hidden sm:inline-flex min-h-[44px] items-center justify-center px-6 sm:px-8 py-2.5 text-[11px] uppercase tracking-widest border rounded-full transition-all duration-300 touch-manipulation ${isScrolled || isDarkHeader
-                  ? 'border-[#2C3539] text-[#2C3539] hover:bg-[#2C3539] hover:text-white'
-                  : 'border-[#2C3539] text-[#2C3539] hover:bg-[#2C3539] hover:text-white'
+                className={`hidden sm:inline-flex min-h-[44px] items-center justify-center px-6 sm:px-8 py-2.5 uppercase tracking-widest border border-[#2C3539] rounded-full transition-all duration-300 touch-manipulation hover:bg-[#2C3539] hover:text-white ${
+                  siteUi.header.textStyles?.navButton?.fontSizePx == null ? 'text-[11px]' : ''
                 }`}
+                style={homeUiTextStyle(siteUi.header.textStyles?.navButton)}
               >
                 {t('layout.bookNow')}
               </Link>
@@ -315,11 +332,27 @@ export default function Layout({ children, villas }: LayoutProps) {
       <main>{children}</main>
 
       {/* Footer & Contact */}
-      <footer id="contact" className="bg-[#1A1F22] pt-20 pb-10 border-t border-white/10">
+      <footer
+        id="contact"
+        className="pt-20 pb-10 border-t border-white/10"
+        style={homeUiSectionBackground(siteUi.footer)}
+      >
         <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-3 gap-12 lg:gap-24 mb-16">
           <div>
-            <div className="font-serif text-2xl tracking-wider uppercase text-white mb-6">{footer?.brandName ?? 'Grey House'}</div>
-            <p className="text-gray-400 font-light text-sm mb-8 leading-relaxed">
+            <div
+              className={`font-serif tracking-wider uppercase mb-6 ${
+                siteUi.footer.textStyles?.brand?.fontSizePx == null ? 'text-2xl' : ''
+              }`}
+              style={homeUiTextStyle(siteUi.footer.textStyles?.brand)}
+            >
+              {footer?.brandName ?? 'Grey House'}
+            </div>
+            <p
+              className={`font-light mb-8 leading-relaxed ${
+                siteUi.footer.textStyles?.body?.fontSizePx == null ? 'text-sm' : ''
+              }`}
+              style={homeUiTextStyle(siteUi.footer.textStyles?.body)}
+            >
               {footerTagline}
             </p>
             <div className="flex space-x-4">
@@ -336,7 +369,14 @@ export default function Layout({ children, villas }: LayoutProps) {
           </div>
 
           <div>
-            <h4 className="text-white font-serif text-xl mb-6">{footerDirectTitle}</h4>
+            <h4
+              className={`font-serif mb-6 ${
+                siteUi.footer.textStyles?.heading?.fontSizePx == null ? 'text-xl' : ''
+              }`}
+              style={homeUiTextStyle(siteUi.footer.textStyles?.heading)}
+            >
+              {footerDirectTitle}
+            </h4>
             <div className="space-y-4">
               <a href={`mailto:${footer?.email ?? 'sales@greyhousevillas.com'}`} className="flex items-center text-gray-400 hover:text-white transition-colors">
                 <Mail size={18} className="mr-4 text-[#A89F91]" />
@@ -374,7 +414,14 @@ export default function Layout({ children, villas }: LayoutProps) {
           </div>
 
           <div>
-            <h4 className="text-white font-serif text-xl mb-6">{footerRegisterTitle}</h4>
+            <h4
+              className={`font-serif mb-6 ${
+                siteUi.footer.textStyles?.heading?.fontSizePx == null ? 'text-xl' : ''
+              }`}
+              style={homeUiTextStyle(siteUi.footer.textStyles?.heading)}
+            >
+              {footerRegisterTitle}
+            </h4>
             <form className="space-y-4" onSubmit={handleInquiry}>
               <input
                 type="text"

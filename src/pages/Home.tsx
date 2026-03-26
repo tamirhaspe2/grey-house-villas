@@ -8,6 +8,8 @@ import homeDataDefault from '../data/home.json';
 import { encodePublicMediaUrl } from '../lib/mediaUrl';
 import { mergeHomeWithLocale } from '../lib/mergeHomeWithLocale';
 import { mergeHomeDataWithCmsLocale } from '../lib/cmsHomeLocale';
+import type { HomeSiteUi } from '../lib/homeSiteUi';
+import { homeUiSectionBackground, homeUiTextStyle, mergeHomeSiteUi } from '../lib/homeSiteUi';
 
 interface HomeProps {
   villas: Villa[];
@@ -57,6 +59,8 @@ interface HomeData {
   };
   /** Admin-edited translations (fr/he/el); merged on top of JSON locale files. */
   localeStrings?: Partial<Record<'fr' | 'he' | 'el', Record<string, unknown>>>;
+  /** Global section colors & typography (not per language). */
+  siteUi?: HomeSiteUi;
   footer?: {
     brandName: string;
     brandTagline: string;
@@ -170,6 +174,8 @@ export default function Home({ villas }: HomeProps) {
     return mergeHomeDataWithCmsLocale(afterJson as Record<string, unknown>, lng) as unknown as HomeData;
   }, [homeData, i18n]);
 
+  const siteUi = useMemo(() => mergeHomeSiteUi(homeData.siteUi), [homeData.siteUi]);
+
   useEffect(() => {
     // Fetch home data from API
     fetch('/api/home', { cache: 'no-store' })
@@ -203,10 +209,23 @@ export default function Home({ villas }: HomeProps) {
     );
   }
 
+  const heroLoc = siteUi.hero.textStyles?.location;
+  const heroTitle = siteUi.hero.textStyles?.title;
+  const heroSub = siteUi.hero.textStyles?.subtitle;
+  const heroDesc = siteUi.hero.textStyles?.description;
+  const heroBtnP = siteUi.hero.textStyles?.buttonPrimary;
+  const heroBtnS = siteUi.hero.textStyles?.buttonSecondary;
+
   return (
-    <div className="bg-[#FDFCFB] text-[#1A1A1A]">
+    <div
+      className="text-[#1A1A1A]"
+      style={{ backgroundColor: siteUi.pageShell.backgroundColor }}
+    >
       {/* Hero Section - Editorial Recipe: fully responsive, text never clipped or covered */}
-      <section className="relative min-h-screen flex items-center justify-center">
+      <section
+        className="relative flex items-center justify-center"
+        style={{ minHeight: `${siteUi.hero.minHeightVh ?? 100}vh` }}
+      >
         {/* Background only: clip image to section, content stays above */}
         <div className="absolute inset-0 z-0 overflow-hidden">
           <motion.img
@@ -222,7 +241,13 @@ export default function Home({ villas }: HomeProps) {
               console.error('Hero image failed to load:', homeDisplay.hero.backgroundImage);
             }}
           />
-          <div className="absolute inset-0 bg-black/25 pointer-events-none" aria-hidden />
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              backgroundColor: `rgba(0,0,0,${(siteUi.hero.overlayOpacity ?? 25) / 100})`,
+            }}
+            aria-hidden
+          />
         </div>
 
         {/* Content: never clipped, safe padding so video (when visible) doesn’t overlap on narrow widths */}
@@ -233,27 +258,65 @@ export default function Home({ villas }: HomeProps) {
             transition={{ duration: 1, delay: 0.5 }}
             className="flex flex-col items-center min-w-0 w-full"
           >
-            <span className="inline-block text-[10px] uppercase tracking-[0.5em] text-white/80 mb-4 sm:mb-8 border-b border-white/20 pb-2">
+            <span
+              className="inline-block uppercase tracking-[0.5em] mb-4 sm:mb-8 border-b border-white/20 pb-2"
+              style={homeUiTextStyle(heroLoc)}
+            >
               {homeDisplay.hero.location}
             </span>
             <h1
-              className="font-serif text-white leading-[0.9] mb-8 sm:mb-12 tracking-tight w-full break-words"
-              style={{ fontSize: 'clamp(2.25rem, 6vw + 1.5rem, 8rem)' }}
+              className="font-serif leading-[0.9] mb-8 sm:mb-12 tracking-tight w-full break-words"
+              style={{
+                ...homeUiTextStyle(heroTitle),
+                ...(heroTitle?.fontSizePx == null ? { fontSize: 'clamp(2.25rem, 6vw + 1.5rem, 8rem)' } : {}),
+              }}
             >
-              {homeDisplay.hero.title} <br /> <span className="italic font-light opacity-90">{homeDisplay.hero.subtitle}</span>
+              {homeDisplay.hero.title} <br />{' '}
+              <span
+                className="italic opacity-90"
+                style={{
+                  ...homeUiTextStyle(heroSub),
+                  ...(heroSub?.fontSizePx == null
+                    ? {
+                        fontSize:
+                          heroTitle?.fontSizePx != null
+                            ? '1em'
+                            : 'clamp(2.25rem, 6vw + 1.5rem, 8rem)',
+                      }
+                    : {}),
+                }}
+              >
+                {homeDisplay.hero.subtitle}
+              </span>
             </h1>
             <p
-              className="text-white/90 font-light w-full max-w-2xl mx-auto mb-8 sm:mb-12 leading-relaxed break-words"
-              style={{ fontSize: 'clamp(0.9375rem, 1.5vw + 0.75rem, 1.25rem)' }}
+              className="font-light w-full max-w-2xl mx-auto mb-8 sm:mb-12 leading-relaxed break-words"
+              style={{
+                ...homeUiTextStyle(heroDesc),
+                ...(heroDesc?.fontSizePx == null ? { fontSize: 'clamp(0.9375rem, 1.5vw + 0.75rem, 1.25rem)' } : {}),
+              }}
             >
               {homeDisplay.hero.description}
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 flex-wrap">
-              <a href="#villas" className="min-h-[44px] inline-flex items-center justify-center px-8 sm:px-10 py-3.5 sm:py-4 bg-white text-black text-[10px] uppercase tracking-[0.3em] font-bold hover:bg-[#D4C3B3] transition-all duration-500 shrink-0">
+              <a
+                href="#villas"
+                className="min-h-[44px] inline-flex items-center justify-center px-8 sm:px-10 py-3.5 sm:py-4 bg-white uppercase tracking-[0.3em] hover:bg-[#D4C3B3] transition-all duration-500 shrink-0"
+                style={homeUiTextStyle(heroBtnP)}
+              >
                 {homeDisplay.hero.button1}
               </a>
-              <a href="#gallery" className="min-h-[44px] inline-flex items-center justify-center text-white text-[10px] uppercase tracking-[0.3em] font-bold group shrink-0">
-                {homeDisplay.hero.button2} <ArrowRight size={14} className="ml-3 group-hover:translate-x-2 transition-transform shrink-0" />
+              <a
+                href="#gallery"
+                className="min-h-[44px] inline-flex items-center justify-center uppercase tracking-[0.3em] group shrink-0"
+                style={homeUiTextStyle(heroBtnS)}
+              >
+                {homeDisplay.hero.button2}{' '}
+                <ArrowRight
+                  size={14}
+                  className="ml-3 group-hover:translate-x-2 transition-transform shrink-0"
+                  style={{ color: heroBtnS?.colorHex || 'currentColor' }}
+                />
               </a>
             </div>
           </motion.div>
@@ -270,7 +333,11 @@ export default function Home({ villas }: HomeProps) {
       </section>
 
       {/* Architectural Philosophy - Warm Organic Recipe */}
-      <section id="estate" className="py-32 lg:py-48 px-6 overflow-hidden bg-[#C7C6C4]">
+      <section
+        id="estate"
+        className="py-32 lg:py-48 px-6 overflow-hidden"
+        style={homeUiSectionBackground(siteUi.philosophy)}
+      >
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-12 gap-16 items-center">
             <div className="lg:col-span-5">
@@ -280,21 +347,40 @@ export default function Home({ villas }: HomeProps) {
                 viewport={{ once: true }}
                 transition={{ duration: 1 }}
               >
-                <span className="text-[10px] uppercase tracking-[0.4em] text-[#A89F91] mb-6 block">{homeDisplay.philosophy.sectionLabel}</span>
-                <h2 className="text-4xl md:text-6xl font-serif mb-10 text-[#2C3539] leading-tight">
-                  {homeDisplay.philosophy.heading} <br /> <span className="italic">{homeDisplay.philosophy.headingHighlight}</span>
+                <span
+                  className="uppercase tracking-[0.4em] mb-6 block"
+                  style={homeUiTextStyle(siteUi.philosophy.textStyles?.label)}
+                >
+                  {homeDisplay.philosophy.sectionLabel}
+                </span>
+                <h2
+                  className={`font-serif mb-10 leading-tight ${
+                    siteUi.philosophy.textStyles?.heading?.fontSizePx == null ? 'text-4xl md:text-6xl' : ''
+                  }`}
+                  style={homeUiTextStyle(siteUi.philosophy.textStyles?.heading)}
+                >
+                  {homeDisplay.philosophy.heading} <br />{' '}
+                  <span className="italic">{homeDisplay.philosophy.headingHighlight}</span>
                 </h2>
-                <div className="space-y-8 text-gray-600 font-light leading-relaxed text-lg">
-                  <p>
-                    {homeDisplay.philosophy.paragraph1}
-                  </p>
-                  <p>
-                    {homeDisplay.philosophy.paragraph2}
-                  </p>
+                <div
+                  className={`space-y-8 font-light leading-relaxed ${
+                    siteUi.philosophy.textStyles?.body?.fontSizePx == null ? 'text-lg' : ''
+                  }`}
+                  style={homeUiTextStyle(siteUi.philosophy.textStyles?.body)}
+                >
+                  <p>{homeDisplay.philosophy.paragraph1}</p>
+                  <p>{homeDisplay.philosophy.paragraph2}</p>
                 </div>
                 <div className="mt-16 flex items-center gap-8">
                   <div className="w-16 h-[1px] bg-[#D4C3B3]"></div>
-                  <p className="font-serif italic text-xl text-[#8B6F5A]">{homeDisplay.philosophy.quote}</p>
+                  <p
+                    className={`font-serif italic ${
+                      siteUi.philosophy.textStyles?.quote?.fontSizePx == null ? 'text-xl' : ''
+                    }`}
+                    style={homeUiTextStyle(siteUi.philosophy.textStyles?.quote)}
+                  >
+                    {homeDisplay.philosophy.quote}
+                  </p>
                 </div>
               </motion.div>
             </div>
@@ -484,17 +570,38 @@ export default function Home({ villas }: HomeProps) {
       </section> */}
 
       {/* Gallery — featured film (same copy as data gallery; carousel implementation remains in comments below) */}
-      <section id="gallery" className="py-32 bg-[#1A1A1A] text-white overflow-hidden">
+      <section
+        id="gallery"
+        className="py-32 overflow-hidden"
+        style={homeUiSectionBackground(siteUi.gallery)}
+      >
         <div className="max-w-7xl mx-auto px-6 mb-12 lg:mb-16">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
             <div>
-              <span className="text-[10px] uppercase tracking-[0.4em] text-white/40 mb-4 block">{homeDisplay.gallery.sectionLabel}</span>
-              <h2 className="text-4xl md:text-6xl font-serif">
+              <span
+                className="uppercase tracking-[0.4em] mb-4 block"
+                style={homeUiTextStyle(siteUi.gallery.textStyles?.label)}
+              >
+                {homeDisplay.gallery.sectionLabel}
+              </span>
+              <h2
+                className={`font-serif ${
+                  siteUi.gallery.textStyles?.heading?.fontSizePx == null ? 'text-4xl md:text-6xl' : ''
+                }`}
+                style={homeUiTextStyle(siteUi.gallery.textStyles?.heading)}
+              >
                 {homeDisplay.gallery.heading}{' '}
                 <span className="italic font-light">{homeDisplay.gallery.headingHighlight}</span>
               </h2>
             </div>
-            <p className="text-white/50 font-light max-w-md text-lg">{homeDisplay.gallery.description}</p>
+            <p
+              className={`font-light max-w-md ${
+                siteUi.gallery.textStyles?.description?.fontSizePx == null ? 'text-lg' : ''
+              }`}
+              style={homeUiTextStyle(siteUi.gallery.textStyles?.description)}
+            >
+              {homeDisplay.gallery.description}
+            </p>
           </div>
         </div>
 

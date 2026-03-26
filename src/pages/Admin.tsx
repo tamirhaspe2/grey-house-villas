@@ -17,6 +17,18 @@ import {
 } from '../lib/bookingPageCopy';
 import type { AdminContentLocale } from '../lib/cmsLocaleTypes';
 import { ADMIN_CONTENT_LOCALE_OPTIONS } from '../lib/cmsLocaleTypes';
+import type { HomeSiteFontWeight, HomeSiteUi } from '../lib/homeSiteUi';
+import {
+    HOME_SITE_UI_DEFAULTS,
+    HOME_SITE_UI_EDITOR_GROUPS,
+    applyHeroMinHeight,
+    applyHeroOverlay,
+    applyHomeSiteUiSectionBg,
+    applyHomeSiteUiTextOverride,
+    mergeHomeSiteUi,
+    readHomeSiteUiTextForAdmin,
+    readHomeSiteUiTextRaw,
+} from '../lib/homeSiteUi';
 import { editHomeAtPath, readHomeAtPath, readHomeFieldForAdmin } from '../lib/cmsHomeLocale';
 import {
     readVillaName,
@@ -105,6 +117,8 @@ interface HomeData {
         disclaimerUrl: string;
     };
     localeStrings?: Partial<Record<'fr' | 'he' | 'el', Record<string, unknown>>>;
+    /** Site-wide section colors & typography (all languages). */
+    siteUi?: HomeSiteUi;
 }
 
 export default function Admin() {
@@ -203,8 +217,15 @@ export default function Admin() {
     useEffect(() => {
         if (isAuthenticated) {
             fetch('/api/home')
-                .then(res => res.json())
-                .then(data => setHomeData(data))
+                .then((res) => res.json())
+                .then((data: HomeData) => {
+                    const base = homeDataDefault as HomeData;
+                    setHomeData({
+                        ...base,
+                        ...data,
+                        siteUi: { ...(base as { siteUi?: HomeSiteUi }).siteUi, ...(data as { siteUi?: HomeSiteUi }).siteUi },
+                    });
+                })
                 .catch(() => setHomeData(homeDataDefault as HomeData));
         }
     }, [isAuthenticated]);
@@ -337,6 +358,8 @@ export default function Admin() {
         },
         [homeData, adminContentLocale]
     );
+
+    const mergedHomeSiteUi = useMemo(() => mergeHomeSiteUi(homeData.siteUi), [homeData.siteUi]);
 
     const homeFeaturesLines = useCallback((): string => {
         const raw = readHomeFieldForAdmin(homeData as unknown as Record<string, unknown>, adminContentLocale, [
@@ -766,6 +789,333 @@ export default function Admin() {
                     {activeSection === 'home' ? (
                         /* HOME PAGE EDITOR */
                         <div className="space-y-12">
+                            <div className="bg-white p-6 md:p-12 shadow-sm border border-stone-200 rounded-sm">
+                                <h2 className="text-2xl font-serif text-[#2C3539] mb-2">Home — section look & typography</h2>
+                                <p className="text-sm text-gray-600 mb-2 leading-relaxed">
+                                    Background colors, hero overlay, and font sizes/weights apply{' '}
+                                    <strong>site-wide</strong> (all languages). They are not tied to the Content language
+                                    selector. Clear a value to restore the built-in default. Save with Save Changes on the home
+                                    tab.
+                                </p>
+                                <div className="space-y-8 mt-8">
+                                    {HOME_SITE_UI_EDITOR_GROUPS.map((g) => {
+                                        const sec = g.section;
+                                        const secResolved = mergedHomeSiteUi[sec];
+                                        const defSec = HOME_SITE_UI_DEFAULTS[sec];
+                                        const normHexLocal = (c: string) => {
+                                            let s = c.trim();
+                                            if (!s) return '';
+                                            if (!s.startsWith('#')) s = `#${s}`;
+                                            if (/^#[0-9A-Fa-f]{3}$/.test(s)) {
+                                                const [, r, gg, b] = s;
+                                                s = `#${r}${r}${gg}${gg}${b}${b}`;
+                                            }
+                                            return s.toLowerCase();
+                                        };
+                                        return (
+                                            <div
+                                                key={sec}
+                                                className="border border-stone-100 rounded-sm p-5 bg-stone-50/40 space-y-4"
+                                            >
+                                                <div>
+                                                    <h3 className="text-xs uppercase tracking-[0.25em] text-[#8B6F5A] font-bold">
+                                                        {g.title}
+                                                    </h3>
+                                                    <p className="text-xs text-gray-600 mt-1">{g.description}</p>
+                                                </div>
+                                                <div className="flex flex-wrap gap-4 items-end">
+                                                    <div>
+                                                        <label className="block text-[10px] uppercase tracking-wider text-gray-500 mb-1">
+                                                            Background
+                                                        </label>
+                                                        <div className="flex items-center gap-2">
+                                                            <input
+                                                                type="color"
+                                                                aria-label={`${g.title} background`}
+                                                                className="h-9 w-12 cursor-pointer border border-gray-200 bg-white p-0.5"
+                                                                value={
+                                                                    /^#[0-9A-Fa-f]{6}$/i.test(
+                                                                        secResolved.backgroundColor || ''
+                                                                    )
+                                                                        ? secResolved.backgroundColor!
+                                                                        : '#cccccc'
+                                                                }
+                                                                onChange={(e) =>
+                                                                    setHomeData((prev) => ({
+                                                                        ...prev,
+                                                                        siteUi:
+                                                                            applyHomeSiteUiSectionBg(
+                                                                                prev.siteUi,
+                                                                                sec,
+                                                                                e.target.value
+                                                                            ) ?? undefined,
+                                                                    }))
+                                                                }
+                                                            />
+                                                            <input
+                                                                type="text"
+                                                                className="w-36 border border-gray-200 px-2 py-1.5 text-xs font-mono"
+                                                                placeholder={defSec.backgroundColor || 'transparent'}
+                                                                value={secResolved.backgroundColor || ''}
+                                                                onChange={(e) =>
+                                                                    setHomeData((prev) => ({
+                                                                        ...prev,
+                                                                        siteUi:
+                                                                            applyHomeSiteUiSectionBg(
+                                                                                prev.siteUi,
+                                                                                sec,
+                                                                                e.target.value
+                                                                            ) ?? undefined,
+                                                                    }))
+                                                                }
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                    {g.showOverlay ? (
+                                                        <div>
+                                                            <label className="block text-[10px] uppercase tracking-wider text-gray-500 mb-1">
+                                                                Hero image darken (%)
+                                                            </label>
+                                                            <input
+                                                                type="number"
+                                                                min={0}
+                                                                max={100}
+                                                                className="w-24 border border-gray-200 px-2 py-1.5 text-xs"
+                                                                value={secResolved.overlayOpacity ?? 25}
+                                                                onChange={(e) => {
+                                                                    const n = Number(e.target.value);
+                                                                    setHomeData((prev) => ({
+                                                                        ...prev,
+                                                                        siteUi: applyHeroOverlay(prev.siteUi, n) ?? undefined,
+                                                                    }));
+                                                                }}
+                                                            />
+                                                        </div>
+                                                    ) : null}
+                                                    {g.showMinHeight ? (
+                                                        <div>
+                                                            <label className="block text-[10px] uppercase tracking-wider text-gray-500 mb-1">
+                                                                Min height (vh)
+                                                            </label>
+                                                            <input
+                                                                type="number"
+                                                                min={40}
+                                                                max={200}
+                                                                className="w-24 border border-gray-200 px-2 py-1.5 text-xs"
+                                                                value={secResolved.minHeightVh ?? 100}
+                                                                onChange={(e) => {
+                                                                    const n = Number(e.target.value);
+                                                                    setHomeData((prev) => ({
+                                                                        ...prev,
+                                                                        siteUi:
+                                                                            applyHeroMinHeight(prev.siteUi, n) ?? undefined,
+                                                                    }));
+                                                                }}
+                                                            />
+                                                        </div>
+                                                    ) : null}
+                                                </div>
+                                                {g.roles.length > 0 ? (
+                                                    <div className="space-y-5 pt-2 border-t border-stone-200">
+                                                        {g.roles.map((role) => {
+                                                            const adm = readHomeSiteUiTextForAdmin(
+                                                                homeData.siteUi,
+                                                                sec,
+                                                                role.key
+                                                            );
+                                                            const defRole =
+                                                                HOME_SITE_UI_DEFAULTS[sec]?.textStyles?.[role.key] || {};
+                                                            const defColor = defRole.colorHex || '#333333';
+                                                            const pickerOk =
+                                                                adm.colorHex && /^#[0-9A-Fa-f]{6}$/i.test(adm.colorHex);
+                                                            return (
+                                                                <div key={role.key} className="grid md:grid-cols-12 gap-3">
+                                                                    <div className="md:col-span-3">
+                                                                        <p className="text-xs font-medium text-[#2C3539]">
+                                                                            {role.label}
+                                                                        </p>
+                                                                    </div>
+                                                                    <div className="md:col-span-9 flex flex-wrap gap-4 items-end">
+                                                                        <div>
+                                                                            <label className="block text-[10px] uppercase tracking-wider text-gray-500 mb-1">
+                                                                                Size (px)
+                                                                            </label>
+                                                                            <input
+                                                                                type="number"
+                                                                                min={8}
+                                                                                max={120}
+                                                                                className="w-20 border border-gray-200 px-2 py-1.5 text-xs"
+                                                                                value={
+                                                                                    adm.fontSizePx != null
+                                                                                        ? adm.fontSizePx
+                                                                                        : ''
+                                                                                }
+                                                                                placeholder="—"
+                                                                                onChange={(e) => {
+                                                                                    const v = e.target.value;
+                                                                                    const base = readHomeSiteUiTextForAdmin(
+                                                                                        homeData.siteUi,
+                                                                                        sec,
+                                                                                        role.key
+                                                                                    );
+                                                                                    if (v === '') {
+                                                                                        setHomeData((prev) => ({
+                                                                                            ...prev,
+                                                                                            siteUi:
+                                                                                                applyHomeSiteUiTextOverride(
+                                                                                                    prev.siteUi,
+                                                                                                    sec,
+                                                                                                    role.key,
+                                                                                                    { ...base, fontSizePx: undefined }
+                                                                                                ) ?? undefined,
+                                                                                        }));
+                                                                                        return;
+                                                                                    }
+                                                                                    const n = Math.min(
+                                                                                        120,
+                                                                                        Math.max(8, parseInt(v, 10))
+                                                                                    );
+                                                                                    if (Number.isNaN(n)) return;
+                                                                                    setHomeData((prev) => ({
+                                                                                        ...prev,
+                                                                                        siteUi:
+                                                                                            applyHomeSiteUiTextOverride(
+                                                                                                prev.siteUi,
+                                                                                                sec,
+                                                                                                role.key,
+                                                                                                { ...base, fontSizePx: n }
+                                                                                            ) ?? undefined,
+                                                                                    }));
+                                                                                }}
+                                                                            />
+                                                                        </div>
+                                                                        <div>
+                                                                            <label className="block text-[10px] uppercase tracking-wider text-gray-500 mb-1">
+                                                                                Color
+                                                                            </label>
+                                                                            <div className="flex items-center gap-2">
+                                                                                <input
+                                                                                    type="color"
+                                                                                    aria-label={`${role.label} color`}
+                                                                                    className="h-9 w-12 cursor-pointer border border-gray-200 bg-white p-0.5"
+                                                                                    value={pickerOk ? adm.colorHex! : defColor}
+                                                                                    onChange={(e) => {
+                                                                                        const hex = e.target.value;
+                                                                                        const base =
+                                                                                            readHomeSiteUiTextForAdmin(
+                                                                                                homeData.siteUi,
+                                                                                                sec,
+                                                                                                role.key
+                                                                                            );
+                                                                                        const next = {
+                                                                                            ...base,
+                                                                                            colorHex: hex,
+                                                                                        };
+                                                                                        setHomeData((prev) => ({
+                                                                                            ...prev,
+                                                                                            siteUi:
+                                                                                                applyHomeSiteUiTextOverride(
+                                                                                                    prev.siteUi,
+                                                                                                    sec,
+                                                                                                    role.key,
+                                                                                                    next
+                                                                                                ) ?? undefined,
+                                                                                        }));
+                                                                                    }}
+                                                                                />
+                                                                                <input
+                                                                                    type="text"
+                                                                                    className="w-36 border border-gray-200 px-2 py-1.5 text-xs font-mono"
+                                                                                    placeholder={defColor}
+                                                                                    value={adm.colorHex || ''}
+                                                                                    onChange={(e) => {
+                                                                                        const c = e.target.value;
+                                                                                        const base =
+                                                                                            readHomeSiteUiTextForAdmin(
+                                                                                                homeData.siteUi,
+                                                                                                sec,
+                                                                                                role.key
+                                                                                            );
+                                                                                        const same =
+                                                                                            !c.trim() ||
+                                                                                            normHexLocal(c) ===
+                                                                                                normHexLocal(defColor);
+                                                                                        const next = {
+                                                                                            ...base,
+                                                                                            colorHex: same ? '' : c,
+                                                                                        };
+                                                                                        setHomeData((prev) => ({
+                                                                                            ...prev,
+                                                                                            siteUi:
+                                                                                                applyHomeSiteUiTextOverride(
+                                                                                                    prev.siteUi,
+                                                                                                    sec,
+                                                                                                    role.key,
+                                                                                                    next
+                                                                                                ) ?? undefined,
+                                                                                        }));
+                                                                                    }}
+                                                                                />
+                                                                            </div>
+                                                                        </div>
+                                                                        <div>
+                                                                            <label className="block text-[10px] uppercase tracking-wider text-gray-500 mb-1">
+                                                                                Weight
+                                                                            </label>
+                                                                            <select
+                                                                                className="border border-gray-200 px-2 py-1.5 text-xs min-w-[120px]"
+                                                                                value={
+                                                                                    readHomeSiteUiTextRaw(
+                                                                                        homeData.siteUi,
+                                                                                        sec,
+                                                                                        role.key
+                                                                                    ).fontWeight || ''
+                                                                                }
+                                                                                onChange={(e) => {
+                                                                                    const v = e.target
+                                                                                        .value as HomeSiteFontWeight;
+                                                                                    const base =
+                                                                                        readHomeSiteUiTextForAdmin(
+                                                                                            homeData.siteUi,
+                                                                                            sec,
+                                                                                            role.key
+                                                                                        );
+                                                                                    const next = {
+                                                                                        ...base,
+                                                                                        fontWeight: v || undefined,
+                                                                                    };
+                                                                                    setHomeData((prev) => ({
+                                                                                        ...prev,
+                                                                                        siteUi:
+                                                                                            applyHomeSiteUiTextOverride(
+                                                                                                prev.siteUi,
+                                                                                                sec,
+                                                                                                role.key,
+                                                                                                next
+                                                                                            ) ?? undefined,
+                                                                                    }));
+                                                                                }}
+                                                                            >
+                                                                                <option value="">Default</option>
+                                                                                <option value="300">300</option>
+                                                                                <option value="400">400</option>
+                                                                                <option value="500">500</option>
+                                                                                <option value="600">600</option>
+                                                                                <option value="700">700</option>
+                                                                            </select>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                ) : null}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
                             {/* Hero Section */}
                             <div className="bg-white p-6 md:p-12 shadow-sm border border-gray-100 rounded-sm">
                                 <h2 className="text-4xl font-serif text-[#2C3539] mb-12">Home Page - Hero Section</h2>
