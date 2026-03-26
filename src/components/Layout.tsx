@@ -8,6 +8,7 @@ import { io, Socket } from 'socket.io-client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Villa } from '../types';
 import homeDataDefault from '../data/home.json';
+import { buildGoogleMapsEmbedSrc } from '../lib/googleMapsEmbed';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -53,14 +54,19 @@ export default function Layout({ children, villas }: LayoutProps) {
   const [footer, setFooter] = useState<any>((homeDataDefault as any).footer ?? null);
 
   useEffect(() => {
-    fetch('/api/home')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data && data.footer) setFooter(data.footer);
-      })
-      .catch(() => {
-        // keep default footer from bundled JSON
-      });
+    const loadFooter = () => {
+      fetch('/api/home', { cache: 'no-store' })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && data.footer) setFooter(data.footer);
+        })
+        .catch(() => {
+          // keep default footer from bundled JSON
+        });
+    };
+    loadFooter();
+    window.addEventListener('home:updated', loadFooter);
+    return () => window.removeEventListener('home:updated', loadFooter);
   }, []);
 
   const isEn = i18n.language === 'en';
@@ -348,6 +354,22 @@ export default function Layout({ children, villas }: LayoutProps) {
                   {footer?.addressLine2 ?? 'Ionian Islands, Greece 311 00'}
                 </span>
               </div>
+              {(() => {
+                const mapSrc = footer ? buildGoogleMapsEmbedSrc(footer) : null;
+                if (!mapSrc) return null;
+                return (
+                  <div className="mt-6 w-full overflow-hidden rounded-sm border border-white/10 bg-black/20 aspect-[4/3] min-h-[200px]">
+                    <iframe
+                      title={t('layout.footer.mapEmbedTitle')}
+                      src={mapSrc}
+                      className="h-full w-full border-0"
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                      allowFullScreen
+                    />
+                  </div>
+                );
+              })()}
             </div>
           </div>
 

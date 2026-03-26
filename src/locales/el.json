@@ -31,7 +31,8 @@
       "inquiryError": "Κάτι πήγε στραβά. Δοκιμάστε ξανά.",
       "copyright": "© 2026 Grey House Villas. Με επιφύλαξη παντός δικαιώματος.",
       "privacy": "Πολιτική απορρήτου",
-      "disclaimer": "Αποποίηση ευθύνης"
+      "disclaimer": "Αποποίηση ευθύνης",
+      "mapEmbedTitle": "Χάρτης τοποθεσίας"
     }
   },
   "homeA11y": {

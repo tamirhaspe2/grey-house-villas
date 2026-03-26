@@ -31,7 +31,8 @@
       "inquiryError": "Something went wrong. Please try again.",
       "copyright": "© 2026 Grey House Villas. All rights reserved.",
       "privacy": "Privacy Policy",
-      "disclaimer": "Disclaimer"
+      "disclaimer": "Disclaimer",
+      "mapEmbedTitle": "Location map"
     }
   },
   "homeA11y": {

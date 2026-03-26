@@ -67,6 +67,8 @@
     "phone": "+30 690 000 0000",
     "addressLine1": "Katouna, Lefkas Island",
     "addressLine2": "Ionian Islands, Greece 311 00",
+    "mapQuery": "38.777438,20.71357",
+    "mapEmbedUrl": "",
     "registerInterestTitle": "Register Interest",
     "copyright": "© 2026 Grey House Villas. All rights reserved.",
     "privacyLabel": "Privacy Policy",

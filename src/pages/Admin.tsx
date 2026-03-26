@@ -81,6 +81,10 @@ interface HomeData {
         phone: string;
         addressLine1: string;
         addressLine2: string;
+        /** Coordinates or place query for Google Map pin (not shown as address text). */
+        mapQuery?: string;
+        /** Optional full iframe src from Google Maps → Share → Embed. Overrides mapQuery when set. */
+        mapEmbedUrl?: string;
         registerInterestTitle: string;
         copyright: string;
         privacyLabel: string;
@@ -1471,6 +1475,65 @@ export default function Admin() {
                                                     onChange={(e) => updateHomePath(['footer', 'addressLine2'], e.target.value)}
                                                     className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                                 />
+                                            </div>
+                                            <div className="md:col-span-2 space-y-4 border border-[#D4C3B3]/50 bg-[#F9F8F6] p-4 rounded-sm">
+                                                <p className="text-xs text-[#2C3539] leading-relaxed">
+                                                    <span className="font-bold uppercase tracking-wider text-[10px] block mb-1">
+                                                        Footer Google Map
+                                                    </span>
+                                                    The map appears under the two address lines. It uses a <strong>different</strong> location than the visible address — set the pin below. Same map for every language. Add{' '}
+                                                    <code className="text-[10px] bg-white px-1 border rounded">VITE_GOOGLE_MAPS_API_KEY</code> to{' '}
+                                                    <code className="text-[10px] bg-white px-1 border rounded">.env</code> and enable <strong>Maps Embed API</strong> in Google Cloud for production-quality embeds; otherwise a basic embed is used (works locally too).
+                                                </p>
+                                                {!isEditingEnglish ? (
+                                                    <p className="text-xs text-[#8B6F5A]">
+                                                        Switch <strong>Content language</strong> to English to edit map fields.
+                                                    </p>
+                                                ) : (
+                                                    <>
+                                                        <div>
+                                                            <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">
+                                                                Map pin (coordinates or place — not shown as text)
+                                                            </label>
+                                                            <input
+                                                                type="text"
+                                                                value={String(
+                                                                    readHomeAtPath(homeData as unknown as Record<string, unknown>, 'en', [
+                                                                        'footer',
+                                                                        'mapQuery',
+                                                                    ]) ?? ''
+                                                                )}
+                                                                placeholder="e.g. 38.777438,20.71357"
+                                                                onChange={(e) =>
+                                                                    updateHomePath(['footer', 'mapQuery'], e.target.value)
+                                                                }
+                                                                className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none font-mono text-sm"
+                                                            />
+                                                            <p className="text-[10px] text-gray-500 mt-1">
+                                                                Leave empty and save to hide the map. Default matches your shared Google Maps location.
+                                                            </p>
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">
+                                                                Optional: full embed URL
+                                                            </label>
+                                                            <input
+                                                                type="url"
+                                                                value={String(
+                                                                    readHomeAtPath(homeData as unknown as Record<string, unknown>, 'en', [
+                                                                        'footer',
+                                                                        'mapEmbedUrl',
+                                                                    ]) ?? ''
+                                                                )}
+                                                                placeholder="Paste iframe src from Google Maps → Share → Embed a map"
+                                                                onChange={(e) =>
+                                                                    updateHomePath(['footer', 'mapEmbedUrl'], e.target.value)
+                                                                }
+                                                                className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none text-sm"
+                                                            />
+                                                        </div>
+                                                    </>
+                                                )}
                                             </div>
                                         </div>
                                     </div>

@@ -70,6 +70,8 @@ interface HomeData {
     phone: string;
     addressLine1: string;
     addressLine2: string;
+    mapQuery?: string;
+    mapEmbedUrl?: string;
     registerInterestTitle: string;
     copyright: string;
     privacyLabel: string;
