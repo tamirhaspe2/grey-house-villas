@@ -18,6 +18,16 @@ export interface HomeSiteUiText {
   fontWeight?: HomeSiteFontWeight;
 }
 
+/** Hero-only: draggable text regions (percent of hero content box, anchor = center). */
+export type HeroUiBlockKey = 'location' | 'headline' | 'description' | 'actions';
+
+export interface HeroBlockPosition {
+  /** 0–100 from left of hero content area */
+  leftPct: number;
+  /** 0–100 from top of hero content area */
+  topPct: number;
+}
+
 export interface HomeSiteUiSection {
   backgroundColor?: string;
   /** Hero image darkening, 0–100 (%). */
@@ -25,6 +35,8 @@ export interface HomeSiteUiSection {
   /** Hero block min height in viewport height units. */
   minHeightVh?: number;
   textStyles?: Partial<Record<string, HomeSiteUiText>>;
+  /** Hero only: when non-empty, home hero uses absolute positioning for these blocks. */
+  blockPositions?: Partial<Record<HeroUiBlockKey, HeroBlockPosition>>;
 }
 
 export type HomeSiteUi = Partial<Record<HomeSiteSectionKey, HomeSiteUiSection>>;
@@ -101,6 +113,50 @@ export const HOME_SITE_UI_DEFAULTS: Record<HomeSiteSectionKey, HomeSiteUiSection
   gallery: GALLERY,
   footer: FOOTER,
 };
+
+/** Centered stack approximated as % positions when custom hero layout is enabled. */
+export const HERO_BLOCK_DEFAULTS: Record<HeroUiBlockKey, HeroBlockPosition> = {
+  location: { leftPct: 50, topPct: 30 },
+  headline: { leftPct: 50, topPct: 44 },
+  description: { leftPct: 50, topPct: 58 },
+  actions: { leftPct: 50, topPct: 74 },
+};
+
+function clampPct(n: number): number {
+  if (Number.isNaN(n)) return 50;
+  return Math.max(2, Math.min(98, n));
+}
+
+export function resolveHeroBlockPositions(
+  partial?: Partial<Record<HeroUiBlockKey, HeroBlockPosition>> | null
+): Record<HeroUiBlockKey, HeroBlockPosition> {
+  const keys: HeroUiBlockKey[] = ['location', 'headline', 'description', 'actions'];
+  const out = { ...HERO_BLOCK_DEFAULTS };
+  if (!partial) return out;
+  for (const k of keys) {
+    const p = partial[k];
+    if (!p) continue;
+    out[k] = { leftPct: clampPct(p.leftPct), topPct: clampPct(p.topPct) };
+  }
+  return out;
+}
+
+/** True when saved siteUi requests free-position hero blocks (public + admin preview). */
+export function isHeroFreeLayout(hero: HomeSiteUiSection | undefined): boolean {
+  const bp = hero?.blockPositions;
+  return !!bp && Object.keys(bp).length > 0;
+}
+
+export function heroBlockPositionStyle(p: HeroBlockPosition): CSSProperties {
+  return {
+    position: 'absolute',
+    left: `${clampPct(p.leftPct)}%`,
+    top: `${clampPct(p.topPct)}%`,
+    transform: 'translate(-50%, -50%)',
+    maxWidth: 'min(64rem, 92vw)',
+    pointerEvents: 'auto',
+  };
+}
 
 function mergeTextStyles(
   base: Record<string, HomeSiteUiText> | undefined,
@@ -188,10 +244,13 @@ function pruneEmptySiteUi(siteUi: HomeSiteUi): HomeSiteUi | undefined {
     if (!sec) continue;
     const hasText = sec.textStyles && Object.keys(sec.textStyles).length > 0;
     const hasBg = !!sec.backgroundColor?.trim();
+    const hasHeroBlocks =
+      key === 'hero' && sec.blockPositions && Object.keys(sec.blockPositions).length > 0;
     const extra =
       key === 'hero' &&
       ((sec.overlayOpacity != null && sec.overlayOpacity !== HOME_SITE_UI_DEFAULTS.hero.overlayOpacity) ||
-        (sec.minHeightVh != null && sec.minHeightVh !== HOME_SITE_UI_DEFAULTS.hero.minHeightVh));
+        (sec.minHeightVh != null && sec.minHeightVh !== HOME_SITE_UI_DEFAULTS.hero.minHeightVh) ||
+        hasHeroBlocks);
     if (hasText || hasBg || extra) out[key] = { ...sec };
   }
   return Object.keys(out).length ? out : undefined;
@@ -243,10 +302,13 @@ export function applyHomeSiteUiSectionBg(
 
   const hasText = sec.textStyles && Object.keys(sec.textStyles).length > 0;
   const hasBg = !!sec.backgroundColor?.trim();
+  const hasHeroBlocks =
+    section === 'hero' && sec.blockPositions && Object.keys(sec.blockPositions).length > 0;
   const hasHeroExtra =
     section === 'hero' &&
     ((sec.overlayOpacity != null && sec.overlayOpacity !== HOME_SITE_UI_DEFAULTS.hero.overlayOpacity) ||
-      (sec.minHeightVh != null && sec.minHeightVh !== HOME_SITE_UI_DEFAULTS.hero.minHeightVh));
+      (sec.minHeightVh != null && sec.minHeightVh !== HOME_SITE_UI_DEFAULTS.hero.minHeightVh) ||
+      hasHeroBlocks);
   if (hasText || hasBg || hasHeroExtra) siteUi[section] = sec;
   else delete siteUi[section];
 
@@ -277,6 +339,36 @@ export function applyHeroMinHeight(prev: HomeSiteUi | undefined, vh: number): Ho
   }
   if (Object.keys(siteUi.hero).length === 0) delete siteUi.hero;
   return pruneEmptySiteUi(siteUi);
+}
+
+/** Persist all hero block positions (typically after dragging in admin). */
+export function applyHeroBlockPositions(
+  prev: HomeSiteUi | undefined,
+  positions: Record<HeroUiBlockKey, HeroBlockPosition>
+): HomeSiteUi | undefined {
+  const siteUi: HomeSiteUi = JSON.parse(JSON.stringify(prev || {}));
+  if (!siteUi.hero) siteUi.hero = {};
+  siteUi.hero.blockPositions = {
+    location: { ...positions.location },
+    headline: { ...positions.headline },
+    description: { ...positions.description },
+    actions: { ...positions.actions },
+  };
+  return pruneEmptySiteUi(siteUi);
+}
+
+/** Remove custom positioning; hero returns to centered stack layout. */
+export function clearHeroBlockPositions(prev: HomeSiteUi | undefined): HomeSiteUi | undefined {
+  if (!prev?.hero?.blockPositions) return prev;
+  const siteUi: HomeSiteUi = JSON.parse(JSON.stringify(prev));
+  delete siteUi.hero!.blockPositions;
+  if (siteUi.hero && Object.keys(siteUi.hero).length === 0) delete siteUi.hero;
+  return pruneEmptySiteUi(siteUi);
+}
+
+/** First-time enable: seed defaults so layout mode activates and blocks are draggable. */
+export function seedHeroCustomBlockLayout(prev: HomeSiteUi | undefined): HomeSiteUi | undefined {
+  return applyHeroBlockPositions(prev, { ...HERO_BLOCK_DEFAULTS });
 }
 
 export interface HomeSiteUiEditorRole {

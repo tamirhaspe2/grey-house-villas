@@ -17,18 +17,28 @@ import {
 } from '../lib/bookingPageCopy';
 import type { AdminContentLocale } from '../lib/cmsLocaleTypes';
 import { ADMIN_CONTENT_LOCALE_OPTIONS } from '../lib/cmsLocaleTypes';
-import type { HomeSiteFontWeight, HomeSiteUi } from '../lib/homeSiteUi';
+import type {
+    HeroBlockPosition,
+    HeroUiBlockKey,
+    HomeSiteFontWeight,
+    HomeSiteUi,
+} from '../lib/homeSiteUi';
 import {
     HOME_SITE_UI_DEFAULTS,
     HOME_SITE_UI_EDITOR_GROUPS,
+    applyHeroBlockPositions,
     applyHeroMinHeight,
     applyHeroOverlay,
     applyHomeSiteUiSectionBg,
     applyHomeSiteUiTextOverride,
+    clearHeroBlockPositions,
+    isHeroFreeLayout,
     mergeHomeSiteUi,
     readHomeSiteUiTextForAdmin,
     readHomeSiteUiTextRaw,
+    seedHeroCustomBlockLayout,
 } from '../lib/homeSiteUi';
+import HeroLayoutEditor from '../components/HeroLayoutEditor';
 import { editHomeAtPath, readHomeAtPath, readHomeFieldForAdmin } from '../lib/cmsHomeLocale';
 import {
     readVillaName,
@@ -360,6 +370,13 @@ export default function Admin() {
     );
 
     const mergedHomeSiteUi = useMemo(() => mergeHomeSiteUi(homeData.siteUi), [homeData.siteUi]);
+
+    const handleHeroBlockPositionsCommit = useCallback((p: Record<HeroUiBlockKey, HeroBlockPosition>) => {
+        setHomeData((prev) => ({
+            ...prev,
+            siteUi: applyHeroBlockPositions(prev.siteUi, p) ?? undefined,
+        }));
+    }, []);
 
     const homeFeaturesLines = useCallback((): string => {
         const raw = readHomeFieldForAdmin(homeData as unknown as Record<string, unknown>, adminContentLocale, [
@@ -1273,6 +1290,76 @@ export default function Admin() {
                                                 className="w-full border border-gray-200 px-4 py-2 focus:border-[#2C3539] outline-none"
                                             />
                                         </div>
+                                    </div>
+
+                                    <div className="pt-10 mt-8 border-t border-gray-200">
+                                        <h3 className="text-xs uppercase tracking-[0.3em] text-[#2C3539] font-bold mb-2">
+                                            Hero text positions
+                                        </h3>
+                                        <p className="text-xs text-gray-500 mb-6 max-w-2xl">
+                                            By default the hero text stays centered. Turn on custom positions to drag each
+                                            block on a preview; save the home page to apply on the live site. Uses the same
+                                            overlay and typography as below.
+                                        </p>
+                                        {!isHeroFreeLayout(homeData.siteUi?.hero) ? (
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    setHomeData((prev) => ({
+                                                        ...prev,
+                                                        siteUi: seedHeroCustomBlockLayout(prev.siteUi) ?? undefined,
+                                                    }))
+                                                }
+                                                className="text-xs font-bold uppercase tracking-widest px-6 py-3 bg-[#2C3539] text-white hover:bg-[#8B6F5A] transition-colors"
+                                            >
+                                                Enable draggable layout
+                                            </button>
+                                        ) : (
+                                            <div className="space-y-4">
+                                                <HeroLayoutEditor
+                                                    backgroundImage={homeData.hero.backgroundImage}
+                                                    hero={{
+                                                        location: homeText(['hero', 'location']),
+                                                        title: homeText(['hero', 'title']),
+                                                        subtitle: homeText(['hero', 'subtitle']),
+                                                        description: homeText(['hero', 'description']),
+                                                        button1: homeText(['hero', 'button1']),
+                                                        button2: homeText(['hero', 'button2']),
+                                                    }}
+                                                    heroUi={mergedHomeSiteUi.hero}
+                                                    rawBlockPositions={homeData.siteUi?.hero?.blockPositions}
+                                                    overlayOpacityPct={mergedHomeSiteUi.hero.overlayOpacity ?? 25}
+                                                    onChangePositions={handleHeroBlockPositionsCommit}
+                                                />
+                                                <div className="flex flex-wrap gap-3">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            setHomeData((prev) => ({
+                                                                ...prev,
+                                                                siteUi:
+                                                                    seedHeroCustomBlockLayout(prev.siteUi) ?? undefined,
+                                                            }))
+                                                        }
+                                                        className="text-[10px] font-bold uppercase tracking-widest px-4 py-2 border border-gray-300 text-[#2C3539] hover:border-[#8B6F5A] transition-colors"
+                                                    >
+                                                        Reset positions to defaults
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            setHomeData((prev) => ({
+                                                                ...prev,
+                                                                siteUi: clearHeroBlockPositions(prev.siteUi) ?? undefined,
+                                                            }))
+                                                        }
+                                                        className="text-[10px] font-bold uppercase tracking-widest px-4 py-2 border border-rose-200 text-rose-700 hover:bg-rose-50 transition-colors"
+                                                    >
+                                                        Turn off custom layout
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>

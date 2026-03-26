@@ -9,7 +9,14 @@ import { encodePublicMediaUrl } from '../lib/mediaUrl';
 import { mergeHomeWithLocale } from '../lib/mergeHomeWithLocale';
 import { mergeHomeDataWithCmsLocale } from '../lib/cmsHomeLocale';
 import type { HomeSiteUi } from '../lib/homeSiteUi';
-import { homeUiSectionBackground, homeUiTextStyle, mergeHomeSiteUi } from '../lib/homeSiteUi';
+import {
+  homeUiSectionBackground,
+  homeUiTextStyle,
+  mergeHomeSiteUi,
+  isHeroFreeLayout,
+  resolveHeroBlockPositions,
+  heroBlockPositionStyle,
+} from '../lib/homeSiteUi';
 
 interface HomeProps {
   villas: Villa[];
@@ -215,6 +222,9 @@ export default function Home({ villas }: HomeProps) {
   const heroDesc = siteUi.hero.textStyles?.description;
   const heroBtnP = siteUi.hero.textStyles?.buttonPrimary;
   const heroBtnS = siteUi.hero.textStyles?.buttonSecondary;
+  const heroFreeLayout = isHeroFreeLayout(siteUi.hero);
+  const heroBlockPos = resolveHeroBlockPositions(siteUi.hero.blockPositions);
+  const heroVh = siteUi.hero.minHeightVh ?? 100;
 
   return (
     <div
@@ -223,8 +233,8 @@ export default function Home({ villas }: HomeProps) {
     >
       {/* Hero Section - Editorial Recipe: fully responsive, text never clipped or covered */}
       <section
-        className="relative flex items-center justify-center"
-        style={{ minHeight: `${siteUi.hero.minHeightVh ?? 100}vh` }}
+        className={`relative ${heroFreeLayout ? 'flex flex-col' : 'flex items-center justify-center'}`}
+        style={{ minHeight: `${heroVh}vh` }}
       >
         {/* Background only: clip image to section, content stays above */}
         <div className="absolute inset-0 z-0 overflow-hidden">
@@ -250,77 +260,184 @@ export default function Home({ villas }: HomeProps) {
           />
         </div>
 
-        {/* Content: never clipped, safe padding so video (when visible) doesn’t overlap on narrow widths */}
-        <div className="relative z-10 w-full min-w-0 text-center px-4 py-20 sm:px-6 md:px-8 max-w-5xl mx-auto box-border">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.5 }}
-            className="flex flex-col items-center min-w-0 w-full"
+        {/* Content: stacked (default) or absolute blocks when custom positions are saved in Admin */}
+        {heroFreeLayout ? (
+          <div
+            className="relative z-10 w-full min-w-0 flex-1 box-border px-4 py-16 sm:py-20 sm:px-6 md:px-8 pointer-events-none"
+            style={{ minHeight: `${heroVh}vh` }}
           >
-            <span
-              className="inline-block uppercase tracking-[0.5em] mb-4 sm:mb-8 border-b border-white/20 pb-2"
-              style={homeUiTextStyle(heroLoc)}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 1, delay: 0.35 }}
+              className="relative w-full max-w-6xl mx-auto min-w-0"
+              style={{ minHeight: `max(360px, calc(${heroVh}vh - 6rem))` }}
             >
-              {homeDisplay.hero.location}
-            </span>
-            <h1
-              className="font-serif leading-[0.9] mb-8 sm:mb-12 tracking-tight w-full break-words"
-              style={{
-                ...homeUiTextStyle(heroTitle),
-                ...(heroTitle?.fontSizePx == null ? { fontSize: 'clamp(2.25rem, 6vw + 1.5rem, 8rem)' } : {}),
-              }}
-            >
-              {homeDisplay.hero.title} <br />{' '}
-              <span
-                className="italic opacity-90"
+              <div
+                className="text-center min-w-0"
                 style={{
-                  ...homeUiTextStyle(heroSub),
-                  ...(heroSub?.fontSizePx == null
-                    ? {
-                        fontSize:
-                          heroTitle?.fontSizePx != null
-                            ? '1em'
-                            : 'clamp(2.25rem, 6vw + 1.5rem, 8rem)',
-                      }
+                  ...heroBlockPositionStyle(heroBlockPos.location),
+                }}
+              >
+                <span
+                  className="inline-block uppercase tracking-[0.5em] border-b border-white/20 pb-2"
+                  style={homeUiTextStyle(heroLoc)}
+                >
+                  {homeDisplay.hero.location}
+                </span>
+              </div>
+              <div
+                className="text-center min-w-0 w-full max-w-5xl"
+                style={{
+                  ...heroBlockPositionStyle(heroBlockPos.headline),
+                }}
+              >
+                <h1
+                  className="font-serif leading-[0.9] tracking-tight break-words"
+                  style={{
+                    ...homeUiTextStyle(heroTitle),
+                    ...(heroTitle?.fontSizePx == null ? { fontSize: 'clamp(2.25rem, 6vw + 1.5rem, 8rem)' } : {}),
+                  }}
+                >
+                  {homeDisplay.hero.title} <br />{' '}
+                  <span
+                    className="italic opacity-90"
+                    style={{
+                      ...homeUiTextStyle(heroSub),
+                      ...(heroSub?.fontSizePx == null
+                        ? {
+                            fontSize:
+                              heroTitle?.fontSizePx != null
+                                ? '1em'
+                                : 'clamp(2.25rem, 6vw + 1.5rem, 8rem)',
+                          }
+                        : {}),
+                    }}
+                  >
+                    {homeDisplay.hero.subtitle}
+                  </span>
+                </h1>
+              </div>
+              <div
+                className="text-center min-w-0 w-full"
+                style={{
+                  ...heroBlockPositionStyle(heroBlockPos.description),
+                }}
+              >
+                <p
+                  className="font-light w-full max-w-2xl mx-auto leading-relaxed break-words"
+                  style={{
+                    ...homeUiTextStyle(heroDesc),
+                    ...(heroDesc?.fontSizePx == null
+                      ? { fontSize: 'clamp(0.9375rem, 1.5vw + 0.75rem, 1.25rem)' }
+                      : {}),
+                  }}
+                >
+                  {homeDisplay.hero.description}
+                </p>
+              </div>
+              <div
+                className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 flex-wrap"
+                style={{
+                  ...heroBlockPositionStyle(heroBlockPos.actions),
+                }}
+              >
+                <a
+                  href="#villas"
+                  className="min-h-[44px] inline-flex items-center justify-center px-8 sm:px-10 py-3.5 sm:py-4 bg-white uppercase tracking-[0.3em] hover:bg-[#D4C3B3] transition-all duration-500 shrink-0"
+                  style={homeUiTextStyle(heroBtnP)}
+                >
+                  {homeDisplay.hero.button1}
+                </a>
+                <a
+                  href="#gallery"
+                  className="min-h-[44px] inline-flex items-center justify-center uppercase tracking-[0.3em] group shrink-0"
+                  style={homeUiTextStyle(heroBtnS)}
+                >
+                  {homeDisplay.hero.button2}{' '}
+                  <ArrowRight
+                    size={14}
+                    className="ml-3 group-hover:translate-x-2 transition-transform shrink-0"
+                    style={{ color: heroBtnS?.colorHex || 'currentColor' }}
+                  />
+                </a>
+              </div>
+            </motion.div>
+          </div>
+        ) : (
+          <div className="relative z-10 w-full min-w-0 text-center px-4 py-20 sm:px-6 md:px-8 max-w-5xl mx-auto box-border">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1, delay: 0.5 }}
+              className="flex flex-col items-center min-w-0 w-full"
+            >
+              <span
+                className="inline-block uppercase tracking-[0.5em] mb-4 sm:mb-8 border-b border-white/20 pb-2"
+                style={homeUiTextStyle(heroLoc)}
+              >
+                {homeDisplay.hero.location}
+              </span>
+              <h1
+                className="font-serif leading-[0.9] mb-8 sm:mb-12 tracking-tight w-full break-words"
+                style={{
+                  ...homeUiTextStyle(heroTitle),
+                  ...(heroTitle?.fontSizePx == null ? { fontSize: 'clamp(2.25rem, 6vw + 1.5rem, 8rem)' } : {}),
+                }}
+              >
+                {homeDisplay.hero.title} <br />{' '}
+                <span
+                  className="italic opacity-90"
+                  style={{
+                    ...homeUiTextStyle(heroSub),
+                    ...(heroSub?.fontSizePx == null
+                      ? {
+                          fontSize:
+                            heroTitle?.fontSizePx != null
+                              ? '1em'
+                              : 'clamp(2.25rem, 6vw + 1.5rem, 8rem)',
+                        }
+                      : {}),
+                  }}
+                >
+                  {homeDisplay.hero.subtitle}
+                </span>
+              </h1>
+              <p
+                className="font-light w-full max-w-2xl mx-auto mb-8 sm:mb-12 leading-relaxed break-words"
+                style={{
+                  ...homeUiTextStyle(heroDesc),
+                  ...(heroDesc?.fontSizePx == null
+                    ? { fontSize: 'clamp(0.9375rem, 1.5vw + 0.75rem, 1.25rem)' }
                     : {}),
                 }}
               >
-                {homeDisplay.hero.subtitle}
-              </span>
-            </h1>
-            <p
-              className="font-light w-full max-w-2xl mx-auto mb-8 sm:mb-12 leading-relaxed break-words"
-              style={{
-                ...homeUiTextStyle(heroDesc),
-                ...(heroDesc?.fontSizePx == null ? { fontSize: 'clamp(0.9375rem, 1.5vw + 0.75rem, 1.25rem)' } : {}),
-              }}
-            >
-              {homeDisplay.hero.description}
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 flex-wrap">
-              <a
-                href="#villas"
-                className="min-h-[44px] inline-flex items-center justify-center px-8 sm:px-10 py-3.5 sm:py-4 bg-white uppercase tracking-[0.3em] hover:bg-[#D4C3B3] transition-all duration-500 shrink-0"
-                style={homeUiTextStyle(heroBtnP)}
-              >
-                {homeDisplay.hero.button1}
-              </a>
-              <a
-                href="#gallery"
-                className="min-h-[44px] inline-flex items-center justify-center uppercase tracking-[0.3em] group shrink-0"
-                style={homeUiTextStyle(heroBtnS)}
-              >
-                {homeDisplay.hero.button2}{' '}
-                <ArrowRight
-                  size={14}
-                  className="ml-3 group-hover:translate-x-2 transition-transform shrink-0"
-                  style={{ color: heroBtnS?.colorHex || 'currentColor' }}
-                />
-              </a>
-            </div>
-          </motion.div>
-        </div>
+                {homeDisplay.hero.description}
+              </p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 flex-wrap">
+                <a
+                  href="#villas"
+                  className="min-h-[44px] inline-flex items-center justify-center px-8 sm:px-10 py-3.5 sm:py-4 bg-white uppercase tracking-[0.3em] hover:bg-[#D4C3B3] transition-all duration-500 shrink-0"
+                  style={homeUiTextStyle(heroBtnP)}
+                >
+                  {homeDisplay.hero.button1}
+                </a>
+                <a
+                  href="#gallery"
+                  className="min-h-[44px] inline-flex items-center justify-center uppercase tracking-[0.3em] group shrink-0"
+                  style={homeUiTextStyle(heroBtnS)}
+                >
+                  {homeDisplay.hero.button2}{' '}
+                  <ArrowRight
+                    size={14}
+                    className="ml-3 group-hover:translate-x-2 transition-transform shrink-0"
+                    style={{ color: heroBtnS?.colorHex || 'currentColor' }}
+                  />
+                </a>
+              </div>
+            </motion.div>
+          </div>
+        )}
 
         {/* Scroll Indicator */}
         <motion.div

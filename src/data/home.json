@@ -75,5 +75,27 @@
     "privacyUrl": "#",
     "disclaimerLabel": "Disclaimer",
     "disclaimerUrl": "#"
+  },
+  "siteUi": {
+    "hero": {
+      "blockPositions": {
+        "location": {
+          "leftPct": 50,
+          "topPct": 30
+        },
+        "headline": {
+          "leftPct": 58.72575640562252,
+          "topPct": 43.62572949128578
+        },
+        "description": {
+          "leftPct": 50,
+          "topPct": 58
+        },
+        "actions": {
+          "leftPct": 50,
+          "topPct": 74
+        }
+      }
+    }
   }
 }
