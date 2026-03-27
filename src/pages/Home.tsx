@@ -95,24 +95,27 @@ interface HomeData {
 const GALLERY_VISIBLE = 5; // how many images visible in accordion
 const GALLERY_AUTOPLAY_MS = 4000;
 
-function isAppleTouchDevice(): boolean {
+/**
+ * iOS (Safari + Chrome/Firefox/Edge on iPhone) all use WebKit for video. iPadOS may report as MacIntel + touch.
+ */
+function isIOSStyleWebKitVideo(): boolean {
   if (typeof window === 'undefined' || typeof navigator === 'undefined') return false;
   const ua = navigator.userAgent;
-  return (
-    /iPad|iPhone|iPod/i.test(ua) ||
-    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
-  );
+  if (/iPad|iPhone|iPod/i.test(ua)) return true;
+  if (navigator.platform === 'MacIntel' && (navigator.maxTouchPoints ?? 0) > 1) return true;
+  if (/CriOS|FxiOS|EdgiOS/i.test(ua)) return true;
+  return false;
 }
 
 /**
- * iOS Safari often blocks muted autoplay (especially Low Power Mode) and shows a “broken” slashed
- * play overlay if there are no controls. Apple touch devices always get native controls + `<source type>`
- * so guests can tap play; desktop keeps clean autoplay with controls only on failure.
+ * iOS WebKit: muted autoplay is unreliable (Low Power Mode, data saver). Always show controls so guests can tap play.
+ * Direct `src` on `<video>` is more reliable than `<source>` alone on some iOS versions.
+ * Avoid placing this component inside a Framer Motion node that applies translateY — WebKit often shows a black box.
  */
 function EstateFilmVideo({ src, ariaLabel }: { src: string; ariaLabel?: string }) {
   const ref = useRef<HTMLVideoElement>(null);
-  const touchApple = useMemo(() => isAppleTouchDevice(), []);
-  const [showControls, setShowControls] = useState(touchApple);
+  const iosLike = useMemo(() => isIOSStyleWebKitVideo(), []);
+  const [showControls, setShowControls] = useState(iosLike);
   const encodedSrc = encodePublicMediaUrl(src);
 
   useEffect(() => {
@@ -120,6 +123,7 @@ function EstateFilmVideo({ src, ariaLabel }: { src: string; ariaLabel?: string }
     if (!el) return;
     el.setAttribute('playsinline', 'true');
     el.setAttribute('webkit-playsinline', 'true');
+    el.playsInline = true;
     el.muted = true;
     el.defaultMuted = true;
 
@@ -128,7 +132,9 @@ function EstateFilmVideo({ src, ariaLabel }: { src: string; ariaLabel?: string }
       void el.play().catch(() => setShowControls(true));
     };
 
-    if (!touchApple) {
+    el.load();
+
+    if (!iosLike) {
       el.addEventListener('loadedmetadata', tryPlay);
       el.addEventListener('canplay', tryPlay);
       const retry = window.setTimeout(tryPlay, 400);
@@ -142,25 +148,24 @@ function EstateFilmVideo({ src, ariaLabel }: { src: string; ariaLabel?: string }
 
     tryPlay();
     return undefined;
-  }, [encodedSrc, touchApple]);
+  }, [encodedSrc, iosLike]);
 
   return (
     <video
+      key={encodedSrc}
       ref={ref}
-      autoPlay={!touchApple}
+      src={encodedSrc}
+      autoPlay={!iosLike}
       muted
       defaultMuted
       loop
       playsInline
-      preload="auto"
+      preload={iosLike ? 'metadata' : 'auto'}
       controls={showControls}
       className="absolute inset-0 w-full h-full object-cover"
       aria-label={ariaLabel ?? 'Grey House estate film'}
-      // Helps Safari surface decode/network errors in devtools
       onError={() => setShowControls(true)}
-    >
-      <source src={encodedSrc} type="video/mp4" />
-    </video>
+    />
   );
 }
 
@@ -724,15 +729,10 @@ export default function Home({ villas }: HomeProps) {
 
         {homeDisplay.hero.videoUrl ? (
           <div className="max-w-6xl mx-auto px-6">
-            <motion.div
-              initial={{ opacity: 1, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.2 }}
-              transition={{ duration: 0.7, ease: [0.25, 1, 0.5, 1] }}
-              className="relative w-full aspect-video rounded-sm overflow-hidden shadow-2xl border border-white/15 bg-black"
-            >
+            {/* No motion transform here: iOS Safari often renders inline video as a black box when an ancestor has translateY/transform. */}
+            <div className="relative w-full aspect-video rounded-sm overflow-hidden shadow-2xl border border-white/15 bg-black">
               <EstateFilmVideo src={homeDisplay.hero.videoUrl!} ariaLabel={t('homeA11y.videoAria')} />
-            </motion.div>
+            </div>
           </div>
         ) : (
           <p className="text-center text-white/40 text-sm px-6">{t('homeA11y.filmSoon')}</p>
