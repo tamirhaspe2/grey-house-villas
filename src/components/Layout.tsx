@@ -290,9 +290,6 @@ export default function Layout({ children, villas }: LayoutProps) {
                         {t('layout.villas')} <ChevronDown size={20} className="-rotate-90 ml-2 opacity-40 group-hover:opacity-100 transition-opacity" />
                       </button>
                       <Link to="/testimonials" onClick={() => setMobileMenuOpen(false)} className="min-h-[48px] flex items-center text-3xl font-serif text-[#2C3539] hover:text-[#A89F91] transition-colors py-2">{t('layout.testimonials')}</Link>
-                      <a href="/#gallery" onClick={() => setMobileMenuOpen(false)} className="min-h-[48px] flex items-center text-3xl font-serif text-[#2C3539] hover:text-[#A89F91] transition-colors py-2 group">
-                        {t('layout.gallery')} <ChevronDown size={20} className="-rotate-90 ml-2 opacity-40 group-hover:opacity-100 transition-opacity" />
-                      </a>
                       <Link
                         to="/booking"
                         onClick={() => setMobileMenuOpen(false)}

@@ -409,7 +409,7 @@ export default function Home({ villas }: HomeProps) {
                 </Link>
                 <a
                   href="#gallery"
-                  className="min-h-[44px] inline-flex items-center justify-center uppercase tracking-[0.3em] group shrink-0"
+                  className="hidden md:inline-flex min-h-[44px] items-center justify-center uppercase tracking-[0.3em] group shrink-0"
                   style={homeUiTextStyle(heroBtnS)}
                 >
                   {homeDisplay.hero.button2}{' '}
@@ -482,7 +482,7 @@ export default function Home({ villas }: HomeProps) {
                 </Link>
                 <a
                   href="#gallery"
-                  className="min-h-[44px] inline-flex items-center justify-center uppercase tracking-[0.3em] group shrink-0"
+                  className="hidden md:inline-flex min-h-[44px] items-center justify-center uppercase tracking-[0.3em] group shrink-0"
                   style={homeUiTextStyle(heroBtnS)}
                 >
                   {homeDisplay.hero.button2}{' '}
@@ -747,7 +747,7 @@ export default function Home({ villas }: HomeProps) {
       {/* Gallery — featured film (same copy as data gallery; carousel implementation remains in comments below) */}
       <section
         id="gallery"
-        className="py-32 overflow-x-hidden"
+        className="hidden md:block py-32 overflow-x-hidden"
         style={homeUiSectionBackground(siteUi.gallery)}
       >
         <div className="max-w-7xl mx-auto px-6 mb-12 lg:mb-16">
@@ -781,11 +781,7 @@ export default function Home({ villas }: HomeProps) {
         </div>
 
         {homeDisplay.hero.videoUrl ? (
-          <div
-            className={`mx-auto max-w-6xl px-6 ${
-              import.meta.env.VITE_HIDE_GALLERY_VIDEO_ON_MOBILE === 'true' ? 'hidden md:block' : ''
-            }`}
-          >
+          <div className="mx-auto max-w-6xl px-6">
             {/* No motion transform here: iOS Safari often renders inline video as a black box when an ancestor has translateY/transform. */}
             <div className="relative aspect-video w-full overflow-hidden rounded-sm border border-white/15 bg-black shadow-2xl">
               <EstateFilmVideo src={homeDisplay.hero.videoUrl!} ariaLabel={t('homeA11y.videoAria')} />
