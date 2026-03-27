@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, Maximize, Home as HomeIcon, Droplets, Wind, Check } from 'lucide-react';
+import { ArrowRight, Maximize, Home as HomeIcon, Droplets, Wind, Check, Play } from 'lucide-react';
 import { Villa } from '../types';
 import homeDataDefault from '../data/home.json';
 import { encodePublicMediaUrl } from '../lib/mediaUrl';
@@ -107,65 +107,118 @@ function isIOSStyleWebKitVideo(): boolean {
   return false;
 }
 
+/** iOS WebKit requires a user gesture for play(); many phones need an explicit tap even when "muted". */
+function needsGalleryVideoTapToPlay(): boolean {
+  if (typeof window === 'undefined') return false;
+  if (isIOSStyleWebKitVideo()) return true;
+  try {
+    return window.matchMedia('(pointer: coarse) and (max-width: 767.98px)').matches;
+  } catch {
+    return false;
+  }
+}
+
 /**
- * iOS WebKit: muted autoplay is unreliable (Low Power Mode, data saver). Always show controls so guests can tap play.
- * Direct `src` on `<video>` is more reliable than `<source>` alone on some iOS versions.
- * Avoid placing this component inside a Framer Motion node that applies translateY — WebKit often shows a black box.
+ * Direct `src` on `<video>` is more reliable than `<source>` alone on some WebKit builds.
+ * Do not wrap in Framer Motion with translateY — WebKit often shows a black box.
  */
 function EstateFilmVideo({ src, ariaLabel }: { src: string; ariaLabel?: string }) {
+  const { t } = useTranslation();
   const ref = useRef<HTMLVideoElement>(null);
-  const iosLike = useMemo(() => isIOSStyleWebKitVideo(), []);
-  const [showControls, setShowControls] = useState(iosLike);
   const encodedSrc = encodePublicMediaUrl(src);
+  const [tapMode] = useState(() => needsGalleryVideoTapToPlay());
+  const [showTapOverlay, setShowTapOverlay] = useState(tapMode);
+  const [showControls, setShowControls] = useState(false);
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     const el = ref.current;
-    if (!el) return;
+    if (!el || loadError) return;
     el.setAttribute('playsinline', 'true');
     el.setAttribute('webkit-playsinline', 'true');
+    el.setAttribute('x-webkit-airplay', 'deny');
     el.playsInline = true;
     el.muted = true;
     el.defaultMuted = true;
 
-    const tryPlay = () => {
+    const tryAutoplay = () => {
+      if (tapMode) return;
       el.muted = true;
       void el.play().catch(() => setShowControls(true));
     };
 
     el.load();
 
-    if (!iosLike) {
-      el.addEventListener('loadedmetadata', tryPlay);
-      el.addEventListener('canplay', tryPlay);
-      const retry = window.setTimeout(tryPlay, 400);
-      tryPlay();
+    if (!tapMode) {
+      el.addEventListener('loadedmetadata', tryAutoplay);
+      el.addEventListener('canplay', tryAutoplay);
+      const retry = window.setTimeout(tryAutoplay, 400);
+      tryAutoplay();
       return () => {
         window.clearTimeout(retry);
-        el.removeEventListener('loadedmetadata', tryPlay);
-        el.removeEventListener('canplay', tryPlay);
+        el.removeEventListener('loadedmetadata', tryAutoplay);
+        el.removeEventListener('canplay', tryAutoplay);
       };
     }
 
-    tryPlay();
     return undefined;
-  }, [encodedSrc, iosLike]);
+  }, [encodedSrc, tapMode, loadError]);
+
+  const handleTapPlay = () => {
+    const el = ref.current;
+    if (!el) return;
+    el.muted = true;
+    void el.play().then(() => setShowTapOverlay(false)).catch(() => setShowControls(true));
+  };
 
   return (
-    <video
-      key={encodedSrc}
-      ref={ref}
-      src={encodedSrc}
-      autoPlay={!iosLike}
-      muted
-      defaultMuted
-      loop
-      playsInline
-      preload={iosLike ? 'metadata' : 'auto'}
-      controls={showControls}
-      className="absolute inset-0 w-full h-full object-cover"
-      aria-label={ariaLabel ?? 'Grey House estate film'}
-      onError={() => setShowControls(true)}
-    />
+    <div className="absolute inset-0">
+      <video
+        key={encodedSrc}
+        ref={ref}
+        src={encodedSrc}
+        autoPlay={!tapMode}
+        muted
+        defaultMuted
+        loop
+        playsInline
+        preload={tapMode ? 'metadata' : 'auto'}
+        controls={showControls}
+        className="absolute inset-0 h-full w-full rounded-sm object-cover"
+        aria-label={ariaLabel ?? 'Grey House estate film'}
+        onError={() => {
+          setLoadError(true);
+          setShowControls(true);
+        }}
+        onPlaying={() => setShowTapOverlay(false)}
+      />
+      {loadError && (
+        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-black/90 px-4 text-center text-white">
+          <p className="text-sm">{t('homeA11y.videoLoadError')}</p>
+          <a
+            href={encodedSrc}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm underline underline-offset-2"
+          >
+            {t('homeA11y.openVideoNewTab')}
+          </a>
+        </div>
+      )}
+      {tapMode && showTapOverlay && !loadError && (
+        <button
+          type="button"
+          className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-black/35 text-white active:bg-black/45"
+          aria-label={t('homeA11y.tapToPlayFilm')}
+          onClick={handleTapPlay}
+        >
+          <span className="rounded-full bg-white/15 p-5 backdrop-blur-sm">
+            <Play className="h-12 w-12" strokeWidth={1.25} aria-hidden />
+          </span>
+          <span className="text-sm font-medium drop-shadow">{t('homeA11y.tapToPlayFilm')}</span>
+        </button>
+      )}
+    </div>
   );
 }
 
@@ -694,7 +747,7 @@ export default function Home({ villas }: HomeProps) {
       {/* Gallery — featured film (same copy as data gallery; carousel implementation remains in comments below) */}
       <section
         id="gallery"
-        className="py-32 overflow-hidden"
+        className="py-32 overflow-x-hidden"
         style={homeUiSectionBackground(siteUi.gallery)}
       >
         <div className="max-w-7xl mx-auto px-6 mb-12 lg:mb-16">
@@ -728,9 +781,13 @@ export default function Home({ villas }: HomeProps) {
         </div>
 
         {homeDisplay.hero.videoUrl ? (
-          <div className="max-w-6xl mx-auto px-6">
+          <div
+            className={`mx-auto max-w-6xl px-6 ${
+              import.meta.env.VITE_HIDE_GALLERY_VIDEO_ON_MOBILE === 'true' ? 'hidden md:block' : ''
+            }`}
+          >
             {/* No motion transform here: iOS Safari often renders inline video as a black box when an ancestor has translateY/transform. */}
-            <div className="relative w-full aspect-video rounded-sm overflow-hidden shadow-2xl border border-white/15 bg-black">
+            <div className="relative aspect-video w-full overflow-hidden rounded-sm border border-white/15 bg-black shadow-2xl">
               <EstateFilmVideo src={homeDisplay.hero.videoUrl!} ariaLabel={t('homeA11y.videoAria')} />
             </div>
           </div>

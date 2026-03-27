@@ -41,6 +41,9 @@
     "philosophyDetailAlt": "Détail",
     "filmSoon": "Film à venir.",
     "videoAria": "Film du domaine Grey House",
+    "tapToPlayFilm": "Toucher pour lire le film",
+    "videoLoadError": "Impossible de lire la vidéo ici.",
+    "openVideoNewTab": "Ouvrir la vidéo dans un nouvel onglet",
     "exploreOption": "Découvrir l’option",
     "galleryLink": "Galerie",
     "missingImage": "Image manquante"

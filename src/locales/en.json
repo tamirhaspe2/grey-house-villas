@@ -41,6 +41,9 @@
     "philosophyDetailAlt": "Detail",
     "filmSoon": "Film coming soon.",
     "videoAria": "Grey House estate film",
+    "tapToPlayFilm": "Tap to play film",
+    "videoLoadError": "This video could not be played here.",
+    "openVideoNewTab": "Open video in new tab",
     "exploreOption": "Explore Option",
     "galleryLink": "Gallery",
     "missingImage": "Missing image"
