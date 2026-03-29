@@ -7,6 +7,7 @@ import { Villa } from '../types';
 import homeDataDefault from '../data/home.json';
 import { mergeHomeWithLocale } from '../lib/mergeHomeWithLocale';
 import { mergeHomeDataWithCmsLocale } from '../lib/cmsHomeLocale';
+import RollingAccordionGallery from '../components/RollingAccordionGallery';
 
 interface VillasProps {
   villas: Villa[];
@@ -40,6 +41,15 @@ export default function Villas({ villas }: VillasProps) {
 
   return (
     <div className="min-h-screen bg-[#F9F8F6] text-[#1A1A1A]">
+      <RollingAccordionGallery
+        gallery={homeDisplay.gallery}
+        wide
+        missingImageLabel={t('homeA11y.missingImage')}
+        closeLightboxLabel={t('homeA11y.closeLightbox')}
+        prevImageLabel={t('homeA11y.galleryPrevImage')}
+        nextImageLabel={t('homeA11y.galleryNextImage')}
+      />
+
       <section className="py-24 px-6">
         <div className="max-w-7xl mx-auto">
           <motion.div

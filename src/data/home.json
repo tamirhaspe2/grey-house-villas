@@ -97,5 +97,12 @@
         }
       }
     }
+  },
+  "localeStrings": {
+    "he": {
+      "gallery": {
+        "headingHighlight": "יפים איתנו"
+      }
+    }
   }
 }

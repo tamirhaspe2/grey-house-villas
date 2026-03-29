@@ -46,7 +46,10 @@
     "openVideoNewTab": "Open video in new tab",
     "exploreOption": "Explore Option",
     "galleryLink": "Gallery",
-    "missingImage": "Missing image"
+    "missingImage": "Missing image",
+    "closeLightbox": "Close image",
+    "galleryPrevImage": "Previous image",
+    "galleryNextImage": "Next image"
   },
   "booking": {
     "title": "Reserve Your Stay",

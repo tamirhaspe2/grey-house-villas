@@ -46,7 +46,10 @@
     "openVideoNewTab": "Ouvrir la vidéo dans un nouvel onglet",
     "exploreOption": "Découvrir l’option",
     "galleryLink": "Galerie",
-    "missingImage": "Image manquante"
+    "missingImage": "Image manquante",
+    "closeLightbox": "Fermer l’image",
+    "galleryPrevImage": "Image précédente",
+    "galleryNextImage": "Image suivante"
   },
   "home": {
     "hero": {

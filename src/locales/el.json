@@ -46,7 +46,10 @@
     "openVideoNewTab": "Άνοιγμα βίντεο σε νέα καρτέλα",
     "exploreOption": "Εξερευνήστε την επιλογή",
     "galleryLink": "Γκαλερί",
-    "missingImage": "Λείπει εικόνα"
+    "missingImage": "Λείπει εικόνα",
+    "closeLightbox": "Κλείσιμο εικόνας",
+    "galleryPrevImage": "Προηγούμενη εικόνα",
+    "galleryNextImage": "Επόμενη εικόνα"
   },
   "home": {
     "hero": {

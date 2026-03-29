@@ -46,7 +46,10 @@
     "openVideoNewTab": "פתיחת הסרטון בלשונית חדשה",
     "exploreOption": "גלה את האפשרות",
     "galleryLink": "גלריה",
-    "missingImage": "תמונה חסרה"
+    "missingImage": "תמונה חסרה",
+    "closeLightbox": "סגור תמונה",
+    "galleryPrevImage": "תמונה קודמת",
+    "galleryNextImage": "תמונה הבאה"
   },
   "home": {
     "hero": {
