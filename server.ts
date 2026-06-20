@@ -752,32 +752,49 @@ async function startServer() {
 
     app.use(vite.middlewares);
   } else {
-    app.use(
-      express.static(path.join(process.cwd(), "dist"), {
-        index: false,
-        setHeaders(res, filePath) {
-          if (filePath.endsWith("index.html")) {
-            res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
-            res.setHeader("Pragma", "no-cache");
-          }
-        },
-      })
-    );
-    app.use(servePublic);
-    app.get("*", (req, res) => {
-      if (req.path.startsWith("/api")) {
-        res.status(404).json({ error: "Not found" });
-        return;
-      }
-      const ext = path.extname(req.path);
-      if (ext && ext !== ".html") {
-        res.status(404).send("Not found");
-        return;
-      }
-      res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
-      res.setHeader("Pragma", "no-cache");
-      res.sendFile(path.join(process.cwd(), "dist", "index.html"));
-    });
+    const landingPagePath = path.join(process.cwd(), "new_site", "index.html");
+    const serveLandingPage =
+      process.env.USE_REACT_APP !== "true" && fsSync.existsSync(landingPagePath);
+
+    if (serveLandingPage) {
+      app.use(servePublic);
+      app.get("*", (req, res) => {
+        if (req.path.startsWith("/api")) {
+          res.status(404).json({ error: "Not found" });
+          return;
+        }
+        res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+        res.setHeader("Pragma", "no-cache");
+        res.sendFile(landingPagePath);
+      });
+    } else {
+      app.use(
+        express.static(path.join(process.cwd(), "dist"), {
+          index: false,
+          setHeaders(res, filePath) {
+            if (filePath.endsWith("index.html")) {
+              res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+              res.setHeader("Pragma", "no-cache");
+            }
+          },
+        })
+      );
+      app.use(servePublic);
+      app.get("*", (req, res) => {
+        if (req.path.startsWith("/api")) {
+          res.status(404).json({ error: "Not found" });
+          return;
+        }
+        const ext = path.extname(req.path);
+        if (ext && ext !== ".html") {
+          res.status(404).send("Not found");
+          return;
+        }
+        res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+        res.setHeader("Pragma", "no-cache");
+        res.sendFile(path.join(process.cwd(), "dist", "index.html"));
+      });
+    }
   }
 
   server.listen(PORT, "0.0.0.0", () => {
@@ -785,6 +802,11 @@ async function startServer() {
     console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
     console.log(`GCS: ${useGCS && bucket ? 'Enabled' : 'Disabled (using local storage)'}`);
     console.log(`Firestore: ${useFirestore && dbFirestore ? 'Enabled' : 'Disabled (using local JSON)'}`);
+    if (process.env.NODE_ENV === "production") {
+      const landing = path.join(process.cwd(), "new_site", "index.html");
+      const onLanding = process.env.USE_REACT_APP !== "true" && fsSync.existsSync(landing);
+      console.log(`Public site: ${onLanding ? 'new_site/index.html (landing page)' : 'React app (dist/)'}`);
+    }
   }).on('error', (err: any) => {
     if (err.code === 'EADDRINUSE') {
       console.error(`\n❌ Port ${PORT} is already in use!`);
